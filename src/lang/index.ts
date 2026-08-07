@@ -1,31 +1,29 @@
-import zhCN from './zh-CN';
-import zhTW from './zh-TW';
 import enUS from './en-US';
-import deDE from './de-DE';
-import ruRU from './ru-RU';
-import { moment } from 'obsidian';
 
 export type Lang = typeof enUS;
 
-export default {
-  'de-DE': deDE,
-  'en-US': enUS,
-  'zh-CN': zhCN,
-  'zh-TW': zhTW,
-  'ru-RU': ruRU,
-  get current() {
-    const langIds = Object.keys(this);
-    const locale = moment.locale().toLowerCase();
-    let langId = langIds.find(id => id.toLowerCase() === locale.toLowerCase());
-    if (langId) {
-      return this[langId];
-    }
+/**
+ * Shape a translation has to satisfy. New strings land in `en-US` first, so a
+ * locale only has to carry the entries it has actually translated.
+ */
+export type PartialLang = {
+  [K in keyof Lang]?: Lang[K] extends string | ((...args: never[]) => unknown) ? Lang[K] : Partial<Lang[K]>;
+};
 
-    const localePrefix = locale.split('-')[0];
-    langId = langIds.find(id => id.toLowerCase().startsWith(localePrefix));
-    if (langId) {
-      return this[langId];
-    }
-    return this['en-US'];
+/*
+ * The other locales (`de-DE`, `ru-RU`, `zh-CN`, `zh-TW`) are parked while the
+ * settings strings are in flux — the files are still here, they are simply not
+ * wired up, so the plugin runs in English everywhere. To bring them back: add
+ * them to `langs` and let `current` pick by `moment.locale()` again, falling
+ * back to `en-US` per entry (see git history for the previous lookup).
+ */
+const langs = {
+  'en-US': enUS,
+};
+
+export default {
+  ...langs,
+  get current(): Lang {
+    return enUS;
   },
 };

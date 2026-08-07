@@ -7,7 +7,8 @@ import { getPlatformValue, PlatformKey } from './utils';
 import lang, { Lang } from './lang';
 import path from 'path';
 import resources from './resources';
-import './styles.css';
+// `styles.css` is not imported: Obsidian loads the plugin folder's stylesheet
+// itself, and keeping it out of the bundle means it can be edited live.
 
 export default class UniversalExportPlugin extends Plugin {
   settings: UniversalExportPluginSettings;

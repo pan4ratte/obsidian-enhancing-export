@@ -19,6 +19,7 @@ import { insert, Dynamic } from 'solid-js/web';
 import type { Lang } from '../lang';
 
 import pandoc from '../pandoc';
+import PandocDashboard from './PandocDashboard';
 import Modal from './components/Modal';
 import Button from './components/Button';
 import Setting, { Text, Toggle, ExtraButton, DropDown, TextArea } from './components/Setting';
@@ -69,17 +70,6 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
       return item;
     }));
   };
-
-  const pandocDescription = createMemo(() => {
-    const version = pandocVersion();
-    if (version) {
-      if (app.vault.config.useMarkdownLinks && version.compare(pandoc.requiredVersion) === -1) {
-        return lang.settingTab.pandocVersionWithWarning(pandoc.requiredVersion)
-      }
-      return lang.settingTab.pandocVersion(version)
-    }
-    return lang.settingTab.pandocNotFound;
-  });
 
   const [modal, setModal] = createSignal<() => JSX.Element>();
 
@@ -193,11 +183,6 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
     </>;
   };
 
-  const resetSettings = async () => {
-    await plugin.resetSettings();
-    setSettings(plugin.settings);
-  };
-
   const chooseCustomDefaultExportDirectory = async () => {
     const retval = await ct.remote.dialog.showOpenDialog({
       defaultPath: customDefaultExportDirectory() ?? ct.remote.app.getPath('documents'),
@@ -230,18 +215,13 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
   });
 
   return <>
-    <Setting name={lang.settingTab.general} heading={true}>
-      <ExtraButton icon='reset' onClick={resetSettings} />
-    </Setting>
-
-    <Setting name={lang.settingTab.pandocPath} description={pandocDescription()}>
-      <Text
-        placeholder={lang.settingTab.pandocPathPlaceholder}
-        value={getPlatformValue(settings.pandocPath) ?? ''}
-        onChange={(value) => setSettings('pandocPath', (v) => setPlatformValue(v, value))}
-      />
-      <ExtraButton icon="folder" onClick={choosePandocPath} />
-    </Setting>
+    <PandocDashboard
+      lang={lang}
+      version={pandocVersion()}
+      path={getPlatformValue(settings.pandocPath) ?? ''}
+      onPathChange={(value) => setSettings('pandocPath', (v) => setPlatformValue(v, value))}
+      onChoosePath={choosePandocPath}
+    />
 
     <Setting name={lang.settingTab.defaultFolderForExportedFile}>
       <DropDown options={[
@@ -369,7 +349,7 @@ export default class extends PluginSettingTab {
             name: settingTab.title,
             desc: this.plugin.manifest.description,
             aliases: [
-              settingTab.general,
+              settingTab.pandocDashboard,
               settingTab.pandocPath,
               settingTab.defaultFolderForExportedFile,
               settingTab.openExportedFileLocation,

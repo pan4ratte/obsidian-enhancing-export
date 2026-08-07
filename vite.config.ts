@@ -22,19 +22,20 @@ export default defineConfig(({ mode }) => {
 
   // Defaults to the repository root, so the repo itself is a ready-to-load plugin folder.
   const outDir = path.resolve(process.cwd(), OUT_DIR ? OUT_DIR : '.');
-  // manifest.json already lives in the root, copying it onto itself would fail.
-  const copyManifest = outDir !== path.resolve(process.cwd());
+  // manifest.json and styles.css already live in the root, copying them onto
+  // themselves would fail. They are only copied when building elsewhere.
+  const copyAssets = outDir !== path.resolve(process.cwd());
 
   return {
     // Vite warns about `outDir` being the root, which is intended here (`emptyOutDir` is off).
     customLogger: silence(/build\.outDir must not be the same directory of root/),
     plugins: [
       solidPlugin(),
-      copyManifest ? viteStaticCopy({
-        targets: [{
-          src: 'manifest.json',
-          dest: '.'
-        }]
+      copyAssets ? viteStaticCopy({
+        targets: [
+          { src: 'manifest.json', dest: '.' },
+          { src: 'styles.css', dest: '.' },
+        ]
       }) : undefined,
       loader({
         '.lua': 'binary',
@@ -52,16 +53,11 @@ export default defineConfig(({ mode }) => {
       },
       minify: prod,
       sourcemap: prod ? false : 'inline',
-      cssCodeSplit: false,
       emptyOutDir: false,
       outDir,
       rollupOptions: {
         output: {
           exports: 'named',
-          // Obsidian loads the stylesheet by name. Vite has changed what it calls
-          // the library's CSS bundle across majors ('style.css' up to 5, the package
-          // name since 8), so match on the extension instead.
-          assetFileNames: (v) => v.name?.endsWith('.css') ? 'styles.css' : v.name,
           // `banner` is prepended before minification, which drops the comment.
           postBanner: banner,
         },

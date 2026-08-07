@@ -1,5 +1,5 @@
 import { strTpl } from '../utils';
-import type { Lang } from '.';
+import type { PartialLang } from '.';
 
 export default {
   exportToOo: '匯出為......',
@@ -68,4 +68,4 @@ export default {
     environmentVariablesDesc: '定義匯出的環境變數。',
     ShowExportProgressBar: '顯示匯出進度條',
   },
-} satisfies Lang;
+} satisfies PartialLang;

@@ -1,12 +1,16 @@
+import { requestUrl } from 'obsidian';
 import { exec } from './utils';
 import semver from 'semver/preload';
+import type { SemVer } from 'semver';
 
 export const normalizePandocPath = (path?: string) => (path?.includes(' ') ? `"${path}"` : `${path ?? 'pandoc'}`);
 
-export async function getPandocVersion(path?: string, env?: Record<string, string>) {
-  path = normalizePandocPath(path);
-  let version = await exec(`${path} --version`, { env });
-  version = version.substring(0, version.indexOf('\n')).replace('pandoc.exe', '').replace('pandoc', '').trim();
+/**
+ * Pandoc versions are not semver: they carry two components (`2.9`) or four
+ * (`3.1.11.1`). Pad or trim them down to the three semver takes.
+ */
+export function parsePandocVersion(version: string) {
+  version = version.trim().replace(/^v/i, '');
   let dotCount = [...version].filter(c => c === '.').length;
   if (dotCount === 1) {
     version = `${version}.0`;
@@ -19,10 +23,72 @@ export async function getPandocVersion(path?: string, env?: Record<string, strin
   return semver.parse(version, true);
 }
 
+export async function getPandocVersion(path?: string, env?: Record<string, string>) {
+  path = normalizePandocPath(path);
+  let version = await exec(`${path} --version`, { env });
+  version = version.substring(0, version.indexOf('\n')).replace('pandoc.exe', '').replace('pandoc', '').trim();
+  return parsePandocVersion(version);
+}
+
 export const PANDOC_REQUIRED_VERSION = '3.1.7';
+
+export const PANDOC_MANUAL_URL = 'https://pandoc.org/MANUAL.html';
+
+/** Landing page for the newest release, used when the API lookup gives no URL. */
+export const PANDOC_LATEST_RELEASE_URL = 'https://github.com/jgm/pandoc/releases/latest';
+
+const PANDOC_LATEST_RELEASE_API = 'https://api.github.com/repos/jgm/pandoc/releases/latest';
+
+export interface PandocRelease {
+  version: SemVer;
+  url: string;
+}
+
+/**
+ * Pandoc ships a few times a year, so one lookup per plugin session is plenty
+ * and leaves GitHub's unauthenticated rate limit alone.
+ */
+const RELEASE_CACHE_TTL = 6 * 60 * 60 * 1000;
+
+let releaseCache: { fetchedAt: number; release: PandocRelease } | undefined;
+
+/**
+ * Newest release published on the official repository, or `undefined` when it
+ * cannot be determined (offline, rate limited, unparsable tag).
+ */
+export async function getLatestPandocRelease(): Promise<PandocRelease | undefined> {
+  if (releaseCache && Date.now() - releaseCache.fetchedAt < RELEASE_CACHE_TTL) {
+    return releaseCache.release;
+  }
+
+  // `requestUrl` goes through Obsidian rather than the renderer, so no CORS.
+  const response = await requestUrl({
+    url: PANDOC_LATEST_RELEASE_API,
+    headers: { Accept: 'application/vnd.github+json' },
+    throw: false,
+  });
+
+  if (response.status !== 200) {
+    return undefined;
+  }
+
+  const { tag_name, html_url } = (response.json ?? {}) as { tag_name?: string; html_url?: string };
+  const version = tag_name ? parsePandocVersion(tag_name) : undefined;
+  if (!version) {
+    return undefined;
+  }
+
+  const release: PandocRelease = { version, url: html_url ?? PANDOC_LATEST_RELEASE_URL };
+  releaseCache = { fetchedAt: Date.now(), release };
+  return release;
+}
 
 export default {
   normalizePath: normalizePandocPath,
   getVersion: getPandocVersion,
+  parseVersion: parsePandocVersion,
+  getLatestRelease: getLatestPandocRelease,
   requiredVersion: PANDOC_REQUIRED_VERSION,
+  manualUrl: PANDOC_MANUAL_URL,
+  latestReleaseUrl: PANDOC_LATEST_RELEASE_URL,
 };

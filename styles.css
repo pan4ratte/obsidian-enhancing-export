@@ -1,0 +1,178 @@
+/*
+ * Settings tab.
+ *
+ * Obsidian 1.13 renders a setting group as a card and restyles every row inside
+ * it. The whole tab is rendered into a single row of one group, so the group
+ * card and that host row are blanked out here and the rows the plugin draws
+ * inside get the flat layout the UI was written against.
+ */
+
+.ex-settings-group > .setting-items {
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+/*
+ * Host row for the plugin's own DOM. Needs three classes to outrank
+ * `.setting-group .setting-item:not(.setting-item-heading)`.
+ */
+.ex-settings-group .setting-item.ex-settings-anchor {
+  display: block;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
+.ex-settings-group .setting-item.ex-settings-anchor::before {
+  content: none;
+}
+
+/* The row's stock label only exists for the settings search. */
+.ex-settings-anchor > .setting-item-info,
+.ex-settings-anchor > .setting-item-control {
+  display: none;
+}
+
+/*
+ * Reset for the rows rendered inside the tab.
+ * KEEP EVERY CUSTOM ROW RULE BELOW THIS ONE: they tie at the same specificity,
+ * so file order is what makes them win.
+ */
+.ex-settings-root .setting-item:not(.setting-item-heading) {
+  border: none;
+  border-top: var(--border-width) solid var(--background-modifier-border);
+  background-color: transparent;
+  border-radius: 0;
+  padding: var(--size-4-4) 0;
+  margin-bottom: 0;
+  /* Obsidian 1.13's base rule is `flex-start`, which lifts controls to the top
+     of the row. Harmless for the narrow-pane column layout, which left-aligns
+     through `align-self` and `width: 100%` instead. */
+  align-items: center;
+}
+
+.ex-settings-root .setting-item:not(.setting-item-heading)::before {
+  content: none;
+}
+
+/* Align headings with the rows above/below, which are flush with the root. */
+.ex-settings-root .setting-item.setting-item-heading {
+  padding-inline: 0;
+}
+
+/*
+ * Doubled class rather than a `.ex-settings-root` prefix: this one is also used
+ * by the legacy setting tab, which renders outside the root.
+ */
+.setting-item.ex-setting-item.ex-setting-item {
+  border-top: unset;
+  padding-top: 0;
+}
+
+/*
+ * Pandoc dashboard.
+ */
+
+/*
+ * Status on the left, actions on the right. Both are flex items of the card,
+ * so a pane too narrow to hold them side by side wraps them into a column.
+ */
+.ex-pandoc-dashboard {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-4);
+  border: var(--border-width) solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background-color: var(--background-secondary);
+  padding: var(--size-4-4);
+  margin-block: var(--size-4-3);
+}
+
+.ex-pandoc-dashboard-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ex-pandoc-dashboard-version {
+  font-size: var(--font-ui-medium);
+  font-weight: var(--font-semibold);
+  color: var(--text-normal);
+  line-height: 1.2;
+}
+
+/* Status line: the dot and its label share the state colour. */
+.ex-pandoc-dashboard-status {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  margin-top: var(--size-2-2);
+}
+
+.ex-pandoc-dashboard-indicator {
+  flex: none;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background-color: currentColor;
+  /* Halo in the same colour as the dot, only much fainter. */
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.ex-pandoc-dashboard-status.is-ok {
+  color: var(--text-success);
+}
+
+.ex-pandoc-dashboard-status.is-outdated {
+  color: var(--text-warning);
+}
+
+.ex-pandoc-dashboard-status.is-missing {
+  color: var(--text-error);
+}
+
+.ex-pandoc-dashboard-status.is-checking .ex-pandoc-dashboard-indicator {
+  box-shadow: none;
+}
+
+.ex-pandoc-dashboard-warning {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-warning);
+  margin-top: var(--size-2-2);
+}
+
+/* Side by side, and only breaking apart when the row genuinely cannot hold
+   them — the settings pane otherwise stacks buttons as soon as it gets narrow. */
+.ex-pandoc-dashboard-actions {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.ex-pandoc-dashboard-button.ex-pandoc-dashboard-button {
+  display: inline-flex;
+  flex: none;
+  width: auto;
+  align-items: center;
+  gap: var(--size-4-1);
+  margin: 0;
+}
+
+/* `setIcon` sizes to the font, which is too big for a button label. */
+.ex-pandoc-dashboard-button .svg-icon {
+  width: var(--icon-s);
+  height: var(--icon-s);
+}
+
+*[hidden] {
+  display: none;
+}

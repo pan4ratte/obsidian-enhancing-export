@@ -1,5 +1,5 @@
 import { strTpl } from '../utils';
-import type { Lang } from '.';
+import type { PartialLang } from '.';
 
 export default {
   exportToOo: 'Export to...',
@@ -69,4 +69,4 @@ export default {
     environmentVariablesDesc: 'Define the Environment Variables for exporting.',
     ShowExportProgressBar: 'Show export progressBar',
   },
-} satisfies Lang;
+} satisfies PartialLang;
