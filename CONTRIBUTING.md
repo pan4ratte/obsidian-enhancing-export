@@ -31,7 +31,11 @@ First, thank you for your willingness to contribute to this project.
 
 2. Development & debugging  (Recommend [VsCode](https://code.visualstudio.com/))
 
-   - Add `.env.local` to project root with following content
+   - The build output (`main.js` / `styles.css`) is written to the project root by default, next to the
+     already present `manifest.json`, so the repository folder can be loaded by Obsidian as-is.
+
+     To build into another obsidian plugin directory instead, add `.env.local` to project root with
+     following content
 
      ```shell
      # export to obsidian plugin directory directly

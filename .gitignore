@@ -1,4 +1,5 @@
-/dist
+/main.js
+/styles.css
 /node_modules
 /coverage
 /lua/main.lua

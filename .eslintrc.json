@@ -47,6 +47,6 @@
     ]
   },
   "ignorePatterns": [
-    "dist/*"
+    "main.js"
   ]
 }

@@ -1,5 +1,4 @@
-import { exec } from 'child_process';
-import { defineConfig, loadEnv, Plugin, UserConfig } from 'vite';
+import { createLogger, defineConfig, loadEnv, Plugin, UserConfig } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import solidPlugin from 'vite-plugin-solid';
 import builtins from 'builtin-modules';
@@ -16,28 +15,27 @@ if you want to view the source, please visit the github repository https://githu
 `;
 
 
-export default defineConfig(async ({ mode }) => {
-  const { normalize } = path;
-  const { rm } = fsp;
+export default defineConfig(({ mode }) => {
   const prod = mode === 'production';
 
-  let { OUT_DIR } = loadEnv(mode, process.cwd(), ['OUT_']);
+  const { OUT_DIR } = loadEnv(mode, process.cwd(), ['OUT_']);
 
-  OUT_DIR = normalize(OUT_DIR);
-  if (OUT_DIR != 'dist' && OUT_DIR != path.join(process.cwd(), 'dist')) {
-    await rm('dist', { recursive: true });
-    exec(process.platform === 'win32' ? `mklink /J dist ${OUT_DIR}` : `ln -s ${OUT_DIR} dist`);
-  }
+  // Defaults to the repository root, so the repo itself is a ready-to-load plugin folder.
+  const outDir = path.resolve(process.cwd(), OUT_DIR ? OUT_DIR : '.');
+  // manifest.json already lives in the root, copying it onto itself would fail.
+  const copyManifest = outDir !== path.resolve(process.cwd());
 
   return {
+    // Vite warns about `outDir` being the root, which is intended here (`emptyOutDir` is off).
+    customLogger: silence(/build\.outDir must not be the same directory of root/),
     plugins: [
       solidPlugin(),
-      viteStaticCopy({
+      copyManifest ? viteStaticCopy({
         targets: [{
           src: 'manifest.json',
           dest: '.'
         }]
-      }),
+      }) : undefined,
       loader({
         '.lua': 'binary',
         '.tex': 'binary',
@@ -56,7 +54,7 @@ export default defineConfig(async ({ mode }) => {
       sourcemap: prod ? false : 'inline',
       cssCodeSplit: false,
       emptyOutDir: false,
-      // outDir: '',
+      outDir,
       rollupOptions: {
         output: {
           exports: 'named',
@@ -96,6 +94,23 @@ export default defineConfig(async ({ mode }) => {
     }
   } as UserConfig;
 });
+
+
+const silence = (pattern: RegExp) => {
+  const logger = createLogger();
+  const { warn, warnOnce } = logger;
+  logger.warn = (msg, options) => {
+    if (!pattern.test(msg)) {
+      warn.call(logger, msg, options);
+    }
+  };
+  logger.warnOnce = (msg, options) => {
+    if (!pattern.test(msg)) {
+      warnOnce.call(logger, msg, options);
+    }
+  };
+  return logger;
+};
 
 
 const loader = (config: { [extention: string]: 'binary' }): Plugin => {
