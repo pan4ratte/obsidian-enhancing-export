@@ -42,6 +42,7 @@ export interface UniversalExportPluginSettings {
   version?: string;
   pandocPath?: PlatformValue<string>;
   showOverwriteConfirmation?: boolean;
+  /** `Auto` is only what an older vault may still hold; the setting tab turns it into `Same`. */
   defaultExportDirectoryMode: 'Auto' | 'Same' | 'Custom';
   customDefaultExportDirectory?: PlatformValue<string>;
   env: PlatformValue<Record<string, string>>;
@@ -137,7 +138,7 @@ export const DEFAULT_ENV = (() => {
 export const DEFAULT_SETTINGS: UniversalExportPluginSettings = {
   items: Object.values(export_templates).filter(o => o.type !== 'custom'),
   pandocPath: undefined,
-  defaultExportDirectoryMode: 'Auto',
+  defaultExportDirectoryMode: 'Same',
   openExportedFile: true,
   env: DEFAULT_ENV,
   showExportProgressBar: true,

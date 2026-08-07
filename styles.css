@@ -173,6 +173,43 @@
   height: var(--icon-s);
 }
 
+/*
+ * Export destination.
+ */
+
+/* A row another setting has taken the question out of. Its height is animated
+   from the script, so it has to clip what does not fit yet. */
+.ex-collapsible {
+  overflow: hidden;
+}
+
+/* Set once the closing animation has finished, so a closed panel leaves no gap
+   and nothing for a tab key to land in. */
+.ex-collapsed {
+  display: none;
+}
+
+/* The path belongs to the dropdown above it: no divider between them, and the
+   field takes the whole width instead of the sliver at the end of a row. */
+.ex-settings-root .setting-item.ex-export-destination-path {
+  border-top: none;
+  padding-top: 0;
+}
+
+.ex-export-destination-path > .setting-item-info {
+  display: none;
+}
+
+.ex-export-destination-path > .setting-item-control {
+  flex: 1;
+  width: 100%;
+}
+
+.ex-export-destination-path > .setting-item-control > input[type='text'] {
+  flex: 1;
+  min-width: 0;
+}
+
 *[hidden] {
   display: none;
 }

@@ -22,6 +22,7 @@ import pandoc from '../pandoc';
 import PandocDashboard from './PandocDashboard';
 import Modal from './components/Modal';
 import Button from './components/Button';
+import Collapsible from './components/Collapsible';
 import Setting, { Text, Toggle, ExtraButton, DropDown, TextArea } from './components/Setting';
 import export_templates from '../export_templates';
 
@@ -62,6 +63,12 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
     return (type === undefined || type === template.type ? template : undefined) as T extends 'custom' ? CustomExportSetting : T extends 'pandoc' ? PandocExportSetting : ExportSetting;
   };
   const customDefaultExportDirectory = createMemo(() => getPlatformValue(settings.customDefaultExportDirectory));
+
+  // `Auto` is gone from the dropdown, so a vault still carrying it would show a
+  // selection its setting does not hold. Same folder is what it now means.
+  if (settings.defaultExportDirectoryMode === 'Auto') {
+    setSettings('defaultExportDirectoryMode', 'Same');
+  }
 
   const updateCurrentEditCommandTemplate = (update: (prev: Partial<ExportSetting>) => void) => {
     const idx = settings.items.findIndex(v => v.name === settings.lastEditName);
@@ -223,21 +230,22 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
       onChoosePath={choosePandocPath}
     />
 
+    <Setting name={lang.settingTab.defaults} heading={true} />
+
     <Setting name={lang.settingTab.defaultFolderForExportedFile}>
       <DropDown options={[
-        { name: lang.settingTab.auto, value: 'Auto' },
         { name: lang.settingTab.sameFolderWithCurrentFile, value: 'Same' },
         { name: lang.settingTab.customLocation, value: 'Custom' }
-      ]} selected={settings.defaultExportDirectoryMode} onChange={(v: 'Auto' | 'Same' | 'Custom') => setSettings('defaultExportDirectoryMode', v)} />
+      ]} selected={settings.defaultExportDirectoryMode} onChange={(v: 'Same' | 'Custom') => setSettings('defaultExportDirectoryMode', v)} />
 
     </Setting>
 
-    <Show when={settings.defaultExportDirectoryMode === 'Custom'}>
-      <Setting>
-        <Text value={customDefaultExportDirectory() ?? ''} title={customDefaultExportDirectory()} />
+    <Collapsible when={settings.defaultExportDirectoryMode === 'Custom'}>
+      <Setting class="ex-export-destination-path">
+        <Text style="width: 100%" value={customDefaultExportDirectory() ?? ''} title={customDefaultExportDirectory()} />
         <ExtraButton icon="folder" onClick={chooseCustomDefaultExportDirectory} />
       </Setting>
-    </Show>
+    </Collapsible>
 
     <Setting name={lang.settingTab.openExportedFileLocation}>
       <Toggle
@@ -351,6 +359,7 @@ export default class extends PluginSettingTab {
             aliases: [
               settingTab.pandocDashboard,
               settingTab.pandocPath,
+              settingTab.defaults,
               settingTab.defaultFolderForExportedFile,
               settingTab.openExportedFileLocation,
               settingTab.openExportedFile,

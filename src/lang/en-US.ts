@@ -50,7 +50,8 @@ export default {
     pandocPathReset: 'Reset to auto detect',
     pandocOpenManual: 'Open manual',
 
-    defaultFolderForExportedFile: 'Default Folder for Exported File',
+    defaults: 'Defaults',
+    defaultFolderForExportedFile: 'Export destination',
     openExportedFileLocation: 'Open exported file location',
     ShowExportProgressBar: 'Show export progress bar',
     openExportedFile: 'Open exported file',
