@@ -65,6 +65,13 @@ export type OptionsMeta = {
 
 interface CommonExportSetting {
   name: string;
+  /**
+   * Key in `export_templates` the format fields were taken from — what the
+   * template writes, kept as a choice rather than guessed back out of the
+   * arguments. Absent on templates that predate the field, which are named
+   * after their preset.
+   */
+  preset?: string;
 
   openExportedFileLocation?: boolean; // open exported file location after export
   openExportedFile?: boolean; // open exported file after export

@@ -93,45 +93,64 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
     return `${name} ${n}`;
   };
 
+  /** Whether the plugin gave the template this name, rather than the user typing it. */
+  const isGeneratedName = (name: string, preset: string) =>
+    name === preset || (name.startsWith(`${preset} `) && /^\d+$/.test(name.substring(preset.length + 1)));
+
+  const outputOptions = Object.keys(export_templates)
+    .map(k => ({ name: k, value: k }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   const [modal, setModal] = createSignal<() => JSX.Element>();
 
-  const AddCommandTemplateModal = () => {
-    type TemplateKey = keyof typeof export_templates;
-    const [templateName, setTemplateName] = createSignal(Object.keys(export_templates)[0] as TemplateKey);
-    const [name, setName] = createSignal<string>();
-    const doAdd = () => {
-      const template = JSON.parse(JSON.stringify(export_templates[templateName()]));
-      // A row of the table needs a name to be found by, so an empty field takes
-      // the one the preset came with.
-      template.name = uniqueTemplateName(name()?.trim() || template.name);
-      batch(() => {
-        setSettings('items', items => [...items, template]);
-        setSettings('lastEditName', template.name);
+  /** Which preset the template being edited writes with. */
+  const currentOutput = createMemo(() => {
+    const template = currentEditCommandTemplate();
+    // Templates from before the field carry the name of the preset they are a
+    // copy of, which is the key as well.
+    return template?.preset ?? (template?.name in export_templates ? template.name : undefined);
+  });
+
+  const setCurrentOutput = (key: string) => {
+    const preset = export_templates[key];
+    const template = currentEditCommandTemplate();
+    if (!preset || !template || currentOutput() === key) {
+      return;
+    }
+    // What the format decides comes from the preset; what the user decided
+    // about this template — its name, what happens once the file is written —
+    // is carried across. Extra arguments belong to the format that took them.
+    const previous = currentOutput();
+    const name = previous && isGeneratedName(template.name, previous)
+      ? uniqueTemplateName(preset.name, template.name)
+      : template.name;
+    const carried = template.type === 'pandoc' && preset.type === 'pandoc'
+      ? { runCommand: template.runCommand, command: template.command }
+      : {};
+    const idx = settings.items.findIndex(v => v.name === template.name);
+    batch(() => {
+      setSettings('items', idx === -1 ? 0 : idx, {
+        ...JSON.parse(JSON.stringify(preset)),
+        ...carried,
+        openExportedFile: template.openExportedFile,
+        openExportedFileLocation: template.openExportedFileLocation,
+        preset: key,
+        name,
       });
-      const added: string = template.name;
-      setModal(undefined);
-      // Straight on to the arguments — naming a template is not the point of
-      // adding one. Only once this modal is gone, though: it clears the signal
-      // on its way out, and would take the next one with it.
-      queueMicrotask(() => editCommandTemplate(added));
-    };
-    return <>
-      <Modal app={app} title={lang.settingTab.newTemplate} onClose={() => setModal(undefined)}>
-        <Setting name={lang.settingTab.template}>
-          <DropDown
-            options={Object.entries(export_templates).map(([k, v]) => ({ name: v.name, value: k })).sort((a, b) => a.name.localeCompare(b.name))}
-            selected={templateName()}
-            onChange={(v: TemplateKey) => setTemplateName(v)}
-          />
-        </Setting>
-        <Setting name={lang.settingTab.name}>
-          <Text value={name() ?? ''} placeholder={export_templates[templateName()].name} onChange={(value) => setName(value)} />
-        </Setting>
-        <div class="modal-button-container">
-          <Button cta={true} onClick={doAdd}>{lang.settingTab.add}</Button>
-        </div>
-      </Modal>
-    </>;
+      setSettings('lastEditName', name);
+    });
+  };
+
+  const addCommandTemplate = () => {
+    const key = Object.keys(export_templates)[0];
+    const template = JSON.parse(JSON.stringify(export_templates[key]));
+    template.preset = key;
+    template.name = uniqueTemplateName(template.name);
+    batch(() => {
+      setSettings('items', items => [...items, template]);
+      setSettings('lastEditName', template.name);
+    });
+    setModal(() => EditCommandTemplateModal);
   };
 
   const renameCurrentCommandTemplate = (value: string) => {
@@ -148,7 +167,18 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
 
   /** The whole of one template. Every field writes straight through, so there is nothing to save. */
   const EditCommandTemplateModal = () => <>
-    <Modal app={app} title={lang.settingTab.editCommandTemplate} onClose={() => setModal(undefined)}>
+    <Modal
+      app={app}
+      title={<>
+        <span>{lang.settingTab.editCommandTemplate}</span>
+        {/* The picker rides in the title row, so it needs to say what it picks
+            on its own. */}
+        <span class="ex-template-modal-output" title={lang.settingTab.templateOutput}>
+          <DropDown options={outputOptions} selected={currentOutput()} onChange={setCurrentOutput} />
+        </span>
+      </>}
+      classList={{ 'ex-template-modal': true }}
+      onClose={() => setModal(undefined)}>
       <Setting name={lang.settingTab.name}>
         <Text value={currentEditCommandTemplate()?.name ?? ''} onChange={renameCurrentCommandTemplate} />
       </Setting>
@@ -189,6 +219,9 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
     }).open();
   };
 
+  // Both blocks read through `?.`: the output dropdown can turn a pandoc
+  // template into a custom one and back, so a block outlives its own type by
+  // however long the switch takes to swap it out.
   const PandocCommandTempateEditBlock = () => {
     const template = () => currentEditCommandTemplate('pandoc');
     const updateTemplate = (update: (prev: Partial<PandocExportSetting>) => void) => {
@@ -196,27 +229,20 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
     };
     return <>
       <Setting name={lang.settingTab.arguments}>
-        <Text style="width: 100%" value={template().arguments ?? ''} onChange={(value) => updateTemplate(v => v.arguments = value)} />
+        <Text style="width: 100%" value={template()?.arguments ?? ''} onChange={(value) => updateTemplate(v => v.arguments = value)} />
       </Setting>
       <Setting name={lang.settingTab.extraArguments}>
-        <Text style="width: 100%" value={template().customArguments ?? ''} title={template().customArguments} onChange={(value) => updateTemplate(v => v.customArguments = value)} />
+        <Text style="width: 100%" value={template()?.customArguments ?? ''} title={template()?.customArguments} onChange={(value) => updateTemplate(v => v.customArguments = value)} />
       </Setting>
 
-      <Setting name={lang.settingTab.afterExport} heading={true} />
-      <Setting name={lang.settingTab.openExportedFileLocation}>
-        <Toggle checked={template().openExportedFileLocation ?? false} onChange={(checked) => updateTemplate(v => v.openExportedFileLocation = checked)} />
-      </Setting>
-      <Setting name={lang.settingTab.openExportedFile}>
-        <Toggle checked={template().openExportedFile ?? false} onChange={(checked) => updateTemplate(v => v.openExportedFile = checked)} />
-      </Setting>
       <Setting name={lang.settingTab.runCommand}>
-        <Toggle checked={template().runCommand} onChange={(checked) => updateTemplate(v => v.runCommand = checked)} />
+        <Toggle checked={template()?.runCommand} onChange={(checked) => updateTemplate(v => v.runCommand = checked)} />
       </Setting>
-      <Show when={template().runCommand}>
-        <Setting>
-          <Text style="width: 100%" value={template().command ?? ''} onChange={(value) => updateTemplate(v => v.command = value)} />
+      <Collapsible when={template()?.runCommand}>
+        <Setting class="ex-template-modal-nameless">
+          <Text style="width: 100%" value={template()?.command ?? ''} onChange={(value) => updateTemplate(v => v.command = value)} />
         </Setting>
-      </Show>
+      </Collapsible>
     </>;
   };
 
@@ -227,21 +253,16 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
     };
     return <>
       <Setting name={lang.settingTab.command}>
-        <Text style="width: 100%" value={template().command} onChange={(value) => updateTemplate(v => v.command = value)} />
+        <Text style="width: 100%" value={template()?.command ?? ''} onChange={(value) => updateTemplate(v => v.command = value)} />
       </Setting>
       <Setting name={lang.settingTab.targetFileExtensions}>
-        <Text value={template().targetFileExtensions ?? ''} onChange={(value) => updateTemplate(v => v.targetFileExtensions = value)} />
+        <Text value={template()?.targetFileExtensions ?? ''} onChange={(value) => updateTemplate(v => v.targetFileExtensions = value)} />
       </Setting>
 
-      <Setting name={lang.settingTab.afterExport} heading={true} />
+      {/* The counterpart of the pandoc block's run-command toggle: a custom
+          template is a command, and this is the only word it says back. */}
       <Setting name={lang.settingTab.showCommandOutput} >
-        <Toggle checked={template().showCommandOutput ?? false} onChange={(checked) => updateTemplate(v => v.showCommandOutput = checked)} />
-      </Setting>
-      <Setting name={lang.settingTab.openExportedFileLocation}>
-        <Toggle checked={template().openExportedFileLocation ?? false} onChange={(checked) => updateTemplate(v => v.openExportedFileLocation = checked)} />
-      </Setting>
-      <Setting name={lang.settingTab.openExportedFile}>
-        <Toggle checked={template().openExportedFile ?? false} onChange={(checked) => updateTemplate(v => v.openExportedFile = checked)} />
+        <Toggle checked={template()?.showCommandOutput ?? false} onChange={(checked) => updateTemplate(v => v.showCommandOutput = checked)} />
       </Setting>
     </>;
   };
@@ -329,7 +350,7 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
     <TemplateTable
       lang={lang}
       templates={settings.items}
-      onAdd={() => setModal(() => AddCommandTemplateModal)}
+      onAdd={addCommandTemplate}
       onEdit={editCommandTemplate}
       onRemove={removeCommandTemplate}
     />
@@ -404,7 +425,7 @@ export default class extends PluginSettingTab {
               settingTab.targetFileExtensions,
               settingTab.showCommandOutput,
               settingTab.runCommand,
-              settingTab.afterExport,
+              settingTab.templateOutput,
               settingTab.advanced,
               settingTab.environmentVariables,
               'pandoc',

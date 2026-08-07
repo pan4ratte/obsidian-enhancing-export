@@ -79,7 +79,7 @@ export default {
     targetFileExtensions: 'Target file extensions',
     targetFileExtensionsTip: '(Separated by whitespace)',
     showCommandOutput: 'Show command output',
-    runCommand: 'Run command',
+    runCommand: 'Run command after export',
     extraArguments: 'Extra arguments',
     save: 'Save',
     new: 'New',

@@ -117,8 +117,8 @@
 
 .ex-pandoc-dashboard-indicator {
   flex: none;
-  width: 0.45rem;
-  height: 0.45rem;
+  width: 0.30rem;
+  height: 0.30rem;
   border-radius: 50%;
   background-color: currentColor;
   /* Halo in the same colour as the dot, only much fainter. */
@@ -220,6 +220,7 @@
     border: 1px solid var(--background-modifier-border-hover);
     padding: 0px 0px 8px 0px;
     border-radius: var(--setting-items-radius);
+    background: var(--setting-items-background);
 }
 
 .ex-template-table th,
@@ -345,6 +346,73 @@
 
 .ex-template-table-empty:hover {
   background-color: transparent;
+}
+
+/*
+ * Template modal.
+ */
+
+/*
+ * The title row carries the output picker at its end. Obsidian's close button
+ * sits over the modal's top right corner rather than in this row, so the row
+ * has to leave it the space.
+ */
+.ex-template-modal .modal-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-4);
+  padding-inline-end: var(--size-4-8);
+}
+
+.ex-template-modal-output {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* The title's own size and weight are not a control's. */
+.ex-template-modal .modal-title select.dropdown {
+  max-width: 100%;
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-normal);
+}
+
+/*
+ * Every field sits under the label that asks for it and takes the width of the
+ * modal — a pandoc command line does not fit the sliver at the end of a row.
+ * Toggles are left alone: an answer of that size belongs beside its question.
+ */
+.ex-template-modal .setting-item:not(.mod-toggle):not(.setting-item-heading) {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--size-4-2);
+}
+
+.ex-template-modal .setting-item:not(.mod-toggle) > .setting-item-info {
+  margin-right: 0;
+}
+
+.ex-template-modal .setting-item:not(.mod-toggle) > .setting-item-control {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.ex-template-modal .setting-item:not(.mod-toggle) > .setting-item-control > input[type='text'],
+.ex-template-modal .setting-item:not(.mod-toggle) > .setting-item-control > select,
+.ex-template-modal .setting-item:not(.mod-toggle) > .setting-item-control > textarea {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+/* A field the row above asks the question for. */
+.ex-template-modal .setting-item.ex-template-modal-nameless {
+  border-top: none;
+  padding-top: 0;
+}
+
+.ex-template-modal .ex-template-modal-nameless > .setting-item-info {
+  display: none;
 }
 
 *[hidden] {
