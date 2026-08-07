@@ -264,58 +264,67 @@
  */
 
 /*
- * The actions card above the table. Two tiles of equal width that drop onto
- * their own lines when the pane is too narrow to hold both — each is a button
- * with the line that says what it is for.
+ * The actions card above the table: two equal halves of one card, told apart by
+ * the rule between them rather than by any chrome of their own. `overflow`
+ * keeps a half's hover fill inside the card's rounded corners.
  */
 .ex-template-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--size-4-4);
+  align-items: stretch;
   margin-bottom: var(--size-4-4);
-  padding: var(--size-4-4);
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--setting-items-radius);
   background: var(--setting-items-background);
+  overflow: hidden;
 }
 
-.ex-template-action {
-  display: flex;
-  /* Both tiles take an equal share, and neither is allowed to be narrower than
-     its own button. */
-  flex: 1 1 220px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--size-4-2);
-  min-width: 0;
-}
-
-/* Settings-pane buttons stretch; these are sized by their labels. */
-.ex-template-action-button.ex-template-action-button {
+/*
+ * Written at two-class specificity throughout: these are `button` elements, and
+ * every one of these properties is something the theme's button rules would
+ * otherwise set.
+ */
+.ex-template-actions .ex-template-action {
+  flex: 1 1 0;
   display: inline-flex;
   align-items: center;
-  gap: var(--size-4-1);
-  width: auto;
+  justify-content: center;
+  gap: var(--size-4-2);
+  min-width: 0;
   margin: 0;
+  padding: var(--size-4-3) var(--size-4-4);
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  cursor: var(--cursor);
   transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
+}
+
+/* The one line the card is divided by. */
+.ex-template-actions .ex-template-action + .ex-template-action {
+  border-inline-start: 1px solid var(--background-modifier-border);
 }
 
 /* Accent under the pointer only: these are what the section is for, but not
    what it is about. */
-.ex-template-action-button.ex-template-action-button:hover {
-  background-color: var(--interactive-accent);
-  color: var(--text-on-accent);
+.ex-template-actions .ex-template-action:hover,
+.ex-template-actions .ex-template-action:focus-visible {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-accent);
 }
 
-.ex-template-action-button .svg-icon {
+/* Reached by tab, so it has to show where it is — but inside the card, where an
+   outline would otherwise be clipped by the corners. */
+.ex-template-actions .ex-template-action:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+.ex-template-action .svg-icon {
   width: var(--icon-s);
   height: var(--icon-s);
-}
-
-.ex-template-action-desc {
-  font-size: var(--font-ui-smaller);
-  line-height: var(--line-height-tight);
-  color: var(--text-muted);
 }
 
 .ex-template-table {

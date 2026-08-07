@@ -353,10 +353,13 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
     }
   };
 
+  // Asked on every open, answered from the session's cache after the first one
+  // that succeeded — see `getCachedPandocVersion`. Still an effect, so changing
+  // the path or the environment goes and asks the binary it now points at.
   createEffect(async () => {
     try {
       const env = createEnv(getPlatformValue(settings.env) ?? {});
-      setPandocVersion(await pandoc.getVersion(getPlatformValue(settings.pandocPath), env));
+      setPandocVersion(await pandoc.getCachedVersion(getPlatformValue(settings.pandocPath), env));
     } catch {
       setPandocVersion(undefined);
     }

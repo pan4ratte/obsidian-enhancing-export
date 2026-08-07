@@ -30,6 +30,36 @@ export async function getPandocVersion(path?: string, env?: Record<string, strin
   return parsePandocVersion(version);
 }
 
+/**
+ * What the last lookup was made with, so pointing the setting at a different
+ * binary asks that one rather than reporting the previous one's version.
+ */
+let versionCache: { key: string; version: SemVer } | undefined;
+
+const versionCacheKey = (path?: string, env?: Record<string, string>) => JSON.stringify([path ?? '', env ?? {}]);
+
+/**
+ * Installed pandoc's version, looked up once per session for any given binary.
+ *
+ * Running pandoc costs a process, and the settings tab asks every time it is
+ * opened — but the answer only changes when the user installs or moves pandoc,
+ * and moving it changes the path this is keyed by. Only an answer is cached: a
+ * lookup that threw or produced nothing leaves the cache empty, so the next
+ * time the settings are opened it tries again. That is the case worth retrying,
+ * being the one where the user has gone off to install pandoc.
+ */
+export async function getCachedPandocVersion(path?: string, env?: Record<string, string>) {
+  const key = versionCacheKey(path, env);
+  if (versionCache?.key === key) {
+    return versionCache.version;
+  }
+  const version = await getPandocVersion(path, env);
+  if (version) {
+    versionCache = { key, version };
+  }
+  return version;
+}
+
 export const PANDOC_REQUIRED_VERSION = '3.1.7';
 
 export const PANDOC_MANUAL_URL = 'https://pandoc.org/MANUAL.html';
@@ -86,6 +116,7 @@ export async function getLatestPandocRelease(): Promise<PandocRelease | undefine
 export default {
   normalizePath: normalizePandocPath,
   getVersion: getPandocVersion,
+  getCachedVersion: getCachedPandocVersion,
   parseVersion: parsePandocVersion,
   getLatestRelease: getLatestPandocRelease,
   requiredVersion: PANDOC_REQUIRED_VERSION,

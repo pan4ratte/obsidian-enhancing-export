@@ -1,5 +1,4 @@
 import type { Lang } from '../lang';
-import Button from './components/Button';
 import Icon from './components/Icon';
 
 /**
@@ -7,26 +6,25 @@ import Icon from './components/Icon';
  * template already in it. Adding one used to ride in the table's header row,
  * where it read as part of the header rather than as an action of its own —
  * and left nowhere to put a second one.
+ *
+ * The two are halves of one card rather than buttons sitting in it, so they
+ * carry no chrome of their own — only the rule between them says where one ends
+ * and the other begins. They stay `button` elements all the same: what is
+ * reachable by tab and answers to a keypress is not a matter of styling.
  */
 export default (props: { lang: Lang; onAdd?: () => void; onBrowseLuaFilters?: () => void }) => {
   const { lang } = props;
   return (
     <div class="ex-template-actions">
-      <div class="ex-template-action">
-        <Button class="ex-template-action-button" onClick={props.onAdd}>
-          <Icon name="plus" />
-          {lang.settingTab.newTemplate}
-        </Button>
-        <div class="ex-template-action-desc">{lang.settingTab.newTemplateDesc}</div>
-      </div>
+      <button class="ex-template-action" onClick={props.onBrowseLuaFilters}>
+        <Icon name="store" />
+        {lang.settingTab.browseLuaFilters}
+      </button>
 
-      <div class="ex-template-action">
-        <Button class="ex-template-action-button" onClick={props.onBrowseLuaFilters}>
-          <Icon name="store" />
-          {lang.settingTab.browseLuaFilters}
-        </Button>
-        <div class="ex-template-action-desc">{lang.settingTab.browseLuaFiltersDesc}</div>
-      </div>
+      <button class="ex-template-action" onClick={props.onAdd}>
+        <Icon name="plus" />
+        {lang.settingTab.newTemplate}
+      </button>
     </div>
   );
 };

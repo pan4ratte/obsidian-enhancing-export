@@ -90,9 +90,7 @@ export default {
     environmentVariablesDesc: 'Define the Environment Variables for exporting.',
 
     /* The card above the templates table. */
-    newTemplateDesc: 'Add a template for a format you export to, or a command of your own.',
     browseLuaFilters: 'Browse lua-filters',
-    browseLuaFiltersDesc: 'Install Pandoc lua filters and add them to a template.',
   },
   luaFilterStore: {
     title: 'Lua filters',
