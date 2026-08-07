@@ -1,13 +1,16 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
+    "rootDir": ".",
     "inlineSourceMap": true,
     "inlineSources": true,
     "module": "ESNext",
     "target": "ES2021",
     "allowJs": true,
+    // TypeScript 6 turns `strict` on by default; the codebase has never been
+    // strict-clean, so keep the previous behaviour explicit.
+    "strict": false,
     "noImplicitAny": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "importHelpers": true,
     "jsx": "preserve",
@@ -21,7 +24,9 @@
       "ES7",
       "ES2021"
     ],
-    "typeRoots": [ "./typings", "./node_modules/@types"]
+    "typeRoots": [ "./typings", "./node_modules/@types"],
+    // TypeScript 6 no longer pulls in every @types package automatically.
+    "types": [ "jest", "node"]
   },
   "include": [
     "**/*.ts",  "**/*.tsx"

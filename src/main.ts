@@ -79,7 +79,7 @@ export default class UniversalExportPlugin extends Plugin {
     );
     // this.downloadLuaScripts().then();
     if (import.meta.env.DEV) {
-      window.hmr && window.hmr(this);
+      window.hmr?.(this);
     }
   }
 
@@ -145,7 +145,7 @@ export default class UniversalExportPlugin extends Plugin {
       await adapter.mkdir(resDir);
       for (const [fileName, bytes] of res) {
         const filePath = path.join(resDir, fileName);
-        await adapter.writeBinary(filePath, bytes);
+        await adapter.writeBinary(filePath, bytes.buffer);
       }
     }
     resources.length = 0;

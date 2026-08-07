@@ -1,0 +1,11 @@
+# pnpm reads its settings from here now, not from the "pnpm" field in package.json.
+
+# Mirrors the npm "overrides" field in package.json — keep the two in sync.
+# babel-plugin-istanbul <8 drags in the deprecated glob@7/inflight chain.
+overrides:
+  babel-plugin-istanbul: ^8.0.0
+
+# Added by pnpm so its release-age policy does not hold back a freshly published
+# version that package.json already asks for.
+minimumReleaseAgeExclude:
+  - vite@8.2.1

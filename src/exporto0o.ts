@@ -93,7 +93,7 @@ export async function exportToOo(
     console.error(e);
   }
   let targetDirArray: string[] = [];
-  for (const embed of (embedArray || [])) {
+  for (const embed of embedArray || []) {
     const linkPath = embed.link;
     const targetFile = metadataCache.getFirstLinkpathDest(linkPath, currentFile.path);
     if (targetFile instanceof TFile) {
@@ -238,7 +238,7 @@ export async function exportToOo(
         await exec(extCmd, { cwd: variables.currentDir, env });
       }
       // success
-      onSuccess && onSuccess();
+      onSuccess?.();
     };
 
     if (showCommandLineOutput) {
@@ -252,6 +252,6 @@ export async function exportToOo(
   } catch (err) {
     progressBarHide?.();
     new MessageBox(app, lang.exportErrorOutputMessage(cmd, err)).open();
-    onFailure && onFailure();
+    onFailure?.();
   }
 }

@@ -58,8 +58,12 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           exports: 'named',
-          assetFileNames: (v) => v.name === 'style.css' ? 'styles.css' : v.name,
-          banner,
+          // Obsidian loads the stylesheet by name. Vite has changed what it calls
+          // the library's CSS bundle across majors ('style.css' up to 5, the package
+          // name since 8), so match on the extension instead.
+          assetFileNames: (v) => v.name?.endsWith('.css') ? 'styles.css' : v.name,
+          // `banner` is prepended before minification, which drops the comment.
+          postBanner: banner,
         },
         external: [
           'obsidian',
