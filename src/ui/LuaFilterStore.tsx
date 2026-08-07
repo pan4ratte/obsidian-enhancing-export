@@ -1,6 +1,6 @@
 import * as ct from 'electron';
 import { Notice, Platform, type App } from 'obsidian';
-import { For, Match, Show, Switch, createEffect, createMemo, createResource, createSignal, onCleanup, onMount } from 'solid-js';
+import { For, Match, Show, Switch, createEffect, createMemo, createResource, createSignal, onCleanup } from 'solid-js';
 import type { Lang } from '../lang';
 import {
   DEFAULT_LUA_FILTER_CATEGORY,
@@ -170,15 +170,39 @@ export default (props: {
 
   // ── The chip row's overflow ─────────────────────────────────────────────────
 
-  let row!: HTMLDivElement;
+  /**
+   * The row is only there once `Modal` has inserted this component's children,
+   * which it does from an effect — so it does not exist yet when this component
+   * mounts, and everything reaching for it has to allow for that.
+   */
+  let row: HTMLDivElement | undefined;
+  let observer: ResizeObserver | undefined;
   const [overflow, setOverflow] = createSignal({ left: false, right: false });
 
   /** Which edges are cut off. A pixel of slack absorbs sub-pixel rounding. */
-  const syncOverflow = () =>
+  const syncOverflow = () => {
+    if (!row) {
+      return;
+    }
     setOverflow({
       left: row.scrollLeft > 1,
       right: row.scrollWidth - row.clientWidth - row.scrollLeft > 1,
     });
+  };
+
+  /**
+   * Watching the row can only start once there is a row, so it starts from the
+   * ref rather than from `onMount`: its width follows the modal's, and what is
+   * cut off is worth watching rather than working out once.
+   */
+  const attachRow = (el: HTMLDivElement) => {
+    row = el;
+    observer = new ResizeObserver(syncOverflow);
+    observer.observe(el);
+    syncOverflow();
+  };
+
+  onCleanup(() => observer?.disconnect());
 
   /**
    * A mouse wheel emits vertical deltas, which the browser hands to the nearest
@@ -187,20 +211,12 @@ export default (props: {
    * horizontal deltas already scroll the row and are left alone.
    */
   const wheelToHorizontal = (e: WheelEvent) => {
-    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || row.scrollWidth <= row.clientWidth) {
+    if (!row || Math.abs(e.deltaY) <= Math.abs(e.deltaX) || row.scrollWidth <= row.clientWidth) {
       return;
     }
     e.preventDefault();
     row.scrollLeft += e.deltaY;
   };
-
-  onMount(() => {
-    // The row's width follows the modal's, so what is cut off is worth watching
-    // rather than working out once.
-    const observer = new ResizeObserver(syncOverflow);
-    observer.observe(row);
-    onCleanup(() => observer.disconnect());
-  });
 
   // A chip appearing or disappearing changes what overflows just as a resize does.
   createEffect(() => {
@@ -327,7 +343,7 @@ export default (props: {
       {/* One row that scrolls sideways rather than wrapping, so adding a chip
           never costs the list a line of height. */}
       <div class="ex-lua-filters-wrap">
-        <div ref={row} class="ex-lua-filters" onScroll={syncOverflow} onWheel={wheelToHorizontal}>
+        <div ref={attachRow} class="ex-lua-filters" onScroll={syncOverflow} onWheel={wheelToHorizontal}>
           <For each={chips()}>
             {c => (
               <button class="ex-lua-filter" classList={{ 'is-active': chip() === c.value }} onClick={() => setChip(c.value)}>
@@ -347,7 +363,7 @@ export default (props: {
             class="ex-lua-filters-less"
             classList={{ 'is-visible': overflow().left }}
             title={t.moreFilters}
-            onClick={() => row.scrollTo({ left: 0, behavior: 'smooth' })}
+            onClick={() => row?.scrollTo({ left: 0, behavior: 'smooth' })}
           >
             <Icon name="chevron-left" />
           </button>
@@ -355,7 +371,7 @@ export default (props: {
             class="ex-lua-filters-more"
             classList={{ 'is-visible': overflow().right }}
             title={t.moreFilters}
-            onClick={() => row.scrollTo({ left: row.scrollWidth, behavior: 'smooth' })}
+            onClick={() => row?.scrollTo({ left: row.scrollWidth, behavior: 'smooth' })}
           >
             <Icon name="chevron-right" />
           </button>
