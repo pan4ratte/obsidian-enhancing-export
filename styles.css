@@ -263,6 +263,61 @@
  * Export templates.
  */
 
+/*
+ * The actions card above the table. Two tiles of equal width that drop onto
+ * their own lines when the pane is too narrow to hold both — each is a button
+ * with the line that says what it is for.
+ */
+.ex-template-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-4);
+  margin-bottom: var(--size-4-4);
+  padding: var(--size-4-4);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--setting-items-radius);
+  background: var(--setting-items-background);
+}
+
+.ex-template-action {
+  display: flex;
+  /* Both tiles take an equal share, and neither is allowed to be narrower than
+     its own button. */
+  flex: 1 1 220px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--size-4-2);
+  min-width: 0;
+}
+
+/* Settings-pane buttons stretch; these are sized by their labels. */
+.ex-template-action-button.ex-template-action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-4-1);
+  width: auto;
+  margin: 0;
+  transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
+}
+
+/* Accent under the pointer only: these are what the section is for, but not
+   what it is about. */
+.ex-template-action-button.ex-template-action-button:hover {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.ex-template-action-button .svg-icon {
+  width: var(--icon-s);
+  height: var(--icon-s);
+}
+
+.ex-template-action-desc {
+  font-size: var(--font-ui-smaller);
+  line-height: var(--line-height-tight);
+  color: var(--text-muted);
+}
+
 .ex-template-table {
     width: 100%;
     margin-bottom: var(--size-4-4);
@@ -365,28 +420,6 @@
   gap: var(--size-4-4);
 }
 
-/* Settings-pane buttons stretch; this one is the end of a header row. */
-.ex-template-table-add.ex-template-table-add {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--size-4-1);
-  width: auto;
-  margin: 0;
-  transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
-}
-
-/* Accent under the pointer only: adding a template is what this table is for,
-   but not what it is about. */
-.ex-template-table-add.ex-template-table-add:hover {
-  background-color: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
-
-.ex-template-table-add .svg-icon {
-  width: var(--icon-s);
-  height: var(--icon-s);
-}
-
 .ex-template-table-empty td {
   padding-block: var(--size-4-6);
   text-align: center;
@@ -462,6 +495,255 @@
 
 .ex-template-modal .ex-template-modal-nameless > .setting-item-info {
   display: none;
+}
+
+/*
+ * Lua filter store.
+ *
+ * The chrome is the extensions store from the Advanced Word Count plugin,
+ * refitted to this plugin's spacing scale: a search field, a row of counted
+ * filter chips, and a list of cards with the actions at their end.
+ */
+
+/* Wide enough for a card's text and its buttons to share a line, and tall
+   enough that the list is worth scrolling rather than the page behind it. */
+.ex-lua-modal .modal {
+  width: min(760px, 90vw);
+  max-height: 80vh;
+}
+
+/* The modal's own content scrolls. Reserving the gutter on both edges keeps the
+   cards from shifting sideways when the scrollbar appears. */
+.ex-lua-modal .modal-content {
+  overflow-y: auto;
+  scrollbar-gutter: stable both-edges;
+  /* A scroll container trims a trailing child's margin but never its own
+     padding, so the last card needs this to clear the bottom edge. */
+  padding-bottom: var(--size-4-4);
+}
+
+.ex-lua-search {
+  width: 100%;
+  margin-bottom: var(--size-4-3);
+}
+
+/*
+ * The chips. Four of them, so they wrap onto a second line on a narrow window
+ * rather than needing the scroll affordances the original row carries.
+ */
+.ex-lua-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-1);
+  margin-bottom: var(--size-4-3);
+}
+
+.ex-lua-filter {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding: var(--size-4-1) var(--size-4-3);
+  border: none;
+  border-radius: 2em;
+  font-size: var(--font-ui-smaller);
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+  box-shadow: none;
+  cursor: var(--cursor);
+}
+
+.ex-lua-filter:hover {
+  background: var(--background-modifier-active-hover);
+  color: var(--text-normal);
+}
+
+.ex-lua-filter.is-active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+/* The "(N)" after a chip's label. The margin is the gap — a text-node space
+   between the two would be collapsed away. */
+.ex-lua-filter-count {
+  margin-left: 0.35em;
+  opacity: 0.65;
+}
+
+/* One catalogue being unreachable is said above the list the other one fills. */
+.ex-lua-notice {
+  margin: 0 0 var(--size-4-3);
+  font-size: var(--font-ui-smaller);
+  color: var(--text-warning);
+}
+
+.ex-lua-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+}
+
+.ex-lua-status {
+  padding: var(--size-4-6) var(--size-4-2);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.ex-lua-retry {
+  align-self: center;
+}
+
+/* A filter is a card: what it is on the left, what to do with it on the right. */
+.ex-lua-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--size-4-2);
+  padding: var(--size-4-4);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background-color: var(--background-secondary);
+}
+
+.ex-lua-card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.ex-lua-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.ex-lua-name {
+  font-weight: var(--font-semibold);
+  font-size: var(--font-ui-medium);
+  color: var(--text-normal);
+}
+
+.ex-lua-source-icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.ex-lua-source-icon .svg-icon {
+  width: var(--icon-s);
+  height: var(--icon-s);
+}
+
+/* Installed filters carry the accent, so what is already in the vault reads
+   apart from what is merely on offer. */
+.ex-lua-card.is-installed .ex-lua-name,
+.ex-lua-card.is-installed .ex-lua-source-icon {
+  color: var(--text-accent);
+}
+
+.ex-lua-author {
+  display: block;
+  font-size: var(--font-smallest);
+  color: var(--text-faint);
+}
+
+.ex-lua-desc {
+  margin: var(--size-4-1) 0 0;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+/*
+ * Installing a filter does not run it — a template has to ask for it. This is
+ * the row that says which ones do, and adds it to one that does not.
+ */
+.ex-lua-templates {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-4-2);
+  margin-top: var(--size-4-2);
+}
+
+.ex-lua-used-by {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-4-1);
+  font-size: var(--font-ui-smaller);
+}
+
+.ex-lua-used-by-label {
+  color: var(--text-faint);
+}
+
+/* A template the filter runs in, with the control that takes it back out. */
+.ex-lua-used-by-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-2-1);
+  padding: 0 var(--size-4-1) 0 var(--size-4-2);
+  border-radius: 2em;
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.ex-lua-used-by-item .svg-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+.ex-lua-used-by-item .clickable-icon:hover {
+  color: var(--text-error);
+}
+
+.ex-lua-add-select {
+  font-size: var(--font-ui-smaller);
+  max-width: 100%;
+}
+
+.ex-lua-no-templates {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+}
+
+/* Neutral buttons that take a colour only under the pointer, pinned to the end
+   of the card. */
+.ex-lua-actions {
+  display: flex;
+  gap: var(--size-4-2);
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+
+.ex-lua-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--size-4-1);
+  background: var(--interactive-normal);
+  color: var(--text-normal);
+  box-shadow: none;
+  cursor: var(--cursor);
+}
+
+.ex-lua-actions .svg-icon {
+  width: var(--icon-s);
+  height: var(--icon-s);
+}
+
+.ex-lua-readme:hover,
+.ex-lua-install:hover {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.ex-lua-uninstall:hover {
+  background: var(--background-modifier-error);
+  color: var(--text-on-accent);
+}
+
+.ex-lua-actions button:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 
 *[hidden] {

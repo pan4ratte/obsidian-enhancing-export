@@ -88,5 +88,46 @@ export default {
     advanced: 'Advanced',
     environmentVariables: 'Environment Variables',
     environmentVariablesDesc: 'Define the Environment Variables for exporting.',
+
+    /* The card above the templates table. */
+    newTemplateDesc: 'Add a template for a format you export to, or a command of your own.',
+    browseLuaFilters: 'Browse lua-filters',
+    browseLuaFiltersDesc: 'Install Pandoc lua filters and add them to a template.',
+  },
+  luaFilterStore: {
+    title: 'Lua filters',
+    searchPlaceholder: 'Search filters...',
+
+    filterAll: 'All',
+    filterCurated: 'Curated',
+    filterUpstream: 'pandoc-ext',
+    filterInstalled: 'Installed',
+
+    loading: 'Loading filters…',
+    loadError: 'Could not load the filter catalogue.',
+    sourceUnavailable: strTpl`The ${0} catalogue could not be loaded.`,
+    retry: 'Retry',
+    emptyCatalogue: 'The catalogue is empty.',
+    noResults: 'No filters match your search.',
+    noneInstalled: 'No filters installed yet.',
+
+    byAuthor: strTpl`by ${0}`,
+    readme: 'Open readme',
+    install: 'Install',
+    installing: 'Installing…',
+    update: 'Update',
+    uninstall: 'Uninstall',
+    installedNotice: strTpl`Installed "${0}".`,
+    installFailed: strTpl`Install failed: ${0}`,
+    uninstalledNotice: strTpl`Uninstalled "${0}".`,
+    uninstallFailed: strTpl`Uninstall failed: ${0}`,
+
+    /* Connecting an installed filter to the templates that run it. */
+    addToTemplate: 'Add to template…',
+    noPandocTemplates: 'No Pandoc templates to add it to.',
+    usedBy: 'Used by:',
+    removeFromTemplate: strTpl`Remove from "${0}"`,
+    addedToTemplate: strTpl`Added "${0}" to "${1}".`,
+    removedFromTemplate: strTpl`Removed "${0}" from "${1}".`,
   },
 };

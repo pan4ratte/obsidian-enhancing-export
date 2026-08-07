@@ -20,13 +20,17 @@ import type { Lang } from '../lang';
 
 import pandoc from '../pandoc';
 import PandocDashboard from './PandocDashboard';
+import TemplateActions from './TemplateActions';
 import TemplateTable from './TemplateTable';
+import LuaFilterStore from './LuaFilterStore';
+import { LuaFilterManager, addLuaFilterArg, removeLuaFilterArg, type InstalledLuaFilter } from '../lua_filters';
 import { MessageBox } from './message_box';
 import Modal from './components/Modal';
 import Button from './components/Button';
 import Collapsible from './components/Collapsible';
 import Setting, { Text, Toggle, ExtraButton, DropDown, TextArea } from './components/Setting';
 import export_templates from '../export_templates';
+import { BUNDLED_LUA_FILES } from '../resources';
 
 
 const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
@@ -222,6 +226,63 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
     }).open();
   };
 
+  /*
+   * Lua filters. The manager owns the files in `lua/`; what is installed is
+   * settings, so it is written here and handed back to the store as a prop —
+   * which is what keeps the store, the templates table and `data.json` telling
+   * the same story.
+   */
+  const luaFilters = new LuaFilterManager(plugin, BUNDLED_LUA_FILES);
+
+  const setInstalledLuaFilters = (update: (prev: InstalledLuaFilter[]) => InstalledLuaFilter[]) => {
+    setSettings('installedLuaFilters', update(settings.installedLuaFilters ?? []));
+  };
+
+  /** Add or replace a filter's record — an update reinstalls under the same id. */
+  const recordLuaFilter = (filter: InstalledLuaFilter) =>
+    setInstalledLuaFilters(prev => [...prev.filter(f => f.id !== filter.id), filter]);
+
+  const forgetLuaFilter = (filter: InstalledLuaFilter) =>
+    setInstalledLuaFilters(prev => prev.filter(f => f.id !== filter.id));
+
+  /**
+   * Run a filter in a template, or stop running it. The flag goes in the extra
+   * arguments rather than the arguments proper: those come from the output
+   * preset and are rewritten whole whenever it changes, which would take the
+   * filter with them.
+   */
+  const updateTemplateArguments = (templateName: string, update: (args?: string) => string) => {
+    const idx = settings.items.findIndex(v => v.name === templateName);
+    if (idx === -1) {
+      return;
+    }
+    setSettings('items', idx, produce(item => {
+      if (item.type === 'pandoc') {
+        item.customArguments = update(item.customArguments);
+      }
+    }));
+  };
+
+  const addLuaFilterToTemplate = (templateName: string, fileName: string) =>
+    updateTemplateArguments(templateName, args => addLuaFilterArg(args, fileName));
+
+  const removeLuaFilterFromTemplate = (templateName: string, fileName: string) =>
+    updateTemplateArguments(templateName, args => removeLuaFilterArg(args, fileName));
+
+  const LuaFilterStoreModal = () => (
+    <LuaFilterStore
+      lang={lang}
+      manager={luaFilters}
+      installed={settings.installedLuaFilters ?? []}
+      templates={settings.items}
+      onInstalled={recordLuaFilter}
+      onUninstalled={forgetLuaFilter}
+      onAddToTemplate={addLuaFilterToTemplate}
+      onRemoveFromTemplate={removeLuaFilterFromTemplate}
+      onClose={() => setModal(undefined)}
+    />
+  );
+
   // Both blocks read through `?.`: the output dropdown can turn a pandoc
   // template into a custom one and back, so a block outlives its own type by
   // however long the switch takes to swap it out.
@@ -368,10 +429,15 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
 
     <Setting name={lang.settingTab.exportTemplates} heading={true} />
 
+    <TemplateActions
+      lang={lang}
+      onAdd={addCommandTemplate}
+      onBrowseLuaFilters={() => setModal(() => LuaFilterStoreModal)}
+    />
+
     <TemplateTable
       lang={lang}
       templates={settings.items}
-      onAdd={addCommandTemplate}
       onEdit={editCommandTemplate}
       onRemove={removeCommandTemplate}
     />
@@ -428,6 +494,8 @@ export default class extends PluginSettingTab {
               settingTab.ShowExportProgressBar,
               settingTab.exportTemplates,
               settingTab.newTemplate,
+              settingTab.browseLuaFilters,
+              this.lang.luaFilterStore.title,
               settingTab.editCommandTemplate,
               settingTab.command,
               settingTab.arguments,

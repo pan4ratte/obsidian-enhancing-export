@@ -1,7 +1,6 @@
 import { For, createMemo, createSignal } from 'solid-js';
 import type { Lang } from '../lang';
 import { extractDefaultExtension, type ExportSetting } from '../settings';
-import Button from './components/Button';
 import Icon from './components/Icon';
 
 /** The columns worth ordering by, which are also the ones carrying a value. */
@@ -42,12 +41,12 @@ const describeOutput = (extension?: string) => {
 /**
  * Every export template in one table: what it is called, what it writes, and
  * the two things to do with it. Ordering lives here — it is a view of the
- * settings, not part of them, so it is not saved.
+ * settings, not part of them, so it is not saved. Making a template is not one
+ * of the table's jobs; that lives in the card above it.
  */
 export default (props: {
   lang: Lang;
   templates: ExportSetting[];
-  onAdd?: () => void;
   onEdit?: (name: string) => void;
   onRemove?: (name: string) => void;
 }) => {
@@ -97,12 +96,9 @@ export default (props: {
         <tr>
           <Heading column="name" label={lang.settingTab.name} />
           <Heading column="output" label={lang.settingTab.templateOutput} />
-          <th class="ex-template-table-actions">
-            <Button class="ex-template-table-add" onClick={props.onAdd}>
-              <Icon name="plus" />
-              {lang.settingTab.newTemplate}
-            </Button>
-          </th>
+          {/* The row actions' column. It has no heading of its own — what the
+              icons do is said by the icons. */}
+          <th class="ex-template-table-actions" />
         </tr>
       </thead>
       <tbody>

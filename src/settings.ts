@@ -1,6 +1,7 @@
 import export_templates from './export_templates';
 import { setPlatformValue, PlatformValue, renderTemplate, getPlatformValue } from './utils';
 import type { PropertyGridMeta } from './ui/components/PropertyGrid';
+import type { InstalledLuaFilter } from './lua_filters';
 
 /*
  * Variables
@@ -57,6 +58,15 @@ export interface UniversalExportPluginSettings {
   lastExportType?: string;
 
   showExportProgressBar?: boolean;
+
+  /**
+   * Lua filters downloaded through the store, in `lua/` beside the bundled ones.
+   * Absent until the first install; treated as empty and never mutated in place,
+   * so the value in `DEFAULT_SETTINGS` can never be written through.
+   */
+  installedLuaFilters?: InstalledLuaFilter[];
+  /** Base URL of the curated catalogue. Unset means the default repo. */
+  luaFilterRepoUrl?: string;
 }
 
 export type OptionsMeta = {
