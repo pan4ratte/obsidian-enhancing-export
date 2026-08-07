@@ -73,12 +73,6 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
   };
   const customDefaultExportDirectory = createMemo(() => getPlatformValue(settings.customDefaultExportDirectory));
 
-  // `Auto` is gone from the dropdown, so a vault still carrying it would show a
-  // selection its setting does not hold. Same folder is what it now means.
-  if (settings.defaultExportDirectoryMode === 'Auto') {
-    setSettings('defaultExportDirectoryMode', 'Same');
-  }
-
   const updateCurrentEditCommandTemplate = (update: (prev: Partial<ExportSetting>) => void) => {
     const idx = settings.items.findIndex(v => v.name === settings.lastEditName);
     setSettings('items', idx === -1 ? 0 : idx, produce(item => {
@@ -111,12 +105,7 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
   const [modal, setModal] = createSignal<() => JSX.Element>();
 
   /** Which preset the template being edited writes with. */
-  const currentOutput = createMemo(() => {
-    const template = currentEditCommandTemplate();
-    // Templates from before the field carry the name of the preset they are a
-    // copy of, which is the key as well.
-    return template?.preset ?? (template?.name in export_templates ? template.name : undefined);
-  });
+  const currentOutput = createMemo(() => currentEditCommandTemplate()?.preset);
 
   const setCurrentOutput = (key: string) => {
     const preset = export_templates[key];

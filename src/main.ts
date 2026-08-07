@@ -1,6 +1,5 @@
 import { App, Menu, Plugin, PluginManifest, TFile, Notice, debounce } from 'obsidian';
 import { UniversalExportPluginSettings, ExportSetting, DEFAULT_SETTINGS, DEFAULT_ENV } from './settings';
-// import { ExportSettingTab, ExportDialog } from './ui/legacy';
 import { ExportSettingTab, ExportDialog } from './ui';
 import { exportToOo } from './exporto0o';
 import { getPlatformValue, PlatformKey } from './utils';
@@ -78,7 +77,6 @@ export default class UniversalExportPlugin extends Plugin {
         }
       })
     );
-    // this.downloadLuaScripts().then();
     if (import.meta.env.DEV) {
       window.hmr?.(this);
     }

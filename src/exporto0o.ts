@@ -132,22 +132,6 @@ export async function exportToOo(
   const openExportedFile = setting.openExportedFile ?? globalSetting.openExportedFile;
 
   if (showOverwriteConfirmation && fs.existsSync(outputPath)) {
-    // const msgBox = new MessageBox(this.app, {
-    //   message: lang.overwriteConfirmationDialog.message(outputDir),
-    //   title: lang.overwriteConfirmationDialog.title(outputFileFullName),
-    //   buttons: 'OkCancel',
-    //   buttonsLabel: {
-    //     ok: lang.overwriteConfirmationDialog.replace,
-    //   },
-    //   buttonsClass: {
-    //     ok: 'mod-warning'
-    //   },
-    //   callback: {
-    //     ok: () => doExport()
-    //   }
-    // });
-    // msgBox.open();
-
     const result = await ct.remote.dialog.showSaveDialog({
       title: lang.overwriteConfirmationDialog.title(outputFileFullName),
       defaultPath: outputPath,

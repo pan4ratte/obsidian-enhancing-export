@@ -67,15 +67,6 @@ export function exec(cmd: string, options?: ExecOptions): Promise<string> {
   });
 }
 
-export function joinEnvPath(...paths: string[]) {
-  switch (process.platform) {
-    case 'win32':
-      return paths.join(';');
-    default:
-      return paths.join(':');
-  }
-}
-
 export function trimQuotes(s: string) {
   return (s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'")) ? s.substring(1, s.length - 1) : s;
 }

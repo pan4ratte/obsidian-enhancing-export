@@ -3,8 +3,6 @@
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/mokeyish/obsidian-enhancing-export?display_name=tag&include_prereleases)
 ![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=%23483699&label=downloads&query=%24%5B%27obsidian-enhancing-export%27%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)
 
-English | [中文](https://github.com/mokeyish/obsidian-enhancing-export/blob/master/README_zh-CN.md)
-
 This is an enhancing export plugin base on `Pandoc` for Obsidian ([https://obsidian.md/](https://obsidian.md/)). It's allow you to export to formats like `Markdown`,`Markdown (Hugo)`,`HTML`,`docx`,`Latex` etc.
 
 Where `Markdown`,`Markdown (Hugo)`,`HTML` will export and its media resource together.

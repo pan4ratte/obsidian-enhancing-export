@@ -30,9 +30,6 @@ export interface Variables extends Record<string, unknown> {
   currentFileName: string;
   currentFileFullName: string;
   vaultDir: string;
-  // date: new Date(currentFile.stat.ctime),
-  // lastMod: new Date(currentFile.stat.mtime),
-  // now: new Date()
   metadata?: unknown;
   embedDirs: string;
   options?: unknown;
@@ -40,11 +37,9 @@ export interface Variables extends Record<string, unknown> {
 }
 
 export interface UniversalExportPluginSettings {
-  version?: string;
   pandocPath?: PlatformValue<string>;
   showOverwriteConfirmation?: boolean;
-  /** `Auto` is only what an older vault may still hold; the setting tab turns it into `Same`. */
-  defaultExportDirectoryMode: 'Auto' | 'Same' | 'Custom';
+  defaultExportDirectoryMode: 'Same' | 'Custom';
   customDefaultExportDirectory?: PlatformValue<string>;
   env: PlatformValue<Record<string, string>>;
   items: ExportSetting[];
@@ -78,8 +73,8 @@ interface CommonExportSetting {
   /**
    * Key in `export_templates` the format fields were taken from — what the
    * template writes, kept as a choice rather than guessed back out of the
-   * arguments. Absent on templates that predate the field, which are named
-   * after their preset.
+   * arguments. Set on every template in the settings; the presets themselves
+   * carry none, having no preset they are a copy of.
    */
   preset?: string;
 
@@ -153,7 +148,13 @@ export const DEFAULT_ENV = (() => {
 })();
 
 export const DEFAULT_SETTINGS: UniversalExportPluginSettings = {
-  items: Object.values(export_templates).filter(o => o.type !== 'custom'),
+  // Each default is an instance of the preset it is named for, so it carries the
+  // key it came from. Taking that from the key rather than the name matters:
+  // `Bibliography (.bib)` holds a template called `Bibliography`, and the two
+  // being different is exactly what a name could not tell us.
+  items: Object.entries(export_templates)
+    .filter(([, template]) => template.type !== 'custom')
+    .map(([preset, template]) => ({ ...template, preset })),
   pandocPath: undefined,
   defaultExportDirectoryMode: 'Same',
   openExportedFile: true,
