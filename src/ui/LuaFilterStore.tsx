@@ -1,6 +1,6 @@
 import * as ct from 'electron';
-import { Notice, type App } from 'obsidian';
-import { For, Match, Show, Switch, createMemo, createResource, createSignal } from 'solid-js';
+import { Notice, Platform, type App } from 'obsidian';
+import { For, Match, Show, Switch, createEffect, createMemo, createResource, createSignal, onCleanup, onMount } from 'solid-js';
 import type { Lang } from '../lang';
 import {
   DEFAULT_LUA_FILTER_CATEGORY,
@@ -14,12 +14,12 @@ import Modal from './components/Modal';
 import Icon from './components/Icon';
 
 /**
- * The list is narrowed on two axes at once, because they answer different
- * questions and one row of chips could only ever answer one of them: "what of
- * mine is for Word?" needs a state *and* a shelf.
+ * The chips above the list: how a filter stands, then the shelf it sits on, in
+ * one row. There are more of them than fit, which is what the row scrolling
+ * sideways is for — the same filter row the Advanced Word Count extension store
+ * uses, chevrons and all.
  */
-type State = 'all' | 'installed' | 'updatable' | 'nosetup';
-type Shelf = LuaFilterCategory | 'all';
+type Chip = LuaFilterCategory | 'all' | 'installed' | 'updatable' | 'nosetup';
 
 /** What each shelf is drawn as. */
 const CATEGORY_ICON: Record<LuaFilterCategory, string> = {
@@ -62,8 +62,7 @@ export default (props: {
   const t = lang.luaFilterStore;
 
   const [search, setSearch] = createSignal('');
-  const [state, setState] = createSignal<State>('all');
-  const [shelf, setShelf] = createSignal<Shelf>('all');
+  const [chip, setChip] = createSignal<Chip>('all');
   // Ids with a request in flight, so a card's buttons go quiet while it runs
   // rather than the whole list.
   const [busy, setBusy] = createSignal<ReadonlySet<string>>(new Set());
@@ -131,56 +130,87 @@ export default (props: {
     return !!mine && !!e.updated && !!mine.updated && e.updated > mine.updated;
   };
 
-  const inState = (e: LuaFilterEntry, value: State) =>
+  const inChip = (e: LuaFilterEntry, value: Chip) =>
     value === 'all'
       ? true
       : value === 'installed'
         ? !!installedOf(e.id)
         : value === 'updatable'
           ? isUpdatable(e)
-          : // Nothing to install, set up or configure first — the shelf to browse
-            // when a failed export is not worth the risk.
-            !e.requires;
-
-  const inShelf = (e: LuaFilterEntry, value: Shelf) => value === 'all' || e.category === value;
+          : value === 'nosetup'
+            ? // Nothing to install, set up or configure first — the chip to press
+              // when a failed export is not worth the risk.
+              !e.requires
+            : e.category === value;
 
   /** Anything on disk that the catalogue has a newer copy of, whatever is being shown. */
   const updatableCount = createMemo(() => allEntries().filter(isUpdatable).length);
 
   /**
-   * A chip counts what clicking it would show — so it is counted against the
-   * *other* row's selection, and "Structure (2)" under "Installed" means two
-   * installed structure filters rather than two in the catalogue.
-   *
+   * Each chip counts what it would show for the current search, so the number
+   * answers "how many of these are there" independently of which chip is on.
    * Every shelf is always offered, so the row does not rearrange itself as the
    * search is typed — except the catch-all one, which is only a shelf when
    * something has actually landed on it.
    */
-  const count = (s: State, sh: Shelf) => matched().filter(e => inState(e, s) && inShelf(e, sh)).length;
+  const chips = createMemo(() => {
+    const counted = (value: Chip) => matched().filter(e => inChip(e, value)).length;
+    const shelves = LUA_FILTER_CATEGORIES.filter(c => c !== DEFAULT_LUA_FILTER_CATEGORY || allEntries().some(e => e.category === c));
+    return [
+      ['all', t.filterAll],
+      ['installed', t.filterInstalled],
+      // Offered only when there is something to update, and then regardless of
+      // what is being shown: a chip that came and went as a search was typed
+      // would be missed by whoever the news is for.
+      ...(updatableCount() > 0 ? ([['updatable', t.filterUpdatable]] as const) : []),
+      ['nosetup', t.filterNoSetup],
+      ...shelves.map(c => [c, t.category[c]] as const),
+    ].map(([value, label]: [Chip, string]) => ({ value, label, count: counted(value) }));
+  });
 
-  const stateChips = createMemo(() =>
-    (
-      [
-        ['all', t.filterAll],
-        ['installed', t.filterInstalled],
-        // Offered only when there is something to update, and then regardless of
-        // what is being shown: a chip that came and went as a search was typed
-        // would be missed by whoever the news is for.
-        ...(updatableCount() > 0 ? ([['updatable', t.filterUpdatable]] as const) : []),
-        ['nosetup', t.filterNoSetup],
-      ] as const
-    ).map(([value, label]) => ({ value, label, count: count(value, shelf()) }))
-  );
+  // ── The chip row's overflow ─────────────────────────────────────────────────
 
-  const shelfChips = createMemo(() =>
-    ([['all', t.filterAll], ...LUA_FILTER_CATEGORIES.map(c => [c, t.category[c]] as const)] as const)
-      .filter(([value]) => value !== DEFAULT_LUA_FILTER_CATEGORY || allEntries().some(e => e.category === value))
-      .map(([value, label]) => ({ value, label, count: count(state(), value) }))
-  );
+  let row!: HTMLDivElement;
+  const [overflow, setOverflow] = createSignal({ left: false, right: false });
+
+  /** Which edges are cut off. A pixel of slack absorbs sub-pixel rounding. */
+  const syncOverflow = () =>
+    setOverflow({
+      left: row.scrollLeft > 1,
+      right: row.scrollWidth - row.clientWidth - row.scrollLeft > 1,
+    });
+
+  /**
+   * A mouse wheel emits vertical deltas, which the browser hands to the nearest
+   * vertically scrollable ancestor — the modal, leaving this row unmoved however
+   * long it is. Turn a predominantly vertical wheel sideways; a touchpad's
+   * horizontal deltas already scroll the row and are left alone.
+   */
+  const wheelToHorizontal = (e: WheelEvent) => {
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || row.scrollWidth <= row.clientWidth) {
+      return;
+    }
+    e.preventDefault();
+    row.scrollLeft += e.deltaY;
+  };
+
+  onMount(() => {
+    // The row's width follows the modal's, so what is cut off is worth watching
+    // rather than working out once.
+    const observer = new ResizeObserver(syncOverflow);
+    observer.observe(row);
+    onCleanup(() => observer.disconnect());
+  });
+
+  // A chip appearing or disappearing changes what overflows just as a resize does.
+  createEffect(() => {
+    chips();
+    syncOverflow();
+  });
 
   const rows = createMemo(() =>
     matched()
-      .filter(e => inState(e, state()) && inShelf(e, shelf()))
+      .filter(e => inChip(e, chip()))
       // Installed first, then by name: what is already in use is what the list
       // is most often reopened for.
       .sort((a, b) => {
@@ -294,20 +324,13 @@ export default (props: {
         onInput={e => setSearch(e.currentTarget.value.trim().toLowerCase())}
       />
 
-      {/* Two rows, narrowing the list together. A chip with nothing behind it is
-          dimmed and dead rather than a click that empties the list — except the
-          one that is on, which must always stay clickable to get back out of. */}
-      <div class="ex-lua-filters">
-        <span class="ex-lua-filter-label">{t.rowShow}</span>
-        <div class="ex-lua-filter-row">
-          <For each={stateChips()}>
+      {/* One row that scrolls sideways rather than wrapping, so adding a chip
+          never costs the list a line of height. */}
+      <div class="ex-lua-filters-wrap">
+        <div ref={row} class="ex-lua-filters" onScroll={syncOverflow} onWheel={wheelToHorizontal}>
+          <For each={chips()}>
             {c => (
-              <button
-                class="ex-lua-filter"
-                classList={{ 'is-active': state() === c.value, 'is-empty': c.count === 0 }}
-                disabled={c.count === 0 && state() !== c.value}
-                onClick={() => setState(c.value)}
-              >
+              <button class="ex-lua-filter" classList={{ 'is-active': chip() === c.value }} onClick={() => setChip(c.value)}>
                 {c.label}
                 <Show when={!catalogue.loading}>
                   <span class="ex-lua-filter-count">({c.count})</span>
@@ -317,24 +340,26 @@ export default (props: {
           </For>
         </div>
 
-        <span class="ex-lua-filter-label">{t.rowShelf}</span>
-        <div class="ex-lua-filter-row">
-          <For each={shelfChips()}>
-            {c => (
-              <button
-                class="ex-lua-filter"
-                classList={{ 'is-active': shelf() === c.value, 'is-empty': c.count === 0 }}
-                disabled={c.count === 0 && shelf() !== c.value}
-                onClick={() => setShelf(c.value)}
-              >
-                {c.label}
-                <Show when={!catalogue.loading}>
-                  <span class="ex-lua-filter-count">({c.count})</span>
-                </Show>
-              </button>
-            )}
-          </For>
-        </div>
+        {/* The scrollbar is hidden, so a cut-off edge needs something else to say
+            there is more. Touch scrolls the row directly and needs neither. */}
+        <Show when={Platform.isDesktop}>
+          <button
+            class="ex-lua-filters-less"
+            classList={{ 'is-visible': overflow().left }}
+            title={t.moreFilters}
+            onClick={() => row.scrollTo({ left: 0, behavior: 'smooth' })}
+          >
+            <Icon name="chevron-left" />
+          </button>
+          <button
+            class="ex-lua-filters-more"
+            classList={{ 'is-visible': overflow().right }}
+            title={t.moreFilters}
+            onClick={() => row.scrollTo({ left: row.scrollWidth, behavior: 'smooth' })}
+          >
+            <Icon name="chevron-right" />
+          </button>
+        </Show>
       </div>
 
       <div class="ex-lua-list">
@@ -350,11 +375,7 @@ export default (props: {
           </Match>
           <Match when={rows().length === 0}>
             <p class="ex-lua-status">
-              {allEntries().length === 0
-                ? t.emptyCatalogue
-                : state() === 'installed' && shelf() === 'all' && !search()
-                  ? t.noneInstalled
-                  : t.noResults}
+              {allEntries().length === 0 ? t.emptyCatalogue : chip() === 'installed' && !search() ? t.noneInstalled : t.noResults}
             </p>
           </Match>
           <Match when={rows().length > 0}>

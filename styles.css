@@ -609,30 +609,95 @@
 }
 
 /*
- * The chips, in two labelled rows that narrow the list together: what state a
- * filter is in, and what shelf it sits on. A label column keeps the two "All"s
- * apart; the rows themselves wrap onto further lines on a narrow window rather
- * than needing the scroll affordances the original row carries.
+ * The chips: one row, scrolled sideways rather than wrapped, so adding a chip
+ * never costs the list a line of height. The row and its edge chevrons share a
+ * relative wrapper, which also carries the gap below the row.
  */
-.ex-lua-filters {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: var(--size-4-2) var(--size-4-3);
+.ex-lua-filters-wrap {
+  position: relative;
   margin-bottom: var(--size-4-3);
 }
 
-.ex-lua-filter-label {
-  font-size: var(--font-ui-smaller);
-  color: var(--text-faint);
-  white-space: nowrap;
+/* Single non-wrapping row; the overflow scrolls and the scrollbar is hidden. */
+.ex-lua-filters {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--size-4-1);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
-.ex-lua-filter-row {
+.ex-lua-filters::-webkit-scrollbar {
+  display: none;
+}
+
+/*
+ * The "there is more" affordances: a chevron pinned over a fade at each cut-off
+ * edge, slid in by scroll position through `.is-visible` — the right one while
+ * the row is not scrolled to its end, the left one while it is scrolled away
+ * from its start. Desktop only; touch scrolls the row directly.
+ */
+.ex-lua-filters-more,
+.ex-lua-filters-less {
+  position: absolute;
+  top: 0;
+  bottom: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--size-4-1);
-  min-width: 0;
+  align-items: center;
+  width: 36px;
+  padding: 0 2px;
+  /* Strip the native and theme button chrome, so only the rules here paint it. */
+  appearance: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  outline: none;
+  cursor: var(--cursor);
+  color: var(--text-muted);
+  /* Revealed by opacity alone. The background colour is held transparent in
+     every state below, so the theme's solid button background never bleeds
+     through the gradient mid-fade; `pointer-events` keeps the hidden button
+     from swallowing clicks meant for the chips underneath it. */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease-in-out;
+}
+
+.ex-lua-filters-more {
+  right: 0;
+  justify-content: flex-end;
+  background: linear-gradient(to right, transparent, var(--background-primary) 100%);
+}
+
+.ex-lua-filters-less {
+  left: 0;
+  justify-content: flex-start;
+  background: linear-gradient(to left, transparent, var(--background-primary) 100%);
+}
+
+/* The theme's button rules set a solid background at a specificity above a
+   single class, and it shows through the gradient's transparent half. Pin the
+   paint properties transparent at the wrapper's two-class specificity, in every
+   state, so nothing changes as `.is-visible` toggles. */
+.ex-lua-filters-wrap .ex-lua-filters-more,
+.ex-lua-filters-wrap .ex-lua-filters-less,
+.ex-lua-filters-more:hover,
+.ex-lua-filters-more:focus,
+.ex-lua-filters-more:active,
+.ex-lua-filters-less:hover,
+.ex-lua-filters-less:focus,
+.ex-lua-filters-less:active {
+  background-color: transparent;
+  box-shadow: none;
+  border: none;
+  outline: none;
+  color: var(--text-muted);
+}
+
+.ex-lua-filters-more.is-visible,
+.ex-lua-filters-less.is-visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .ex-lua-filter {
@@ -656,19 +721,6 @@
 .ex-lua-filter.is-active {
   background: var(--interactive-accent);
   color: var(--text-on-accent);
-}
-
-/* A chip with nothing behind it says so and stops taking clicks — the count
-   reads as information rather than as a filter that broke. The one that is on
-   stays live even at zero, or there would be no way back out of it. */
-.ex-lua-filter.is-empty:not(.is-active) {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.ex-lua-filter.is-empty:not(.is-active):hover {
-  background: var(--background-modifier-hover);
-  color: var(--text-muted);
 }
 
 /* The "(N)" after a chip's label. The margin is the gap — a text-node space

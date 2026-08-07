@@ -91,9 +91,8 @@ export default {
     title: 'Lua filters',
     searchPlaceholder: 'Search filters...',
 
-    /* The two rows of chips, which narrow the list together. */
-    rowShow: 'Show',
-    rowShelf: 'Shelf',
+    /* The chevrons at a cut-off edge of the chip row. */
+    moreFilters: 'More filters',
 
     filterAll: 'All',
     filterInstalled: 'Installed',
