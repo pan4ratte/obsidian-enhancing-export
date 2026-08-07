@@ -22,7 +22,40 @@ import TemplateLuaFilters from './TemplateLuaFilters';
 import CheckGrid from './components/CheckGrid';
 import { TOC_MAX_DEPTH, setTocDepth, tocDepth } from '../toc_args';
 import { PANDOC_EXTENSIONS, enabledExtensions, setExtensions } from '../pandoc_extensions';
-import { outputFormat, supportsToc } from '../pandoc_format';
+import {
+  HIGHLIGHT_NONE,
+  HIGHLIGHT_STYLES,
+  MATH_METHODS,
+  PDF_ENGINES,
+  TOP_LEVEL_DIVISIONS,
+  highlightStyle,
+  listOfFigures,
+  listOfTables,
+  mathMethod,
+  numberOffset,
+  numberSections,
+  pdfEngine,
+  setHighlightStyle,
+  setListOfFigures,
+  setListOfTables,
+  setMathMethod,
+  setNumberOffset,
+  setNumberSections,
+  setPdfEngine,
+  setTopLevelDivision,
+  topLevelDivision,
+} from '../writer_args';
+import {
+  isPdfOutput,
+  outputFormat,
+  supportsHighlighting,
+  supportsMathMethod,
+  supportsNumberOffset,
+  supportsNumberSections,
+  supportsSectionLists,
+  supportsToc,
+  supportsTopLevelDivision,
+} from '../pandoc_format';
 import { MessageBox } from './message_box';
 import Modal from './components/Modal';
 import Button from './components/Button';
@@ -351,6 +384,77 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
         const current = enabledExtensions(v.customArguments).filter(e => e !== id);
         v.customArguments = setExtensions(v.customArguments, on ? [...current, id] : current);
       });
+
+    /** The extra arguments, which every writer option below is read back out of. */
+    const args = () => template()?.customArguments;
+
+    /** Setting one is always the same move: that field, rewritten. */
+    const writeArgs = (write: (args?: string) => string) => updateTemplate(v => (v.customArguments = write(v.customArguments)));
+
+    /**
+     * Numbering, and the two lists that keep a table of contents company: three
+     * flags with nothing to say for themselves, so they share one card — less
+     * whichever of them this writer would ignore.
+     */
+    const numbering = createMemo(() => {
+      const items: { value: string; label: string; title: string; checked: boolean }[] = [];
+      if (supportsNumberSections(format())) {
+        items.push({
+          value: 'sections',
+          label: lang.settingTab.numberSections,
+          title: '--number-sections',
+          checked: numberSections(args()),
+        });
+      }
+      if (supportsSectionLists(format())) {
+        items.push({ value: 'figures', label: lang.settingTab.listOfFigures, title: '--list-of-figures', checked: listOfFigures(args()) });
+        items.push({ value: 'tables', label: lang.settingTab.listOfTables, title: '--list-of-tables', checked: listOfTables(args()) });
+      }
+      return items;
+    });
+
+    const toggleNumbering = (value: string, on: boolean) =>
+      writeArgs(a =>
+        value === 'sections' ? setNumberSections(a, on) : value === 'figures' ? setListOfFigures(a, on) : setListOfTables(a, on)
+      );
+
+    /**
+     * A dropdown's options: pandoc's own answer first, which writes no flag at
+     * all, then the ones it names. When the arguments carry something else — a
+     * theme file, an engine of the user's own — that is a real answer too, and
+     * is added rather than dropped on the floor by a picker that cannot show it.
+     */
+    const withCurrent = (options: { name: string; value: string }[], current?: string) =>
+      current && !options.some(o => o.value === current) ? [...options, { name: current, value: current }] : options;
+
+    const divisionOptions = [
+      { name: lang.settingTab.division.default, value: '' },
+      ...TOP_LEVEL_DIVISIONS.map(d => ({ name: lang.settingTab.division[d], value: d })),
+    ];
+
+    const highlightOptions = createMemo(() =>
+      withCurrent(
+        [
+          { name: lang.settingTab.highlightDefault, value: '' },
+          { name: lang.settingTab.highlightNone, value: HIGHLIGHT_NONE },
+          ...HIGHLIGHT_STYLES.map(s => ({ name: lang.settingTab.highlightStyle[s], value: s })),
+        ],
+        highlightStyle(args())
+      )
+    );
+
+    const mathOptions = [
+      { name: lang.settingTab.mathDefault, value: '' },
+      ...MATH_METHODS.map(m => ({ name: lang.settingTab.mathMethod[m], value: m })),
+    ];
+
+    const engineOptions = createMemo(() =>
+      withCurrent(
+        [{ name: lang.settingTab.pdfEngineDefault, value: '' }, ...PDF_ENGINES.map(e => ({ name: e, value: e }))],
+        pdfEngine(args())
+      )
+    );
+
     return (
       <>
         <Setting name={lang.settingTab.arguments}>
@@ -383,6 +487,66 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
                 // stops them at the level above, so unticking the first is "none".
                 updateTemplate(v => (v.customArguments = setTocDepth(v.customArguments, Number(value) - (checked ? 0 : 1))))
               }
+            />
+          </Setting>
+        </Show>
+
+        {/* The rest of the writer options, each shown only where it would do
+            something — the sets they are gated on are the manual's own. */}
+        <Show when={numbering().length > 0}>
+          <Setting name={lang.settingTab.numbering} description={lang.settingTab.numberingDesc}>
+            <CheckGrid items={numbering()} onToggle={toggleNumbering} />
+          </Setting>
+        </Show>
+
+        {/* Once there is numbering for it to offset, and only in the two formats
+            pandoc says it reaches. */}
+        <Collapsible when={supportsNumberOffset(format()) && numberSections(args())}>
+          <Setting name={lang.settingTab.numberOffset} description={lang.settingTab.numberOffsetDesc}>
+            <Text value={numberOffset(args()) ?? ''} placeholder="0" onChange={value => writeArgs(a => setNumberOffset(a, value))} />
+          </Setting>
+        </Collapsible>
+
+        <Show when={supportsTopLevelDivision(format())}>
+          <Setting name={lang.settingTab.topLevelDivision} description={lang.settingTab.topLevelDivisionDesc}>
+            <DropDown
+              options={divisionOptions}
+              selected={topLevelDivision(args()) ?? ''}
+              autofocus={false}
+              onChange={value => writeArgs(a => setTopLevelDivision(a, value))}
+            />
+          </Setting>
+        </Show>
+
+        <Show when={supportsHighlighting(format())}>
+          <Setting name={lang.settingTab.syntaxHighlighting} description={lang.settingTab.syntaxHighlightingDesc}>
+            <DropDown
+              options={highlightOptions()}
+              selected={highlightStyle(args()) ?? ''}
+              autofocus={false}
+              onChange={value => writeArgs(a => setHighlightStyle(a, value))}
+            />
+          </Setting>
+        </Show>
+
+        <Show when={supportsMathMethod(format())}>
+          <Setting name={lang.settingTab.math} description={lang.settingTab.mathDesc}>
+            <DropDown
+              options={mathOptions}
+              selected={mathMethod(args()) ?? ''}
+              autofocus={false}
+              onChange={value => writeArgs(a => setMathMethod(a, value))}
+            />
+          </Setting>
+        </Show>
+
+        <Show when={isPdfOutput(format())}>
+          <Setting name={lang.settingTab.pdfEngine} description={lang.settingTab.pdfEngineDesc}>
+            <DropDown
+              options={engineOptions()}
+              selected={pdfEngine(args()) ?? ''}
+              autofocus={false}
+              onChange={value => writeArgs(a => setPdfEngine(a, value))}
             />
           </Setting>
         </Show>

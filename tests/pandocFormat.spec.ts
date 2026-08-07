@@ -1,4 +1,16 @@
-import { familiesOf, outputFormat, runsInFormat, supportsToc } from '../src/pandoc_format';
+import {
+  familiesOf,
+  isPdfOutput,
+  outputFormat,
+  runsInFormat,
+  supportsHighlighting,
+  supportsMathMethod,
+  supportsNumberOffset,
+  supportsNumberSections,
+  supportsSectionLists,
+  supportsToc,
+  supportsTopLevelDivision,
+} from '../src/pandoc_format';
 
 /*
  * What a template writes decides which rows the editor shows, so reading the
@@ -59,6 +71,72 @@ describe('what a writer supports', () => {
 
   test('a writer that cannot be made out asks for no row at all', () => {
     expect(supportsToc(undefined)).toBe(false);
+  });
+});
+
+/*
+ * The rest of the rows are gated the other way round from `--toc`: the manual
+ * names a few formats for each, and a writer it does not name is not offered
+ * the row rather than being left to ignore it.
+ */
+describe('which rows a writer is offered', () => {
+  test('numbering, where headings are numbered at all', () => {
+    for (const writer of ['latex', 'pdf', 'context', 'html', 'html5', 'docx', 'ms', 'epub3']) {
+      expect(supportsNumberSections(writer)).toBe(true);
+    }
+    for (const writer of ['odt', 'typst', 'commonmark_x', 'rtf', 'pptx', undefined]) {
+      expect(supportsNumberSections(writer)).toBe(false);
+    }
+  });
+
+  test('an offset, only where pandoc says it reaches', () => {
+    expect(supportsNumberOffset('html')).toBe(true);
+    expect(supportsNumberOffset('docx')).toBe(true);
+    // Numbered, but the offset is ignored — so the field is not shown.
+    expect(supportsNumberOffset('latex')).toBe(false);
+    expect(supportsNumberOffset('epub3')).toBe(false);
+  });
+
+  test('lists of figures and tables, in the three writers that build them', () => {
+    for (const writer of ['latex', 'pdf', 'context', 'docx']) {
+      expect(supportsSectionLists(writer)).toBe(true);
+    }
+    for (const writer of ['html', 'epub3', 'odt', 'typst']) {
+      expect(supportsSectionLists(writer)).toBe(false);
+    }
+  });
+
+  test('a top-level division, where a document has divisions to name', () => {
+    expect(supportsTopLevelDivision('latex')).toBe(true);
+    expect(supportsTopLevelDivision('pdf')).toBe(true);
+    expect(supportsTopLevelDivision('docbook5')).toBe(true);
+    expect(supportsTopLevelDivision('docx')).toBe(false);
+    expect(supportsTopLevelDivision('html')).toBe(false);
+  });
+
+  test('highlighting, wherever code is coloured', () => {
+    for (const writer of ['html', 'latex', 'pdf', 'docx', 'odt', 'revealjs', 'typst', 'epub3']) {
+      expect(supportsHighlighting(writer)).toBe(true);
+    }
+    for (const writer of ['commonmark_x', 'rst', 'textile', 'json']) {
+      expect(supportsHighlighting(writer)).toBe(false);
+    }
+  });
+
+  test('a math method, where the math is going into HTML', () => {
+    for (const writer of ['html', 'html5', 'epub3', 'revealjs']) {
+      expect(supportsMathMethod(writer)).toBe(true);
+    }
+    // These write their own math; there is no script to choose between.
+    for (const writer of ['latex', 'pdf', 'typst', 'docx']) {
+      expect(supportsMathMethod(writer)).toBe(false);
+    }
+  });
+
+  test('a PDF engine, only when a PDF is what comes out', () => {
+    expect(isPdfOutput('pdf')).toBe(true);
+    expect(isPdfOutput('latex')).toBe(false);
+    expect(isPdfOutput(undefined)).toBe(false);
   });
 });
 

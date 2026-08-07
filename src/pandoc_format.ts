@@ -69,6 +69,95 @@ const TOC_UNSUPPORTED = new Set([
 export const supportsToc = (writer?: string): boolean => !!writer && !TOC_UNSUPPORTED.has(writer);
 
 /*
+ * The rest of the writer options the template modal offers.
+ *
+ * `--toc` is listed by what does *not* take it, because nearly everything does.
+ * These are the other way round: the manual names a handful of formats for each
+ * one, so a writer not named is not offered the option at all rather than given
+ * the benefit of the doubt and left to ignore it quietly. Each list is the
+ * manual's, plus the other spellings of the same writer pandoc answers to —
+ * `html5`, `epub3`, and `pdf`, which is LaTeX unless the engine says otherwise.
+ */
+const supportedBy = (writers: readonly string[]) => {
+  const supported = new Set(writers);
+  return (writer?: string): boolean => !!writer && supported.has(writer);
+};
+
+/** "Number section headings in LaTeX, ConTeXt, HTML, Docx, ms, or EPUB output." */
+export const supportsNumberSections = supportedBy([
+  'latex',
+  'beamer',
+  'pdf',
+  'context',
+  'html',
+  'html4',
+  'html5',
+  'chunkedhtml',
+  'docx',
+  'ms',
+  'epub',
+  'epub2',
+  'epub3',
+]);
+
+/** `--number-offset`: "Currently this feature only affects HTML and Docx output." */
+export const supportsNumberOffset = supportedBy(['html', 'html4', 'html5', 'chunkedhtml', 'docx']);
+
+/** `--lof` and `--lot`, "supported in latex, context, and docx output". */
+export const supportsSectionLists = supportedBy(['latex', 'pdf', 'context', 'docx']);
+
+/** `--top-level-division`, honoured "in LaTeX, ConTeXt, DocBook, and TEI output". */
+export const supportsTopLevelDivision = supportedBy(['latex', 'pdf', 'context', 'docbook', 'docbook4', 'docbook5', 'tei']);
+
+/** The writers that colour code at all; the rest print it as it stands. */
+export const supportsHighlighting = supportedBy([
+  'latex',
+  'beamer',
+  'pdf',
+  'context',
+  'html',
+  'html4',
+  'html5',
+  'chunkedhtml',
+  'revealjs',
+  'slidy',
+  'slideous',
+  'dzslides',
+  's5',
+  'docx',
+  'odt',
+  'opendocument',
+  'ms',
+  'typst',
+  'epub',
+  'epub2',
+  'epub3',
+]);
+
+/**
+ * Where a maths method is a question at all: the flags each name a way of
+ * getting TeX into HTML, so only the writers that produce HTML have an answer.
+ * LaTeX and Typst write maths themselves and are not asked.
+ */
+export const supportsMathMethod = supportedBy([
+  'html',
+  'html4',
+  'html5',
+  'chunkedhtml',
+  'revealjs',
+  'slidy',
+  'slideous',
+  'dzslides',
+  's5',
+  'epub',
+  'epub2',
+  'epub3',
+]);
+
+/** Whether pandoc will be handing the document to a PDF engine. */
+export const isPdfOutput = (writer?: string): boolean => writer === 'pdf';
+
+/*
  * The families a filter can be written for. A filter that reaches for
  * `custom-style` is for the word processors whatever the exact writer is
  * called, and one that emits raw LaTeX is no use to any of them — so what a

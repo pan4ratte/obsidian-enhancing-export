@@ -164,11 +164,16 @@ export const TextArea = (props: {
 export const DropDown = (props: {
   options: { name?: string; value: string }[];
   selected?: string;
+  /**
+   * A dropdown claims the focus by default — it is the one control a dialog
+   * opened for it is about. One of several rows in a form says otherwise.
+   */
+  autofocus?: boolean;
   onChange?: (value: string, index: number) => void;
 }) => {
   return (
     <>
-      <select class="dropdown" onChange={e => props.onChange?.(e.target.value, e.target.selectedIndex)} autofocus={true}>
+      <select class="dropdown" onChange={e => props.onChange?.(e.target.value, e.target.selectedIndex)} autofocus={props.autofocus ?? true}>
         <For each={props.options}>
           {item => (
             <option value={item.value} selected={item.value === props.selected}>

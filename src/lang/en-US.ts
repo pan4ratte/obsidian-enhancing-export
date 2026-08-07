@@ -104,6 +104,56 @@ export default {
     tableOfContentsDesc: 'Headings down to the deepest level ticked. Tick nothing for no contents.',
     tocLevel: strTpl`Level ${0}`,
 
+    /* The rest of the writer options, written into the same field. Every row
+       here is shown only for the formats that would do something with it, so a
+       template that cannot be asked is never asked. */
+    numbering: 'Numbering and lists',
+    numberingDesc: 'Section numbers, and the lists that go with a table of contents.',
+    numberSections: 'Number headings',
+    listOfFigures: 'List of figures',
+    listOfTables: 'List of tables',
+    numberOffset: 'Start numbering at',
+    numberOffsetDesc: 'The number before the first heading — 5 to start at 6. One per level, separated by commas.',
+
+    topLevelDivision: 'Top-level headings',
+    topLevelDivisionDesc: 'What a level-1 heading becomes in the written document.',
+    division: {
+      default: 'Default',
+      section: 'Section',
+      chapter: 'Chapter',
+      part: 'Part',
+    },
+
+    syntaxHighlighting: 'Code highlighting',
+    syntaxHighlightingDesc: 'The colours for fenced code blocks.',
+    highlightDefault: 'Default (Pygments)',
+    highlightNone: 'None',
+    highlightStyle: {
+      pygments: 'Pygments',
+      tango: 'Tango',
+      espresso: 'Espresso',
+      zenburn: 'Zenburn',
+      kate: 'Kate',
+      monochrome: 'Monochrome',
+      breezedark: 'Breeze Dark',
+      haddock: 'Haddock',
+    },
+
+    math: 'Math rendering',
+    mathDesc: 'How TeX math is written into the page.',
+    mathDefault: 'Default (plain text)',
+    mathMethod: {
+      mathjax: 'MathJax',
+      katex: 'KaTeX',
+      mathml: 'MathML',
+      webtex: 'WebTeX (images)',
+      gladtex: 'GladTeX',
+    },
+
+    pdfEngine: 'PDF engine',
+    pdfEngineDesc: 'The program that turns the document into a PDF. XeLaTeX and LuaLaTeX handle system fonts and non-Latin scripts.',
+    pdfEngineDefault: 'Default (pdfLaTeX)',
+
     /* Running installed filters, from the template that runs them. */
     luaFilters: 'Lua filters',
     noLuaFiltersInstalled: 'No filters installed. Add some from Browse lua-filters.',
