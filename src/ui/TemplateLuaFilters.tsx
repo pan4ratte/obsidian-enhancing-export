@@ -1,16 +1,15 @@
-import { For, Show, createMemo } from 'solid-js';
+import { createMemo } from 'solid-js';
 import type { Lang } from '../lang';
 import { hasLuaFilterArg, type InstalledLuaFilter } from '../lua_filters';
-import Icon from './components/Icon';
+import CheckGrid from './components/CheckGrid';
 
 /**
  * Which installed lua filters this template runs.
  *
  * A filter is installed once, in the store, and switched on per template here —
- * which is the only place that knows which template is being edited. The filters
- * already running are listed as chips; the dropdown offers the rest and goes
- * straight back to its prompt, because it asks a question rather than holding an
- * answer.
+ * which is the only place that knows which template is being edited. Everything
+ * on disk is listed, ticked or not, so what a template runs and what it *could*
+ * run are one glance rather than a list plus a dropdown holding the rest.
  */
 export default (props: {
   lang: Lang;
@@ -23,44 +22,24 @@ export default (props: {
 }) => {
   const { lang } = props;
 
-  const byName = (a: InstalledLuaFilter, b: InstalledLuaFilter) => a.storeName.localeCompare(b.storeName);
-  const running = createMemo(() => props.installed.filter(f => hasLuaFilterArg(props.args, f.fileName)).sort(byName));
-  const available = createMemo(() => props.installed.filter(f => !hasLuaFilterArg(props.args, f.fileName)).sort(byName));
-
-  let select!: HTMLSelectElement;
+  const items = createMemo(() =>
+    [...props.installed]
+      .sort((a, b) => a.storeName.localeCompare(b.storeName))
+      .map(filter => ({
+        value: filter.fileName,
+        label: filter.storeName,
+        // The file name is what the flag actually carries, and two filters can
+        // share a store name only until one of them is renamed.
+        title: filter.fileName,
+        checked: hasLuaFilterArg(props.args, filter.fileName),
+      }))
+  );
 
   return (
-    <div class="ex-template-lua">
-      <Show when={running().length > 0}>
-        <div class="ex-template-lua-running">
-          <For each={running()}>
-            {filter => (
-              <span class="ex-template-lua-chip">
-                {filter.storeName}
-                <Icon name="x" title={lang.settingTab.removeLuaFilter(filter.storeName)} onClick={() => props.onRemove(filter.fileName)} />
-              </span>
-            )}
-          </For>
-        </div>
-      </Show>
-
-      <Show when={props.installed.length > 0} fallback={<span class="ex-template-lua-empty">{lang.settingTab.noLuaFiltersInstalled}</span>}>
-        <select
-          ref={select}
-          class="dropdown ex-template-lua-select"
-          disabled={available().length === 0}
-          onChange={e => {
-            const fileName = e.currentTarget.value;
-            select.value = '';
-            if (fileName) {
-              props.onAdd(fileName);
-            }
-          }}
-        >
-          <option value="">{lang.settingTab.addLuaFilter}</option>
-          <For each={available()}>{filter => <option value={filter.fileName}>{filter.storeName}</option>}</For>
-        </select>
-      </Show>
-    </div>
+    <CheckGrid
+      items={items()}
+      empty={lang.settingTab.noLuaFiltersInstalled}
+      onToggle={(fileName, running) => (running ? props.onAdd(fileName) : props.onRemove(fileName))}
+    />
   );
 };

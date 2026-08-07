@@ -81,11 +81,14 @@ export default {
     /* The card above the templates table. */
     browseLuaFilters: 'Browse lua-filters',
 
+    /* Writes `--toc --toc-depth=N` into the template's extra arguments. */
+    tableOfContents: 'Table of contents',
+    tableOfContentsDesc: 'Headings down to the deepest level ticked. Tick nothing for no contents.',
+    tocLevel: strTpl`Level ${0}`,
+
     /* Running installed filters, from the template that runs them. */
     luaFilters: 'Lua filters',
-    addLuaFilter: 'Add a filter…',
     noLuaFiltersInstalled: 'No filters installed. Add some from Browse lua-filters.',
-    removeLuaFilter: strTpl`Stop running "${0}"`,
   },
   luaFilterStore: {
     title: 'Lua filters',

@@ -19,6 +19,8 @@ import TemplateTable from './TemplateTable';
 import LuaFilterStore from './LuaFilterStore';
 import { LuaFilterManager, addLuaFilterArg, hasLuaFilterArg, removeLuaFilterArg, type InstalledLuaFilter } from '../lua_filters';
 import TemplateLuaFilters from './TemplateLuaFilters';
+import CheckGrid from './components/CheckGrid';
+import { TOC_MAX_DEPTH, setTocDepth, tocDepth } from '../toc_args';
 import { MessageBox } from './message_box';
 import Modal from './components/Modal';
 import Button from './components/Button';
@@ -310,6 +312,19 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     const updateTemplate = (update: (prev: Partial<PandocExportSetting>) => void) => {
       updateCurrentEditCommandTemplate(prev => (prev.type === 'pandoc' ? update(prev) : undefined));
     };
+    /**
+     * One box per heading level a table of contents can reach, ticked down to
+     * the depth the arguments ask for — depth is one number, so the boxes fill
+     * from the top rather than being picked out one at a time.
+     */
+    const tocLevels = createMemo(() => {
+      const depth = tocDepth(template()?.customArguments);
+      return Array.from({ length: TOC_MAX_DEPTH }, (_, i) => ({
+        value: String(i + 1),
+        label: lang.settingTab.tocLevel(i + 1),
+        checked: depth >= i + 1,
+      }));
+    });
     return (
       <>
         <Setting name={lang.settingTab.arguments}>
@@ -324,8 +339,21 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
           />
         </Setting>
 
-        {/* Sits under the extra arguments because that is the field it writes:
-            adding a filter appends its `--lua-filter` flag to the line above. */}
+        {/* Writes the extra arguments above: ticking a level puts `--toc
+            --toc-depth=N` in that line, and clearing them takes it back out. */}
+        <Setting name={lang.settingTab.tableOfContents} description={lang.settingTab.tableOfContentsDesc}>
+          <CheckGrid
+            items={tocLevels()}
+            onToggle={(value, checked) =>
+              // Ticking a level takes the contents down to it; clearing one
+              // stops them at the level above, so unticking the first is "none".
+              updateTemplate(v => (v.customArguments = setTocDepth(v.customArguments, Number(value) - (checked ? 0 : 1))))
+            }
+          />
+        </Setting>
+
+        {/* Writes that same field: adding a filter appends its `--lua-filter`
+            flag to it. */}
         <Setting name={lang.settingTab.luaFilters}>
           <TemplateLuaFilters
             lang={lang}
@@ -529,6 +557,7 @@ export default class extends PluginSettingTab {
               settingTab.command,
               settingTab.arguments,
               settingTab.extraArguments,
+              settingTab.tableOfContents,
               settingTab.targetFileExtensions,
               settingTab.showCommandOutput,
               settingTab.runCommand,

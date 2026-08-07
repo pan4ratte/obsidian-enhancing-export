@@ -472,6 +472,15 @@
 }
 
 /*
+ * No rules between the rows. Every field already sits under its own label with
+ * space around it, so the divider Obsidian draws between settings only chops
+ * the modal into stripes — the spacing does the separating.
+ */
+.ex-template-modal .setting-item {
+  border-top: none;
+}
+
+/*
  * Every field sits under the label that asks for it and takes the width of the
  * modal — a pandoc command line does not fit the sliver at the end of a row.
  * Toggles are left alone: an answer of that size belongs beside its question.
@@ -500,61 +509,66 @@
 }
 
 /*
- * Which lua filters a template runs. The chips are what it runs now; the
- * dropdown offers the rest of what is installed.
+ * A bordered card of checkboxes — the heading levels a table of contents
+ * reaches, and the lua filters a template runs. Both are a set of things that
+ * are either on or off, and both read better all at once than through a
+ * dropdown that shows one answer at a time.
+ *
+ * `auto-fit` rather than `auto-fill`: with only a few boxes the columns stretch
+ * to fill the card instead of leaving a stretch of empty grid to their right.
  */
-.ex-template-lua {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--size-4-2);
+.ex-check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--size-4-1) var(--size-4-3);
   width: 100%;
   min-width: 0;
+  padding: var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-secondary);
 }
 
-.ex-template-lua-running {
+/* The whole row is the hit area, label included — a checkbox alone is a small
+   target for a mouse. */
+.ex-check {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--size-4-1);
+  gap: var(--size-4-2);
+  min-width: 0;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  cursor: var(--cursor);
 }
 
-/* A filter this template runs, with the control that stops it. */
-.ex-template-lua-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--size-2-1);
-  padding: var(--size-2-1) var(--size-4-1) var(--size-2-1) var(--size-4-2);
-  border-radius: 2em;
-  font-size: var(--font-ui-smaller);
-  background: var(--background-modifier-hover);
+.ex-check:hover,
+.ex-check.is-checked {
   color: var(--text-normal);
 }
 
-.ex-template-lua-chip .svg-icon {
-  width: var(--icon-xs);
-  height: var(--icon-xs);
+.ex-check input[type='checkbox'] {
+  flex: 0 0 auto;
+  margin: 0;
 }
 
-.ex-template-lua-chip .clickable-icon:hover {
-  color: var(--text-error);
+/* A filter's name can be longer than its column; it is cut rather than allowed
+   to push the grid wider than the card. */
+.ex-check-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* Overrides the modal's rule stretching every control to the full width: this
-   one is a picker, not a field. */
-.ex-template-modal .setting-item:not(.mod-toggle) > .setting-item-control > .ex-template-lua select.ex-template-lua-select {
-  width: auto;
-  max-width: 100%;
-}
-
-.ex-template-lua-empty {
+/* Said in the grid's place when there is nothing to tick — the card stays, so
+   the row does not collapse to nothing. */
+.ex-check-empty {
   font-size: var(--font-ui-smaller);
   color: var(--text-faint);
 }
 
-/* A field the row above asks the question for. */
+/* A field the row above asks the question for: it closes up against it rather
+   than keeping the gap the other rows have. */
 .ex-template-modal .setting-item.ex-template-modal-nameless {
-  border-top: none;
   padding-top: 0;
 }
 
