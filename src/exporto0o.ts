@@ -5,7 +5,7 @@ import path from 'path';
 import argsParser from 'yargs-parser';
 import { Variables, ExportSetting, extractDefaultExtension as extractExtension, createEnv } from './settings';
 import { MessageBox } from './ui/message_box';
-import { Notice, TFile } from 'obsidian';
+import { Notice, TFile, type EmbedCache } from 'obsidian';
 import { exec, renderTemplate, getPlatformValue, trimQuotes } from './utils';
 import ProgressBar from './ui/components/ProgressBar';
 import type ExportPlugin from './main';
@@ -86,14 +86,14 @@ export async function exportToOo(
     console.error(e);
   }
 
-  let embedArray: unknown = null;
+  let embedArray: EmbedCache[] | undefined;
   try {
     embedArray = metadataCache.getCache(currentFile.path).embeds;
   } catch (e) {
     console.error(e);
   }
   let targetDirArray: string[] = [];
-  for (const embed of embedArray || []) {
+  for (const embed of embedArray ?? []) {
     const linkPath = embed.link;
     const targetFile = metadataCache.getFirstLinkpathDest(linkPath, currentFile.path);
     if (targetFile instanceof TFile) {

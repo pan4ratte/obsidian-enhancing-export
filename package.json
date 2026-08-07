@@ -8,6 +8,7 @@
     "build": "vite build",
     "version-bump": "node version.mjs bump",
     "version": "node version.mjs",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "lint-fix": "eslint --fix src",
     "format-check": "prettier --check \"src/**/*.ts\"",

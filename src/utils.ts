@@ -46,9 +46,11 @@ export function strTpl(strings: TemplateStringsArray, ...keys: number[]): (...va
 }
 
 export function exec(cmd: string, options?: ExecOptions): Promise<string> {
-  options = options ?? {};
   return new Promise((resolve, reject) => {
-    node_exec(cmd, options, (error, stdout, stderr) => {
+    // Naming the encoding picks the overload that hands back text rather than a
+    // Buffer. Every caller parses what comes out as a string, and `utf8` is what
+    // node would have defaulted to anyway.
+    node_exec(cmd, { ...options, encoding: 'utf8' }, (error, stdout, stderr) => {
       if (error) {
         reject(error);
         console.error(stdout, error);

@@ -17,6 +17,13 @@
     "jsxImportSource": "solid-js",
     "noEmit": true,
     "isolatedModules": true,
+    // Only declaration files are skipped, never our own source. Three things
+    // need it, none of them ours to fix: obsidian's typings contradict
+    // themselves under TS 6 (`onHistoryBack`), augmenting `DataAdapter` in
+    // typings/obsidian.d.ts leaves its own classes short of the members we
+    // added, and electron and @types/node declare `noDeprecation` with
+    // different modifiers.
+    "skipLibCheck": true,
     "lib": [
       "DOM",
       "ES5",

@@ -1,6 +1,16 @@
 
 import  'obsidian';
-import type { EventRef } from 'obsidian';
+import type { App, EventRef } from 'obsidian';
+
+declare global {
+  /**
+   * Obsidian puts the app on `window` but does not declare it — the documented
+   * way in is `plugin.app`. Declared here for the few places that have no
+   * plugin to hand: a modal built from a component, a memo about the vault's
+   * link style.
+   */
+  const app: App;
+}
 
 
 declare module 'obsidian' {
