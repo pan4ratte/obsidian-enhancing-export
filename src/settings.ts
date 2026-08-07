@@ -60,7 +60,7 @@ export interface UniversalExportPluginSettings {
    * so the value in `DEFAULT_SETTINGS` can never be written through.
    */
   installedLuaFilters?: InstalledLuaFilter[];
-  /** Base URL of the curated catalogue. Unset means the default repo. */
+  /** Base URL of the lua-filter catalogue. Unset means the default repo. */
   luaFilterRepoUrl?: string;
 }
 

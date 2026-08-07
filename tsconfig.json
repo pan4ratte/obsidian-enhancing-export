@@ -12,6 +12,8 @@
     "noImplicitAny": true,
     "moduleResolution": "bundler",
     "esModuleInterop": true,
+    // The lua-filter catalogue is JSON, and its test reads it directly.
+    "resolveJsonModule": true,
     "importHelpers": true,
     "jsx": "preserve",
     "jsxImportSource": "solid-js",

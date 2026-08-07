@@ -31,6 +31,23 @@ Where `Markdown`,`Markdown (Hugo)`,`HTML` will export and its media resource tog
 
 2. Search `obsidian-enhancing-export` in the community plugins of obsidian, and install it.
 
+## Lua filters
+
+A lua filter is a small script pandoc runs over the document on its way out — it
+is how you get real page breaks in Word, diagrams from Mermaid code blocks,
+per-chapter bibliographies, or Word's own list styles instead of pandoc's.
+
+Click **Browse lua-filters** in the setting view to open the store. It offers
+[the catalogue in `lua-filters/`](lua-filters/README.md) — filters from
+[pandoc-ext](https://github.com/pandoc-ext), from the retired
+[pandoc/lua-filters](https://github.com/pandoc/lua-filters) collection and a few
+written for Obsidian-to-Word exports — grouped by the problem they solve, each
+naming its author, its licence, and anything it needs installed.
+
+Installing one only puts the file in the plugin's `lua/` folder. A filter runs
+when a template asks for it, which is set per template in the *Lua filters* row
+of the template editor.
+
 ## Customize export commands
 
 You can customize your export command by yourself, click `add` in the plugin setting view and then choose template `custom` to add new custom configuration.

@@ -91,21 +91,43 @@ export default {
     title: 'Lua filters',
     searchPlaceholder: 'Search filters...',
 
+    /* The two rows of chips, which narrow the list together. */
+    rowShow: 'Show',
+    rowShelf: 'Shelf',
+
     filterAll: 'All',
-    filterCurated: 'Curated',
-    filterUpstream: 'pandoc-ext',
-    filterCourse: 'course-it-in-science',
     filterInstalled: 'Installed',
+    filterUpdatable: 'Update available',
+    /* Filters that need no external program, no reference-document style and no
+       other filter ahead of them — the ones that cannot fail an export for
+       something that was never installed. */
+    filterNoSetup: 'No setup needed',
+
+    /* The shelves, named after what a user came to fix rather than after where
+       the filter was published. */
+    category: {
+      structure: 'Structure',
+      citations: 'Citations',
+      figures: 'Figures & math',
+      prose: 'Text & typography',
+      word: 'Word & ODT',
+      latex: 'LaTeX & PDF',
+      tools: 'Tools',
+      other: 'Other',
+    },
 
     loading: 'Loading filters…',
     loadError: 'Could not load the filter catalogue.',
-    sourceUnavailable: strTpl`Could not load: ${0}.`,
     retry: 'Retry',
     emptyCatalogue: 'The catalogue is empty.',
     noResults: 'No filters match your search.',
     noneInstalled: 'No filters installed yet.',
 
     byAuthor: strTpl`by ${0}`,
+    byAuthorUnder: strTpl`by ${0} · ${1}`,
+    /* Said before installing, so a missing program is not discovered as a
+       failed export. */
+    requires: strTpl`Needs: ${0}`,
     readme: 'Open readme',
     install: 'Install',
     installing: 'Installing…',

@@ -609,14 +609,30 @@
 }
 
 /*
- * The chips. Four of them, so they wrap onto a second line on a narrow window
- * rather than needing the scroll affordances the original row carries.
+ * The chips, in two labelled rows that narrow the list together: what state a
+ * filter is in, and what shelf it sits on. A label column keeps the two "All"s
+ * apart; the rows themselves wrap onto further lines on a narrow window rather
+ * than needing the scroll affordances the original row carries.
  */
 .ex-lua-filters {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--size-4-2) var(--size-4-3);
+  margin-bottom: var(--size-4-3);
+}
+
+.ex-lua-filter-label {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.ex-lua-filter-row {
   display: flex;
   flex-wrap: wrap;
   gap: var(--size-4-1);
-  margin-bottom: var(--size-4-3);
+  min-width: 0;
 }
 
 .ex-lua-filter {
@@ -642,18 +658,24 @@
   color: var(--text-on-accent);
 }
 
+/* A chip with nothing behind it says so and stops taking clicks — the count
+   reads as information rather than as a filter that broke. The one that is on
+   stays live even at zero, or there would be no way back out of it. */
+.ex-lua-filter.is-empty:not(.is-active) {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ex-lua-filter.is-empty:not(.is-active):hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+}
+
 /* The "(N)" after a chip's label. The margin is the gap — a text-node space
    between the two would be collapsed away. */
 .ex-lua-filter-count {
   margin-left: 0.35em;
   opacity: 0.65;
-}
-
-/* One catalogue being unreachable is said above the list the other one fills. */
-.ex-lua-notice {
-  margin: 0 0 var(--size-4-3);
-  font-size: var(--font-ui-smaller);
-  color: var(--text-warning);
 }
 
 .ex-lua-list {
@@ -712,14 +734,15 @@
   color: var(--text-normal);
 }
 
-.ex-lua-source-icon {
+/* The shelf a filter sits on, drawn beside its name. */
+.ex-lua-category-icon {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
   color: var(--text-muted);
 }
 
-.ex-lua-source-icon .svg-icon {
+.ex-lua-category-icon .svg-icon {
   width: var(--icon-s);
   height: var(--icon-s);
 }
@@ -727,7 +750,7 @@
 /* Installed filters carry the accent, so what is already in the vault reads
    apart from what is merely on offer. */
 .ex-lua-card.is-installed .ex-lua-name,
-.ex-lua-card.is-installed .ex-lua-source-icon {
+.ex-lua-card.is-installed .ex-lua-category-icon {
   color: var(--text-accent);
 }
 
@@ -741,6 +764,14 @@
   margin: var(--size-4-1) 0 0;
   font-size: var(--font-ui-smaller);
   color: var(--text-muted);
+}
+
+/* What the filter needs to be given before it can work — said while the
+   Install button is still the next thing to press. */
+.ex-lua-requires {
+  margin: var(--size-4-2) 0 0;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-warning);
 }
 
 /* Installing puts a filter on disk; a template still has to ask for it. */

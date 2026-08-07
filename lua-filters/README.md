@@ -1,26 +1,59 @@
-# Curated lua-filter catalogue
+# The lua-filter catalogue
 
-`index.json` is the catalogue the plugin's **Browse lua-filters** store reads under
-its *Curated* chip. The store shows two sources side by side:
+`index.json` is the catalogue the plugin's **Browse lua-filters** store reads, and
+every filter it lists is kept **in this folder**. Browsing the store is one
+request — this file — and installing one is one more, for a file committed here.
 
-| Source | Where it comes from |
+Nothing is read from the GitHub API, from the [pandoc-ext] organisation, or from
+anyone else's repository while the store is open. That is deliberate:
+
+- a filter that is renamed, moved or withdrawn cannot empty the store;
+- the GitHub API's per-address rate limit cannot empty it either;
+- what a card says is written for this store, not inherited from whatever a
+  repository description happened to say — several upstream filters had none at
+  all;
+- and what is installed is the file that was reviewed when it was vendored, not
+  whatever the branch holds today.
+
+It also fixes something the live listing got silently wrong: most pandoc-ext
+repositories keep the real filter in `_extensions/<name>/<name>.lua` and leave a
+**symlink** at the root. Fetching the raw root path returned the *link's text* —
+a 25-byte file naming a path — which pandoc would then fail on.
+
+The vendored copies are unmodified, licence headers included. Every entry names
+its author and licence; all of them are MIT.
+
+[pandoc-ext]: https://github.com/pandoc-ext
+
+## Where the files came from
+
+| Folder | Origin |
 | --- | --- |
-| **Curated** | This file. |
-| **pandoc-ext** | The [pandoc-ext](https://github.com/pandoc-ext) organisation, read live from the GitHub API — one request returns every filter repository with its description and default branch, so there is no list to maintain here. |
-| **course-it-in-science** | `Obsidian/Pandoc/filters` in [pan4ratte/course-it-in-science](https://github.com/pan4ratte/course-it-in-science), read as a directory listing. There is nothing there describing a filter, so those cards carry names only. |
+| `pandoc-ext/` | The [pandoc-ext] organisation — the filters the pandoc project maintains today. |
+| `pandoc/` | The retired [pandoc/lua-filters] collection, for the filters pandoc-ext has not re-published. |
+| `pan4ratte/` | `Obsidian/Pandoc/filters` in [pan4ratte/course-it-in-science], written for exporting Obsidian notes to Word. `zotero.lua` there is [Better BibTeX]'s, vendored with it. |
 
-The sources are read **in that order, and a file name is only offered once**. A
-filter already offered by an earlier source — or already shipped with the plugin —
-is skipped by a later one, because the file name is what `--lua-filter` names and
-two filters answering to it would make which one runs a matter of install order.
+[pandoc/lua-filters]: https://github.com/pandoc/lua-filters
+[pan4ratte/course-it-in-science]: https://github.com/pan4ratte/course-it-in-science
+[Better BibTeX]: https://retorque.re/zotero-better-bibtex/exporting/
 
-Because the other two are read automatically, this catalogue exists for the filters
-they do **not** carry. It is currently seeded with the ones from the retired
-[pandoc/lua-filters](https://github.com/pandoc/lua-filters) collection that were
-never re-published.
+The folders are provenance only. What the **store** shows is the `category` —
+the shelves below — because a reader is looking for the thing that fixes their
+export, not for the organisation that published it. A filter's origin is still
+one click away, on the card's *Open readme* button.
 
-The base URL is overridable per vault through the `luaFilterRepoUrl` setting, so a
-vault can point the *Curated* chip at a catalogue of its own.
+## The shelves
+
+| `category` | Shown as | What is on it |
+| --- | --- | --- |
+| `structure` | Structure | Assembling the document: includes, page breaks, abstracts, format-only content. |
+| `citations` | Citations | Bibliographies, citekeys, DOIs, author metadata. |
+| `figures` | Figures & math | Diagrams, maths, music, captions. |
+| `prose` | Text & typography | Quotes, indents, dates, fonts. |
+| `word` | Word & ODT | Making a reference document's styles actually govern the output. |
+| `latex` | LaTeX & PDF | Things only the LaTeX writer can do. |
+| `tools` | Tools | Filters that report on a document instead of exporting it. |
+| `other` | Other | Anything with no category, or one this plugin does not know. The chip appears only when something lands here. |
 
 ## Entry schema
 
@@ -28,23 +61,36 @@ vault can point the *Curated* chip at a catalogue of its own.
 {
   "filters": [
     {
-      // Required. Unique within this catalogue, and what the installed record is
+      // Required. Unique within the catalogue, and what the installed record is
       // keyed by — changing it makes the entry a different filter.
       "id": "wordcount",
 
       // Required: one of "path" or "url".
-      // "path" is resolved against this folder's URL; "url" may point anywhere
-      // and wins if both are given.
-      "path": "filters/wordcount.lua",
-      "url": "https://raw.githubusercontent.com/…/wordcount.lua",
+      // "path" is resolved against this folder's URL — use it for anything
+      // vendored here. "url" may point anywhere and wins if both are given.
+      "path": "pandoc/wordcount.lua",
 
-      // Shown on the card. "storeName" defaults to the id.
+      // Shown on the card. "storeName" defaults to the id; write the name for
+      // what the filter *does*, not the file it lives in.
       "storeName": "Word count",
-      "description": "Counts the words of a document as pandoc reads it.",
-      "author": "pandoc/lua-filters",
+      "description": "Counts the words pandoc reads, not the characters the file holds.",
+
+      // Whose work this is, and on what terms. Shown together: "by X · MIT".
+      "author": "John MacFarlane",
+      "license": "MIT",
+
+      // One of the shelves above. An unknown or missing one becomes "other".
+      "category": "tools",
+
+      // Optional. What has to exist before the filter can work — an external
+      // program, a style in the reference document, another filter ahead of it.
+      // Shown on the card *before* the Install button, so a missing dependency
+      // is not discovered as a failed export.
+      "requires": "The aspell program on the PATH.",
 
       // ISO date, compared as a string against the installed copy's to offer an
-      // update. Omit it and the filter simply never reports one.
+      // update. Bump it whenever the vendored file changes; omit it and the
+      // filter simply never reports one.
       "updated": "2026-08-07",
 
       // What the filter is called in the plugin's lua/ folder. Defaults to
@@ -52,7 +98,7 @@ vault can point the *Curated* chip at a catalogue of its own.
       // must be unique across everything installed.
       "fileName": "wordcount.lua",
 
-      // Optional. Adds the card's "Open readme" button.
+      // Optional. Adds the card's "Open readme" button — point it upstream.
       "homepage": "https://github.com/pandoc/lua-filters/tree/master/wordcount"
     }
   ]
@@ -61,6 +107,22 @@ vault can point the *Curated* chip at a catalogue of its own.
 
 An entry with no `id`, or with neither `path` nor `url`, is skipped rather than
 treated as an error — one malformed row cannot take the catalogue down with it.
+A file name is only offered once: the first row to claim it keeps it, and a name
+the plugin already ships is never offered at all.
+
+`tests/luaFilterCatalogue.spec.ts` holds this file to the schema — every `path`
+must exist, ids and file names must be unique, and every entry must carry a name,
+a description, an author, a licence and a known category.
+
+## Adding a filter
+
+1. Commit the `.lua` file under the folder for where it came from, unmodified.
+2. Add its entry, filling in `requires` if it needs anything the user has to
+   provide.
+3. Run `npm test`.
+
+The base URL is overridable per vault through the `luaFilterRepoUrl` setting, so
+a vault can point the store at a catalogue of its own instead.
 
 ## What installing does
 
