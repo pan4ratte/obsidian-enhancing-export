@@ -1,4 +1,4 @@
-import { For, JSX, createContext, onCleanup, onMount, useContext } from 'solid-js';
+import { For, JSX, createContext, createEffect, onCleanup, onMount, useContext } from 'solid-js';
 import * as Ob from 'obsidian';
 
 type SettingContext = {
@@ -91,18 +91,57 @@ export const Text = (props: { placeholder?: string,
   />;
 };
 
-export const TextArea = (props: { placeholder?: string, 
-  title?: string, 
+export const TextArea = (props: { placeholder?: string,
+  title?: string,
   value?: string,
   style?: string,
-  disabled?: boolean, 
-  spellcheck?: boolean, 
+  class?: string,
+  /** Height follows the lines it holds, rather than a fixed number of them. */
+  autoSize?: boolean,
+  /** Turn this over when the field is shown: what is not rendered cannot be measured. */
+  visible?: boolean,
+  disabled?: boolean,
+  spellcheck?: boolean,
   onChange?: (value: string) => void }) => {
+  let el!: HTMLTextAreaElement;
+
+  const resize = () => {
+    if (!props.autoSize) {
+      return;
+    }
+    // Nothing rendered has a height to read. `rows` below carries the field
+    // until it is on screen and can be measured for real.
+    if (el.getClientRects().length === 0) {
+      el.style.height = '';
+      return;
+    }
+    // Measured with nothing of its own in the way; `scrollHeight` is content
+    // and padding, and a border-box height has to carry the border as well.
+    el.style.height = 'auto';
+    const style = getComputedStyle(el);
+    const border = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
+    el.style.height = `${el.scrollHeight + border}px`;
+  };
+
+  // Every way it can change: typed into, written from the settings, or brought
+  // on screen where it can finally be measured.
+  createEffect(() => {
+    props.value;
+    props.visible;
+    resize();
+  });
+
   return <textarea
+    ref={el}
+    class={props.class}
     placeholder={props.placeholder}
+    // A line per line, so a field that has never been on screen is still about
+    // the right height for whatever reveals it.
+    rows={props.autoSize ? Math.max(1, props.value?.split('\n').length ?? 1) : undefined}
     spellcheck={props.spellcheck ?? false}
     style={props.style}
     value={props.value}
+    onInput={resize}
     onChange={(e) => props.onChange?.(e.target.value)}
     disabled={props.disabled}
   />;

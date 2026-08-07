@@ -33,6 +33,9 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
   const { plugin, lang } = props;
   const [settings, setSettings0] = createStore(plugin.settings);
   const [pandocVersion, setPandocVersion] = createSignal<SemVer>();
+  // The variables are read far more often than they are written, so the field
+  // stays out of the way until it is asked for.
+  const [editingEnvVars, setEditingEnvVars] = createSignal(false);
   const envVars = createMemo(() => Object.entries(Object.assign({}, getPlatformValue(DEFAULT_ENV), getPlatformValue(settings.env) ?? {})).map(([n, v]) => `${n}="${v}"`).join('\n'));
   const setSettings: typeof setSettings0 = (...args: unknown[]) => {
     (setSettings0 as ((...args: unknown[]) => void))(...args);
@@ -309,41 +312,59 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
 
     <Setting name={lang.settingTab.defaults} heading={true} />
 
-    <Setting name={lang.settingTab.defaultFolderForExportedFile}>
-      <DropDown options={[
-        { name: lang.settingTab.sameFolderWithCurrentFile, value: 'Same' },
-        { name: lang.settingTab.customLocation, value: 'Custom' }
-      ]} selected={settings.defaultExportDirectoryMode} onChange={(v: 'Same' | 'Custom') => setSettings('defaultExportDirectoryMode', v)} />
+    <div class="ex-settings-card">
+      <Setting name={lang.settingTab.defaultFolderForExportedFile}>
+        <DropDown options={[
+          { name: lang.settingTab.sameFolderWithCurrentFile, value: 'Same' },
+          { name: lang.settingTab.customLocation, value: 'Custom' }
+        ]} selected={settings.defaultExportDirectoryMode} onChange={(v: 'Same' | 'Custom') => setSettings('defaultExportDirectoryMode', v)} />
 
-    </Setting>
-
-    <Collapsible when={settings.defaultExportDirectoryMode === 'Custom'}>
-      <Setting class="ex-export-destination-path">
-        <Text style="width: 100%" value={customDefaultExportDirectory() ?? ''} title={customDefaultExportDirectory()} />
-        <ExtraButton icon="folder" onClick={chooseCustomDefaultExportDirectory} />
       </Setting>
-    </Collapsible>
 
-    <Setting name={lang.settingTab.openExportedFileLocation}>
-      <Toggle
-        checked={settings.openExportedFileLocation}
-        onChange={(v) => setSettings('openExportedFileLocation', v)}
-      />
-    </Setting>
+      <Collapsible when={settings.defaultExportDirectoryMode === 'Custom'}>
+        <Setting class="ex-export-destination-path">
+          <Text style="width: 100%" value={customDefaultExportDirectory() ?? ''} title={customDefaultExportDirectory()} />
+          <ExtraButton icon="folder" onClick={chooseCustomDefaultExportDirectory} />
+        </Setting>
+      </Collapsible>
 
-    <Setting name={lang.settingTab.openExportedFile} >
-      <Toggle
-        checked={settings.openExportedFile}
-        onChange={(v) => setSettings('openExportedFile', v)} />
-    </Setting>
+      <Setting name={lang.settingTab.openExportedFileLocation}>
+        <Toggle
+          checked={settings.openExportedFileLocation}
+          onChange={(v) => setSettings('openExportedFileLocation', v)}
+        />
+      </Setting>
 
-    
-    <Setting name={lang.settingTab.ShowExportProgressBar}>
-      <Toggle
-        checked={settings.showExportProgressBar}
-        onChange={(v) => setSettings('showExportProgressBar', v)}
-      />
-    </Setting>
+      <Setting name={lang.settingTab.openExportedFile} >
+        <Toggle
+          checked={settings.openExportedFile}
+          onChange={(v) => setSettings('openExportedFile', v)} />
+      </Setting>
+
+      <Setting name={lang.settingTab.ShowExportProgressBar}>
+        <Toggle
+          checked={settings.showExportProgressBar}
+          onChange={(v) => setSettings('showExportProgressBar', v)}
+        />
+      </Setting>
+
+      {/* TODO:// optimize UI as https://www.jetbrains.com/help/idea/absolute-path-variables.html */}
+      <Setting name={lang.settingTab.environmentVariables}>
+        <ExtraButton icon="pencil" tooltip={lang.settingTab.edit} onClick={() => setEditingEnvVars(v => !v)} />
+      </Setting>
+
+      <Collapsible when={editingEnvVars()}>
+        <Setting class="ex-nameless-setting">
+          <TextArea
+            class="ex-env-vars"
+            autoSize={true}
+            visible={editingEnvVars()}
+            value={envVars()}
+            onChange={setEnvVars}
+          />
+        </Setting>
+      </Collapsible>
+    </div>
 
     <Setting name={lang.settingTab.exportTemplates} heading={true} />
 
@@ -354,17 +375,6 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
       onEdit={editCommandTemplate}
       onRemove={removeCommandTemplate}
     />
-
-    <Setting name={lang.settingTab.advanced} heading={true} />
-
-    {/* TODO:// optimize UI as https://www.jetbrains.com/help/idea/absolute-path-variables.html */}
-    <Setting name={lang.settingTab.environmentVariables} description={lang.settingTab.environmentVariablesDesc}>
-      <TextArea
-        style='width: 100%;height: 5em'
-        value={envVars()}
-        onChange={setEnvVars}
-      />
-    </Setting>
 
     <Show when={modal()}>
       <Dynamic component={modal()} ref={(el: Node) => document.body.appendChild(el)} />
@@ -426,7 +436,6 @@ export default class extends PluginSettingTab {
               settingTab.showCommandOutput,
               settingTab.runCommand,
               settingTab.templateOutput,
-              settingTab.advanced,
               settingTab.environmentVariables,
               'pandoc',
             ],
