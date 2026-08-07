@@ -1,7 +1,7 @@
-import { createLogger, defineConfig, loadEnv, Plugin, UserConfig } from 'vite';
+import { createLogger, defineConfig, loadEnv, Plugin } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import solidPlugin from 'vite-plugin-solid';
-import builtins from 'builtin-modules';
+import { builtinModules as builtins } from 'node:module';
 import path from 'path';
 import * as fsp from 'fs/promises';
 
@@ -92,7 +92,7 @@ export default defineConfig(({ mode }) => {
         ],
       },
     }
-  } as UserConfig;
+  };
 });
 
 

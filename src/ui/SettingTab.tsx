@@ -1,16 +1,10 @@
 import * as ct from 'electron';
 import process from 'process';
-import { PluginSettingTab } from 'obsidian';
+import { Notice, PluginSettingTab } from 'obsidian';
 import type { SettingDefinitionItem } from 'obsidian';
-import type { SemVer } from 'semver'
+import type { SemVer } from 'semver';
 import type UniversalExportPlugin from '../main';
-import {
-  CustomExportSetting,
-  ExportSetting,
-  PandocExportSetting,
-  createEnv,
-  DEFAULT_ENV
-} from '../settings';
+import { CustomExportSetting, ExportSetting, PandocExportSetting, createEnv, DEFAULT_ENV } from '../settings';
 import { setPlatformValue, getPlatformValue } from '../utils';
 
 import { createSignal, createRoot, onCleanup, createMemo, createEffect, Show, batch, Match, Switch, JSX } from 'solid-js';
@@ -32,18 +26,24 @@ import Setting, { Text, Toggle, ExtraButton, DropDown, TextArea } from './compon
 import export_templates from '../export_templates';
 import { BUNDLED_LUA_FILES } from '../resources';
 
-
-const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
+const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
   const { plugin, lang } = props;
+  // Obsidian puts an app on `window`, but a plugin is meant to use the one it
+  // was handed — see the plugin guidelines. This is that one.
+  const { app } = plugin;
   const [settings, setSettings0] = createStore(plugin.settings);
   const [pandocVersion, setPandocVersion] = createSignal<SemVer>();
   // The variables are read far more often than they are written, so the field
   // stays out of the way until it is asked for.
   const [editingEnvVars, setEditingEnvVars] = createSignal(false);
-  const envVars = createMemo(() => Object.entries(Object.assign({}, getPlatformValue(DEFAULT_ENV), getPlatformValue(settings.env) ?? {})).map(([n, v]) => `${n}="${v}"`).join('\n'));
+  const envVars = createMemo(() =>
+    Object.entries(Object.assign({}, getPlatformValue(DEFAULT_ENV), getPlatformValue(settings.env) ?? {}))
+      .map(([n, v]) => `${n}="${v}"`)
+      .join('\n')
+  );
   const setSettings: typeof setSettings0 = (...args: unknown[]) => {
-    (setSettings0 as ((...args: unknown[]) => void))(...args);
-    plugin.saveSettings();
+    (setSettings0 as (...args: unknown[]) => void)(...args);
+    void plugin.saveSettings();
   };
   const setEnvVars = (envItems: string) => {
     try {
@@ -62,23 +62,31 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
       }
       setSettings('env', setPlatformValue(settings.env ?? {}, env));
     } catch (e) {
-      alert(e);
+      new Notice(String(e));
     }
   };
 
   const currentCommandTemplate = createMemo(() => settings.items.find(v => v.name === settings.lastEditName) ?? settings.items.first());
   const currentEditCommandTemplate = <T extends 'custom' | 'pandoc'>(type?: T) => {
     const template = currentCommandTemplate();
-    return (type === undefined || type === template?.type ? template : undefined) as T extends 'custom' ? CustomExportSetting : T extends 'pandoc' ? PandocExportSetting : ExportSetting;
+    return (type === undefined || type === template?.type ? template : undefined) as T extends 'custom'
+      ? CustomExportSetting
+      : T extends 'pandoc'
+        ? PandocExportSetting
+        : ExportSetting;
   };
   const customDefaultExportDirectory = createMemo(() => getPlatformValue(settings.customDefaultExportDirectory));
 
   const updateCurrentEditCommandTemplate = (update: (prev: Partial<ExportSetting>) => void) => {
     const idx = settings.items.findIndex(v => v.name === settings.lastEditName);
-    setSettings('items', idx === -1 ? 0 : idx, produce(item => {
-      update(item);
-      return item;
-    }));
+    setSettings(
+      'items',
+      idx === -1 ? 0 : idx,
+      produce(item => {
+        update(item);
+        return item;
+      })
+    );
   };
 
   /** `name`, or the first `name 2`, `name 3`… no other template answers to. */
@@ -117,12 +125,9 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
     // about this template — its name, what happens once the file is written —
     // is carried across. Extra arguments belong to the format that took them.
     const previous = currentOutput();
-    const name = previous && isGeneratedName(template.name, previous)
-      ? uniqueTemplateName(preset.name, template.name)
-      : template.name;
-    const carried = template.type === 'pandoc' && preset.type === 'pandoc'
-      ? { runCommand: template.runCommand, command: template.command }
-      : {};
+    const name = previous && isGeneratedName(template.name, previous) ? uniqueTemplateName(preset.name, template.name) : template.name;
+    const carried =
+      template.type === 'pandoc' && preset.type === 'pandoc' ? { runCommand: template.runCommand, command: template.command } : {};
     const idx = settings.items.findIndex(v => v.name === template.name);
     batch(() => {
       setSettings('items', idx === -1 ? 0 : idx, {
@@ -156,43 +161,50 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
     }
     // Both at once: the item is found again by the name the settings remember.
     batch(() => {
-      updateCurrentEditCommandTemplate((v) => v.name = name);
+      updateCurrentEditCommandTemplate(v => (v.name = name));
       setSettings('lastEditName', name);
     });
   };
 
   /** The whole of one template. Every field writes straight through, so there is nothing to save. */
-  const EditCommandTemplateModal = () => <>
-    <Modal
-      app={app}
-      title={<>
-        <span>{lang.settingTab.editCommandTemplate}</span>
-        {/* The picker rides in the title row, so it needs to say what it picks
+  const EditCommandTemplateModal = () => (
+    <>
+      <Modal
+        app={app}
+        title={
+          <>
+            <span>{lang.settingTab.editCommandTemplate}</span>
+            {/* The picker rides in the title row, so it needs to say what it picks
             on its own. */}
-        <span class="ex-template-modal-output" title={lang.settingTab.templateOutput}>
-          <DropDown options={outputOptions} selected={currentOutput()} onChange={setCurrentOutput} />
-        </span>
-      </>}
-      classList={{ 'ex-template-modal': true }}
-      onClose={() => setModal(undefined)}>
-      <Setting name={lang.settingTab.name}>
-        <Text value={currentEditCommandTemplate()?.name ?? ''} onChange={renameCurrentCommandTemplate} />
-      </Setting>
+            <span class="ex-template-modal-output" title={lang.settingTab.templateOutput}>
+              <DropDown options={outputOptions} selected={currentOutput()} onChange={setCurrentOutput} />
+            </span>
+          </>
+        }
+        classList={{ 'ex-template-modal': true }}
+        onClose={() => setModal(undefined)}
+      >
+        <Setting name={lang.settingTab.name}>
+          <Text value={currentEditCommandTemplate()?.name ?? ''} onChange={renameCurrentCommandTemplate} />
+        </Setting>
 
-      <Switch>
-        <Match when={currentEditCommandTemplate('pandoc')}>
-          <PandocCommandTempateEditBlock />
-        </Match>
-        <Match when={currentEditCommandTemplate('custom')}>
-          <CustomCommandTempateEditBlock />
-        </Match>
-      </Switch>
+        <Switch>
+          <Match when={currentEditCommandTemplate('pandoc')}>
+            <PandocCommandTempateEditBlock />
+          </Match>
+          <Match when={currentEditCommandTemplate('custom')}>
+            <CustomCommandTempateEditBlock />
+          </Match>
+        </Switch>
 
-      <div class="modal-button-container">
-        <Button cta={true} onClick={() => setModal(undefined)}>{lang.settingTab.done}</Button>
-      </div>
-    </Modal>
-  </>;
+        <div class="modal-button-container">
+          <Button cta={true} onClick={() => setModal(undefined)}>
+            {lang.settingTab.done}
+          </Button>
+        </div>
+      </Modal>
+    </>
+  );
 
   const editCommandTemplate = (name: string) => {
     setSettings('lastEditName', name);
@@ -205,12 +217,13 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
       message: lang.settingTab.removeTemplateConfirmation(name),
       buttons: 'YesNo',
       callback: {
-        yes: () => batch(() => {
-          setSettings('items', (items) => items.filter(v => v.name !== name));
-          if (settings.lastEditName === name) {
-            setSettings('lastEditName', settings.items.first()?.name);
-          }
-        }),
+        yes: () =>
+          batch(() => {
+            setSettings('items', items => items.filter(v => v.name !== name));
+            if (settings.lastEditName === name) {
+              setSettings('lastEditName', settings.items.first()?.name);
+            }
+          }),
       },
     }).open();
   };
@@ -228,11 +241,9 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
   };
 
   /** Add or replace a filter's record — an update reinstalls under the same id. */
-  const recordLuaFilter = (filter: InstalledLuaFilter) =>
-    setInstalledLuaFilters(prev => [...prev.filter(f => f.id !== filter.id), filter]);
+  const recordLuaFilter = (filter: InstalledLuaFilter) => setInstalledLuaFilters(prev => [...prev.filter(f => f.id !== filter.id), filter]);
 
-  const forgetLuaFilter = (filter: InstalledLuaFilter) =>
-    setInstalledLuaFilters(prev => prev.filter(f => f.id !== filter.id));
+  const forgetLuaFilter = (filter: InstalledLuaFilter) => setInstalledLuaFilters(prev => prev.filter(f => f.id !== filter.id));
 
   /**
    * Run a filter in a template, or stop running it. The flag goes in the extra
@@ -245,11 +256,15 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
     if (idx === -1) {
       return;
     }
-    setSettings('items', idx, produce(item => {
-      if (item.type === 'pandoc') {
-        item.customArguments = update(item.customArguments);
-      }
-    }));
+    setSettings(
+      'items',
+      idx,
+      produce(item => {
+        if (item.type === 'pandoc') {
+          item.customArguments = update(item.customArguments);
+        }
+      })
+    );
   };
 
   const addLuaFilterToTemplate = (templateName: string, fileName: string) =>
@@ -261,6 +276,7 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
   const LuaFilterStoreModal = () => (
     <LuaFilterStore
       lang={lang}
+      app={app}
       manager={luaFilters}
       installed={settings.installedLuaFilters ?? []}
       templates={settings.items}
@@ -278,46 +294,58 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
   const PandocCommandTempateEditBlock = () => {
     const template = () => currentEditCommandTemplate('pandoc');
     const updateTemplate = (update: (prev: Partial<PandocExportSetting>) => void) => {
-      updateCurrentEditCommandTemplate(prev => prev.type === 'pandoc' ? update(prev) : undefined);
+      updateCurrentEditCommandTemplate(prev => (prev.type === 'pandoc' ? update(prev) : undefined));
     };
-    return <>
-      <Setting name={lang.settingTab.arguments}>
-        <Text style="width: 100%" value={template()?.arguments ?? ''} onChange={(value) => updateTemplate(v => v.arguments = value)} />
-      </Setting>
-      <Setting name={lang.settingTab.extraArguments}>
-        <Text style="width: 100%" value={template()?.customArguments ?? ''} title={template()?.customArguments} onChange={(value) => updateTemplate(v => v.customArguments = value)} />
-      </Setting>
-
-      <Setting name={lang.settingTab.runCommand}>
-        <Toggle checked={template()?.runCommand} onChange={(checked) => updateTemplate(v => v.runCommand = checked)} />
-      </Setting>
-      <Collapsible when={template()?.runCommand}>
-        <Setting class="ex-template-modal-nameless">
-          <Text style="width: 100%" value={template()?.command ?? ''} onChange={(value) => updateTemplate(v => v.command = value)} />
+    return (
+      <>
+        <Setting name={lang.settingTab.arguments}>
+          <Text style="width: 100%" value={template()?.arguments ?? ''} onChange={value => updateTemplate(v => (v.arguments = value))} />
         </Setting>
-      </Collapsible>
-    </>;
+        <Setting name={lang.settingTab.extraArguments}>
+          <Text
+            style="width: 100%"
+            value={template()?.customArguments ?? ''}
+            title={template()?.customArguments}
+            onChange={value => updateTemplate(v => (v.customArguments = value))}
+          />
+        </Setting>
+
+        <Setting name={lang.settingTab.runCommand}>
+          <Toggle checked={template()?.runCommand} onChange={checked => updateTemplate(v => (v.runCommand = checked))} />
+        </Setting>
+        <Collapsible when={template()?.runCommand}>
+          <Setting class="ex-template-modal-nameless">
+            <Text style="width: 100%" value={template()?.command ?? ''} onChange={value => updateTemplate(v => (v.command = value))} />
+          </Setting>
+        </Collapsible>
+      </>
+    );
   };
 
   const CustomCommandTempateEditBlock = () => {
     const template = () => currentEditCommandTemplate('custom');
     const updateTemplate = (update: (prev: Partial<CustomExportSetting>) => void) => {
-      updateCurrentEditCommandTemplate(prev => prev.type === 'custom' ? update(prev) : undefined);
+      updateCurrentEditCommandTemplate(prev => (prev.type === 'custom' ? update(prev) : undefined));
     };
-    return <>
-      <Setting name={lang.settingTab.command}>
-        <Text style="width: 100%" value={template()?.command ?? ''} onChange={(value) => updateTemplate(v => v.command = value)} />
-      </Setting>
-      <Setting name={lang.settingTab.targetFileExtensions}>
-        <Text value={template()?.targetFileExtensions ?? ''} onChange={(value) => updateTemplate(v => v.targetFileExtensions = value)} />
-      </Setting>
+    return (
+      <>
+        <Setting name={lang.settingTab.command}>
+          <Text style="width: 100%" value={template()?.command ?? ''} onChange={value => updateTemplate(v => (v.command = value))} />
+        </Setting>
+        <Setting name={lang.settingTab.targetFileExtensions}>
+          <Text value={template()?.targetFileExtensions ?? ''} onChange={value => updateTemplate(v => (v.targetFileExtensions = value))} />
+        </Setting>
 
-      {/* The counterpart of the pandoc block's run-command toggle: a custom
+        {/* The counterpart of the pandoc block's run-command toggle: a custom
           template is a command, and this is the only word it says back. */}
-      <Setting name={lang.settingTab.showCommandOutput} >
-        <Toggle checked={template()?.showCommandOutput ?? false} onChange={(checked) => updateTemplate(v => v.showCommandOutput = checked)} />
-      </Setting>
-    </>;
+        <Setting name={lang.settingTab.showCommandOutput}>
+          <Toggle
+            checked={template()?.showCommandOutput ?? false}
+            onChange={checked => updateTemplate(v => (v.showCommandOutput = checked))}
+          />
+        </Setting>
+      </>
+    );
   };
 
   const chooseCustomDefaultExportDirectory = async () => {
@@ -333,12 +361,12 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
 
   const choosePandocPath = async () => {
     const retval = await ct.remote.dialog.showOpenDialog({
-      filters: process.platform == 'win32' ? [{ extensions: ['exe'], name: 'pandoc' }]: undefined,
+      filters: process.platform == 'win32' ? [{ extensions: ['exe'], name: 'pandoc' }] : undefined,
       properties: ['openFile'],
     });
 
     if (!retval.canceled && retval.filePaths.length > 0) {
-      setSettings('pandocPath', (v) => setPlatformValue(v, retval.filePaths[0]));
+      setSettings('pandocPath', v => setPlatformValue(v, retval.filePaths[0]));
     }
   };
 
@@ -354,92 +382,74 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
     }
   });
 
-  return <>
-    <PandocDashboard
-      lang={lang}
-      version={pandocVersion()}
-      path={getPlatformValue(settings.pandocPath) ?? ''}
-      onPathChange={(value) => setSettings('pandocPath', (v) => setPlatformValue(v, value))}
-      onChoosePath={choosePandocPath}
-    />
+  return (
+    <>
+      <PandocDashboard
+        lang={lang}
+        version={pandocVersion()}
+        markdownLinks={app.vault.config.useMarkdownLinks}
+        path={getPlatformValue(settings.pandocPath) ?? ''}
+        onPathChange={value => setSettings('pandocPath', v => setPlatformValue(v, value))}
+        onChoosePath={choosePandocPath}
+      />
 
-    <Setting name={lang.settingTab.defaults} heading={true} />
+      <Setting name={lang.settingTab.defaults} heading={true} />
 
-    <div class="ex-settings-card">
-      <Setting name={lang.settingTab.defaultFolderForExportedFile}>
-        <DropDown options={[
-          { name: lang.settingTab.sameFolderWithCurrentFile, value: 'Same' },
-          { name: lang.settingTab.customLocation, value: 'Custom' }
-        ]} selected={settings.defaultExportDirectoryMode} onChange={(v: 'Same' | 'Custom') => setSettings('defaultExportDirectoryMode', v)} />
-
-      </Setting>
-
-      <Collapsible when={settings.defaultExportDirectoryMode === 'Custom'}>
-        <Setting class="ex-export-destination-path">
-          <Text style="width: 100%" value={customDefaultExportDirectory() ?? ''} title={customDefaultExportDirectory()} />
-          <ExtraButton icon="folder" onClick={chooseCustomDefaultExportDirectory} />
-        </Setting>
-      </Collapsible>
-
-      <Setting name={lang.settingTab.openExportedFileLocation}>
-        <Toggle
-          checked={settings.openExportedFileLocation}
-          onChange={(v) => setSettings('openExportedFileLocation', v)}
-        />
-      </Setting>
-
-      <Setting name={lang.settingTab.openExportedFile} >
-        <Toggle
-          checked={settings.openExportedFile}
-          onChange={(v) => setSettings('openExportedFile', v)} />
-      </Setting>
-
-      <Setting name={lang.settingTab.ShowExportProgressBar}>
-        <Toggle
-          checked={settings.showExportProgressBar}
-          onChange={(v) => setSettings('showExportProgressBar', v)}
-        />
-      </Setting>
-
-      {/* TODO:// optimize UI as https://www.jetbrains.com/help/idea/absolute-path-variables.html */}
-      <Setting name={lang.settingTab.environmentVariables}>
-        <ExtraButton icon="pencil" tooltip={lang.settingTab.edit} onClick={() => setEditingEnvVars(v => !v)} />
-      </Setting>
-
-      <Collapsible when={editingEnvVars()}>
-        <Setting class="ex-nameless-setting">
-          <TextArea
-            class="ex-env-vars"
-            autoSize={true}
-            visible={editingEnvVars()}
-            value={envVars()}
-            onChange={setEnvVars}
+      <div class="ex-settings-card">
+        <Setting name={lang.settingTab.defaultFolderForExportedFile}>
+          <DropDown
+            options={[
+              { name: lang.settingTab.sameFolderWithCurrentFile, value: 'Same' },
+              { name: lang.settingTab.customLocation, value: 'Custom' },
+            ]}
+            selected={settings.defaultExportDirectoryMode}
+            onChange={(v: 'Same' | 'Custom') => setSettings('defaultExportDirectoryMode', v)}
           />
         </Setting>
-      </Collapsible>
-    </div>
 
-    <Setting name={lang.settingTab.exportTemplates} heading={true} />
+        <Collapsible when={settings.defaultExportDirectoryMode === 'Custom'}>
+          <Setting class="ex-export-destination-path">
+            <Text style="width: 100%" value={customDefaultExportDirectory() ?? ''} title={customDefaultExportDirectory()} />
+            <ExtraButton icon="folder" onClick={chooseCustomDefaultExportDirectory} />
+          </Setting>
+        </Collapsible>
 
-    <TemplateActions
-      lang={lang}
-      onAdd={addCommandTemplate}
-      onBrowseLuaFilters={() => setModal(() => LuaFilterStoreModal)}
-    />
+        <Setting name={lang.settingTab.openExportedFileLocation}>
+          <Toggle checked={settings.openExportedFileLocation} onChange={v => setSettings('openExportedFileLocation', v)} />
+        </Setting>
 
-    <TemplateTable
-      lang={lang}
-      templates={settings.items}
-      onEdit={editCommandTemplate}
-      onRemove={removeCommandTemplate}
-    />
+        <Setting name={lang.settingTab.openExportedFile}>
+          <Toggle checked={settings.openExportedFile} onChange={v => setSettings('openExportedFile', v)} />
+        </Setting>
 
-    <Show when={modal()}>
-      <Dynamic component={modal()} ref={(el: Node) => document.body.appendChild(el)} />
-    </Show>
-  </>;
+        <Setting name={lang.settingTab.ShowExportProgressBar}>
+          <Toggle checked={settings.showExportProgressBar} onChange={v => setSettings('showExportProgressBar', v)} />
+        </Setting>
+
+        {/* TODO:// optimize UI as https://www.jetbrains.com/help/idea/absolute-path-variables.html */}
+        <Setting name={lang.settingTab.environmentVariables}>
+          <ExtraButton icon="pencil" tooltip={lang.settingTab.edit} onClick={() => setEditingEnvVars(v => !v)} />
+        </Setting>
+
+        <Collapsible when={editingEnvVars()}>
+          <Setting class="ex-nameless-setting">
+            <TextArea class="ex-env-vars" autoSize={true} visible={editingEnvVars()} value={envVars()} onChange={setEnvVars} />
+          </Setting>
+        </Collapsible>
+      </div>
+
+      <Setting name={lang.settingTab.exportTemplates} heading={true} />
+
+      <TemplateActions lang={lang} onAdd={addCommandTemplate} onBrowseLuaFilters={() => setModal(() => LuaFilterStoreModal)} />
+
+      <TemplateTable lang={lang} templates={settings.items} onEdit={editCommandTemplate} onRemove={removeCommandTemplate} />
+
+      <Show when={modal()}>
+        <Dynamic component={modal()} ref={(el: Node) => document.body.appendChild(el)} />
+      </Show>
+    </>
+  );
 };
-
 
 /** Group element hosting the single row the whole tab is rendered into. */
 const GROUP_CLASS = 'ex-settings-group';

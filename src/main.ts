@@ -28,7 +28,9 @@ export default class UniversalExportPlugin extends Plugin {
     this.addSettingTab(new ExportSettingTab(this));
 
     this.addCommand({
-      id: 'obsidian-enhancing-export:export',
+      // Obsidian prefixes command ids with the plugin's own, so naming it here
+      // too produced `obsidian-enhancing-export:obsidian-enhancing-export:export`.
+      id: 'export',
       name: lang.exportToOo,
       icon: 'document',
       callback: () => {
@@ -41,7 +43,7 @@ export default class UniversalExportPlugin extends Plugin {
       },
     });
     this.addCommand({
-      id: 'obsidian-enhancing-export:export-with-previous',
+      id: 'export-with-previous',
       name: lang.exportWithPrevious,
       icon: 'document',
       callback: async () => {
@@ -104,8 +106,7 @@ export default class UniversalExportPlugin extends Plugin {
   }
 
   public async saveSettings(): Promise<void> {
-    console.log('[obsidian-enhancing-export] saveSettings', this.settings);
-    const settings: UniversalExportPluginSettings = JSON.parse(JSON.stringify(this.settings));
+    const settings: UniversalExportPluginSettings = JSON.parse(JSON.stringify(this.settings)) as UniversalExportPluginSettings;
     settings.items.forEach(v => {
       const def = DEFAULT_SETTINGS.items.find(o => o.name === v.name);
       if (def) {

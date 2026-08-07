@@ -1,6 +1,5 @@
 import { getPlatformValue, setPlatformValue } from '../src/utils';
 
-
 test('test get set platformValue 1', async () => {
   const val = setPlatformValue({}, 'abc');
   expect(getPlatformValue(val)).toBe('abc');
@@ -21,6 +20,6 @@ test('test set platformValue on multi platform', async () => {
   const val = setPlatformValue<Record<string, string>>({}, { 'a': 'x' }, ['win32', 'darwin']);
   expect(val).toStrictEqual({
     'win32': { 'a': 'x' },
-    'darwin': { 'a': 'x' }
+    'darwin': { 'a': 'x' },
   });
 });

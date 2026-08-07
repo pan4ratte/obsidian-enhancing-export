@@ -11,7 +11,7 @@ import { createEffect, on, JSX } from 'solid-js';
  * The children must set no `display` of their own on the panel: `ex-collapsed`
  * is a plain class and would lose to it. The layout goes on a child instead.
  */
-export default (props: { when?: boolean, children?: JSX.Element }) => {
+export default (props: { when?: boolean; children?: JSX.Element }) => {
   let panel!: HTMLDivElement;
   let animation: Animation | null = null;
 
@@ -49,15 +49,17 @@ export default (props: { when?: boolean, children?: JSX.Element }) => {
   // nothing to animate from.
   createEffect(on(() => !!props.when, toggle, { defer: true }));
 
-  return <div
-    class="ex-collapsible"
-    ref={(el) => {
-      panel = el;
-      if (!props.when) {
-        el.addClass('ex-collapsed');
-      }
-    }}
-  >
-    {props.children}
-  </div>;
+  return (
+    <div
+      class="ex-collapsible"
+      ref={el => {
+        panel = el;
+        if (!props.when) {
+          el.addClass('ex-collapsed');
+        }
+      }}
+    >
+      {props.children}
+    </div>
+  );
 };

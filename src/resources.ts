@@ -12,9 +12,9 @@ const embed = (dir: string, res: Record<string, Resource>) =>
  * Same glob as the embed below, so Vite resolves it once and nothing is embedded
  * twice.
  */
-export const BUNDLED_LUA_FILES: readonly string[] = Object.keys(
-  import.meta.glob<Resource>('../lua/*.lua', { eager: true })
-).map(k => k.substring(k.lastIndexOf('/') + 1));
+export const BUNDLED_LUA_FILES: readonly string[] = Object.keys(import.meta.glob<Resource>('../lua/*.lua', { eager: true })).map(k =>
+  k.substring(k.lastIndexOf('/') + 1)
+);
 
 // The embedded resource
 export default [

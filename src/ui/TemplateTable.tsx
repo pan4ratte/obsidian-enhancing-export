@@ -44,12 +44,7 @@ const describeOutput = (extension?: string) => {
  * settings, not part of them, so it is not saved. Making a template is not one
  * of the table's jobs; that lives in the card above it.
  */
-export default (props: {
-  lang: Lang;
-  templates: ExportSetting[];
-  onEdit?: (name: string) => void;
-  onRemove?: (name: string) => void;
-}) => {
+export default (props: { lang: Lang; templates: ExportSetting[]; onEdit?: (name: string) => void; onRemove?: (name: string) => void }) => {
   const { lang } = props;
   const [column, setColumn] = createSignal<Column>('name');
   const [ascending, setAscending] = createSignal(true);
@@ -67,25 +62,25 @@ export default (props: {
   const rows = createMemo(() => {
     const key = column();
     const direction = ascending() ? 1 : -1;
-    return props.templates
-      .map(t => ({ name: t.name ?? '', output: describeOutput(extractDefaultExtension(t)) }))
-      // Name breaks a tie on output, so the order never falls back to where a
-      // template happens to sit in the settings file.
-      .sort((a, b) => direction * (a[key].localeCompare(b[key]) || a.name.localeCompare(b.name)));
+    return (
+      props.templates
+        .map(t => ({ name: t.name ?? '', output: describeOutput(extractDefaultExtension(t)) }))
+        // Name breaks a tie on output, so the order never falls back to where a
+        // template happens to sit in the settings file.
+        .sort((a, b) => direction * (a[key].localeCompare(b[key]) || a.name.localeCompare(b.name)))
+    );
   });
 
   const Heading = (headingProps: { column: Column; label: string }) => (
     <th
       class="ex-template-table-heading"
       classList={{ 'is-sorted': column() === headingProps.column }}
-      onClick={() => sortBy(headingProps.column)}>
+      onClick={() => sortBy(headingProps.column)}
+    >
       <span class="ex-template-table-label">
         <span>{headingProps.label}</span>
         {/* Always drawn, so turning the order around moves nothing but the arrow. */}
-        <Icon
-          class="ex-template-table-sort"
-          name={column() === headingProps.column && !ascending() ? 'arrow-down' : 'arrow-up'}
-        />
+        <Icon class="ex-template-table-sort" name={column() === headingProps.column && !ascending() ? 'arrow-down' : 'arrow-up'} />
       </span>
     </th>
   );
@@ -108,7 +103,8 @@ export default (props: {
             <tr class="ex-template-table-empty">
               <td colSpan={3}>{lang.settingTab.noTemplates}</td>
             </tr>
-          }>
+          }
+        >
           {row => (
             <tr>
               <td class="ex-template-table-name">{row.name}</td>

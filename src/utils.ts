@@ -32,7 +32,7 @@ export function getPlatformValue<T>(obj: PlatformValue<T>, platform?: PlatformKe
   return val ?? all;
 }
 
-// eslint-disable-next-line
+/** A template's placeholders take whatever the caller interpolates, so `any` is the type. */
 export function strTpl(strings: TemplateStringsArray, ...keys: number[]): (...values: any[]) => string {
   return function (...values) {
     const dict = values[values.length - 1] || {};
@@ -57,10 +57,12 @@ export function exec(cmd: string, options?: ExecOptions): Promise<string> {
         return;
       }
       if (stderr && stderr !== '') {
-        reject(stderr);
+        reject(new Error(stderr));
         console.error(stdout, error);
         return;
       }
+      // A developer's own debug switch, not vault data — so raw localStorage rather
+      // than `App#saveLocalStorage`, which would scope the flag to a single vault.
       if (stdout?.trim().length === 0 && '1' === localStorage.getItem('debug-plugin')) {
         console.log(stdout);
       }
@@ -84,9 +86,9 @@ export function trimQuotes(s: string) {
 export function renderTemplate(template: string, variables: Record<string, unknown> = {}): string {
   while (true) {
     try {
-      const keys = Object.keys(variables).filter(isVarName) as Array<keyof typeof variables>;
+      const keys = Object.keys(variables).filter(isVarName);
       const values = keys.map(k => variables[k]);
-      return new Function(...keys, `{ return \`${template.replaceAll('\\', '\\\\')}\` }`).bind(variables)(...values);
+      return new Function(...keys, `{ return \`${template.replaceAll('\\', '\\\\')}\` }`).bind(variables)(...values) as string;
     } catch (e: unknown) {
       if (e instanceof ReferenceError && e.message.endsWith('is not defined')) {
         const name = e.message.substring(0, e.message.indexOf(' '));
@@ -112,6 +114,8 @@ const isVarName = (str: string) => {
   }
 
   try {
+    // Asking the engine whether a string is a legal identifier, which is the only
+    // thing that knows for certain. Nothing built here is ever called.
     new Function(str, 'var ' + str);
   } catch {
     return false;

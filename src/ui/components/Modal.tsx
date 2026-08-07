@@ -3,14 +3,14 @@ import { JSX, createEffect, onCleanup, onMount } from 'solid-js';
 import { insert } from 'solid-js/web';
 
 export default (props: {
-  app: App,
-  title?: JSX.Element,
-  children: JSX.Element,
+  app: App;
+  title?: JSX.Element;
+  children: JSX.Element;
   classList?: {
     [k: string]: boolean;
-  },
-  hidden?: boolean,
-  onClose?: () => void
+  };
+  hidden?: boolean;
+  onClose?: () => void;
 }) => {
   const modal = new Modal(props.app);
   let classes: string[] = [];
@@ -22,7 +22,9 @@ export default (props: {
     insert(modal.contentEl, () => props.children);
   });
   createEffect(() => {
-    const newClasses = Object.entries(props.classList ?? {}).filter(([, v]) => v).map(([k,]) => k);
+    const newClasses = Object.entries(props.classList ?? {})
+      .filter(([, v]) => v)
+      .map(([k]) => k);
     if (classes.length > 0) {
       modal.containerEl.removeClasses(classes);
     }

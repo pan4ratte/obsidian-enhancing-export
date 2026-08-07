@@ -124,7 +124,7 @@ export async function exportToOo(
     metadata: frontMatter,
     embedDirs,
     options,
-    fromFormat: app.vault.config.useMarkdownLinks ? 'markdown' : 'markdown+wikilinks_title_after_pipe',
+    fromFormat: obsidianConfig.useMarkdownLinks ? 'markdown' : 'markdown+wikilinks_title_after_pipe',
   };
 
   const showCommandLineOutput = setting.type === 'custom' && setting.showCommandOutput;
@@ -201,16 +201,12 @@ export async function exportToOo(
       fs.mkdirSync(actualOutputDir);
     }
 
-    console.log(`[${plugin.manifest.name}]: export command and options:`, {
-      cmd,
-      options: { cwd: variables.currentDir, env },
-    });
     await exec(cmd, { cwd: variables.currentDir, env });
     progressBarHide?.();
 
     const next = async () => {
       if (openExportedFileLocation) {
-        setTimeout(() => {
+        window.setTimeout(() => {
           ct.remote.shell.showItemInFolder(actualOutputPath);
         }, 1000);
       }
@@ -226,7 +222,7 @@ export async function exportToOo(
     };
 
     if (showCommandLineOutput) {
-      const box = new MessageBox(app, lang.exportCommandOutputMessage(cmd));
+      const box = new MessageBox(plugin.app, lang.exportCommandOutputMessage(cmd));
       box.onClose = next;
       box.open();
     } else {
@@ -235,7 +231,7 @@ export async function exportToOo(
     }
   } catch (err) {
     progressBarHide?.();
-    new MessageBox(app, lang.exportErrorOutputMessage(cmd, err)).open();
+    new MessageBox(plugin.app, lang.exportErrorOutputMessage(cmd, err)).open();
     onFailure?.();
   }
 }

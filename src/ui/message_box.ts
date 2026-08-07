@@ -50,7 +50,7 @@ export class MessageBox extends Modal {
     contentEl.createDiv({ text: message });
     switch (buttons) {
       case 'Yes':
-        contentEl.createEl('div', { cls: ['modal-button-container'], parent: contentEl }, el => {
+        contentEl.createDiv({ cls: ['modal-button-container'], parent: contentEl }, el => {
           el.createEl('button', {
             text: label?.yes ?? lang.messageBox.yes,
             cls: ['mod-cta', buttonsClass?.yes],
@@ -59,7 +59,7 @@ export class MessageBox extends Modal {
         });
         break;
       case 'YesNo':
-        contentEl.createEl('div', { cls: ['modal-button-container'], parent: contentEl }, el => {
+        contentEl.createDiv({ cls: ['modal-button-container'], parent: contentEl }, el => {
           el.createEl('button', {
             text: label?.yes ?? lang.messageBox.yes,
             cls: ['mod-cta', buttonsClass?.yes],
@@ -73,7 +73,7 @@ export class MessageBox extends Modal {
         });
         break;
       case 'Ok':
-        contentEl.createEl('div', { cls: ['modal-button-container'], parent: contentEl }, el => {
+        contentEl.createDiv({ cls: ['modal-button-container'], parent: contentEl }, el => {
           el.createEl('button', {
             text: label?.ok ?? lang.messageBox.ok,
             cls: ['mod-cta', buttonsClass?.no],
@@ -82,7 +82,7 @@ export class MessageBox extends Modal {
         });
         break;
       case 'OkCancel':
-        contentEl.createEl('div', { cls: ['modal-button-container'], parent: contentEl }, el => {
+        contentEl.createDiv({ cls: ['modal-button-container'], parent: contentEl }, el => {
           el.createEl('button', {
             text: label?.ok ?? lang.messageBox.ok,
             cls: ['mod-cta', buttonsClass?.ok],

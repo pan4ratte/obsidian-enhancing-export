@@ -11,7 +11,7 @@ import { ExtraButton } from './components/Setting';
 type Status = 'ok' | 'outdated' | 'checking' | 'missing';
 
 const openExternal = (url: string) => {
-  ct.remote.shell.openExternal(url);
+  void ct.remote.shell.openExternal(url);
 };
 
 /** A lookup that could not be made is the same as "no newer release known". */
@@ -31,6 +31,8 @@ export default (props: {
   lang: Lang;
   version?: SemVer;
   path?: string;
+  /** Whether the vault writes Markdown links rather than wikilinks. */
+  markdownLinks?: boolean;
   onPathChange?: (path: string) => void;
   onChoosePath?: () => void;
 }) => {
@@ -54,9 +56,7 @@ export default (props: {
     return updateAvailable() ? 'outdated' : 'ok';
   });
 
-  const versionText = createMemo(() =>
-    props.version ? lang.settingTab.pandocVersion(props.version) : lang.settingTab.pandocNotInstalled
-  );
+  const versionText = createMemo(() => (props.version ? lang.settingTab.pandocVersion(props.version) : lang.settingTab.pandocNotInstalled));
 
   const statusText = createMemo(() => {
     switch (status()) {
@@ -73,7 +73,7 @@ export default (props: {
 
   // Pandoc below the required version cannot resolve this vault's link style.
   const warning = createMemo(() =>
-    props.version && app.vault.config.useMarkdownLinks && props.version.compare(pandoc.requiredVersion) === -1
+    props.version && props.markdownLinks && props.version.compare(pandoc.requiredVersion) === -1
       ? lang.settingTab.pandocUpgradeRequired(pandoc.requiredVersion)
       : undefined
   );
@@ -97,7 +97,8 @@ export default (props: {
         <Button
           class="ex-pandoc-dashboard-button"
           cta={updateAvailable()}
-          onClick={() => openExternal(latest()?.url ?? pandoc.latestReleaseUrl)}>
+          onClick={() => openExternal(latest()?.url ?? pandoc.latestReleaseUrl)}
+        >
           <Icon name={updateAvailable() ? 'download' : 'scroll-text'} />
           {updateAvailable() ? lang.settingTab.pandocUpdate : lang.settingTab.pandocChangelog}
         </Button>
@@ -105,20 +106,13 @@ export default (props: {
           <Icon name="book-open" />
           {lang.settingTab.pandocOpenManual}
         </Button>
-        <Button
-          class="ex-pandoc-dashboard-button"
-          title={props.path || lang.settingTab.pandocPathPlaceholder}
-          onClick={props.onChoosePath}>
+        <Button class="ex-pandoc-dashboard-button" title={props.path || lang.settingTab.pandocPathPlaceholder} onClick={props.onChoosePath}>
           <Icon name="folder" />
           {lang.settingTab.pandocFolder}
         </Button>
         {/* The dialog cannot pick "nothing", so clearing needs its own control. */}
         <Show when={props.path}>
-          <ExtraButton
-            icon="rotate-ccw"
-            tooltip={lang.settingTab.pandocPathReset}
-            onClick={() => props.onPathChange?.('')}
-          />
+          <ExtraButton icon="rotate-ccw" tooltip={lang.settingTab.pandocPathReset} onClick={() => props.onPathChange?.('')} />
         </Show>
       </div>
     </div>

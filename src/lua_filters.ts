@@ -50,8 +50,7 @@ export interface InstalledLuaFilter {
 }
 
 /** The curated catalogue, unless a vault points `luaFilterRepoUrl` elsewhere. */
-export const DEFAULT_LUA_FILTER_REPO_URL =
-  'https://raw.githubusercontent.com/pan4ratte/obsidian-enhancing-export/main/lua-filters/';
+export const DEFAULT_LUA_FILTER_REPO_URL = 'https://raw.githubusercontent.com/pan4ratte/obsidian-enhancing-export/main/lua-filters/';
 
 /** The organisation the pandoc project publishes its filters under. */
 const UPSTREAM_ORG = 'pandoc-ext';
@@ -85,8 +84,7 @@ export const luaFilterArg = (fileName: string) => '--lua-filter="${luaDir}/' + f
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** Whether `args` already runs the filter. */
-export const hasLuaFilterArg = (args: string | undefined, fileName: string) =>
-  !!args && args.includes(luaFilterArg(fileName));
+export const hasLuaFilterArg = (args: string | undefined, fileName: string) => !!args && args.includes(luaFilterArg(fileName));
 
 /** `args` with the filter appended, or unchanged if it is already there. */
 export const addLuaFilterArg = (args: string | undefined, fileName: string) => {
@@ -157,21 +155,23 @@ export class LuaFilterManager {
     if (!data || !Array.isArray(data.filters)) {
       throw new Error('Malformed catalogue (missing "filters" array)');
     }
-    return (data.filters as Partial<LuaFilterEntry>[])
-      // An entry with nothing to fetch, or nothing to call it, is not a row.
-      .filter(f => typeof f?.id === 'string' && (typeof f.path === 'string' || typeof f.url === 'string'))
-      .map(f => ({
-        id: f.id,
-        storeName: f.storeName ?? f.id,
-        description: f.description ?? '',
-        author: f.author ?? '',
-        updated: f.updated,
-        fileName: f.fileName,
-        path: f.path,
-        url: f.url,
-        homepage: f.homepage,
-        source: 'curated' as const,
-      }));
+    return (
+      (data.filters as Partial<LuaFilterEntry>[])
+        // An entry with nothing to fetch, or nothing to call it, is not a row.
+        .filter(f => typeof f?.id === 'string' && (typeof f.path === 'string' || typeof f.url === 'string'))
+        .map(f => ({
+          id: f.id,
+          storeName: f.storeName ?? f.id,
+          description: f.description ?? '',
+          author: f.author ?? '',
+          updated: f.updated,
+          fileName: f.fileName,
+          path: f.path,
+          url: f.url,
+          homepage: f.homepage,
+          source: 'curated' as const,
+        }))
+    );
   }
 
   /**

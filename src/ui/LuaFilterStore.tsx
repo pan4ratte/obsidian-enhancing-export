@@ -1,15 +1,9 @@
 import * as ct from 'electron';
-import { Notice } from 'obsidian';
+import { Notice, type App } from 'obsidian';
 import { For, Match, Show, Switch, createMemo, createResource, createSignal } from 'solid-js';
 import type { Lang } from '../lang';
 import type { ExportSetting, PandocExportSetting } from '../settings';
-import {
-  LuaFilterManager,
-  hasLuaFilterArg,
-  type InstalledLuaFilter,
-  type LuaFilterEntry,
-  type LuaFilterSource,
-} from '../lua_filters';
+import { LuaFilterManager, hasLuaFilterArg, type InstalledLuaFilter, type LuaFilterEntry, type LuaFilterSource } from '../lua_filters';
 import Modal from './components/Modal';
 import Icon from './components/Icon';
 
@@ -23,10 +17,11 @@ const SOURCE_ICON: Record<LuaFilterSource, string> = {
 };
 
 const openExternal = (url: string) => {
-  ct.remote.shell.openExternal(url);
+  void ct.remote.shell.openExternal(url);
 };
 
-const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
+/** What went wrong, in the words of whatever threw — an object gets its shape, not `[object Object]`. */
+const message = (e: unknown) => (e instanceof Error ? e.message : typeof e === 'string' ? e : JSON.stringify(e));
 
 /**
  * The lua-filter store: both catalogues in one list, with what is installed and
@@ -39,6 +34,7 @@ const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
  */
 export default (props: {
   lang: Lang;
+  app: App;
   manager: LuaFilterManager;
   installed: InstalledLuaFilter[];
   templates: ExportSetting[];
@@ -117,12 +113,14 @@ export default (props: {
    * answers "how many of these are there" independently of which chip is on.
    */
   const chips = createMemo(() =>
-    ([
-      ['all', t.filterAll],
-      ['curated', t.filterCurated],
-      ['upstream', t.filterUpstream],
-      ['installed', t.filterInstalled],
-    ] as const).map(([value, label]) => ({
+    (
+      [
+        ['all', t.filterAll],
+        ['curated', t.filterCurated],
+        ['upstream', t.filterUpstream],
+        ['installed', t.filterInstalled],
+      ] as const
+    ).map(([value, label]) => ({
       value,
       label,
       count: matched().filter(e => inChip(e, value)).length,
@@ -204,9 +202,11 @@ export default (props: {
         <div class="ex-lua-card-main">
           <div class="ex-lua-card-head">
             <span class="ex-lua-name">{entry().storeName}</span>
-            <Icon class="ex-lua-source-icon" name={SOURCE_ICON[entry().source]} title={
-              entry().source === 'curated' ? t.filterCurated : t.filterUpstream
-            } />
+            <Icon
+              class="ex-lua-source-icon"
+              name={SOURCE_ICON[entry().source]}
+              title={entry().source === 'curated' ? t.filterCurated : t.filterUpstream}
+            />
           </div>
           <Show when={entry().author}>
             <span class="ex-lua-author">{t.byAuthor(entry().author)}</span>
@@ -246,7 +246,8 @@ export default (props: {
                   <Show when={pandocTemplates().length === 0}>
                     <span class="ex-lua-no-templates">{t.noPandocTemplates}</span>
                   </Show>
-                }>
+                }
+              >
                 <select
                   ref={select}
                   class="dropdown ex-lua-add-select"
@@ -260,7 +261,8 @@ export default (props: {
                     }
                     props.onAddToTemplate(name, fileName());
                     new Notice(t.addedToTemplate(entry().storeName, name));
-                  }}>
+                  }}
+                >
                   <option value="">{t.addToTemplate}</option>
                   <For each={notUsedBy(fileName())}>{template => <option value={template.name}>{template.name}</option>}</For>
                 </select>
@@ -280,7 +282,8 @@ export default (props: {
               class="ex-lua-install"
               title={isBusy() ? t.installing : updatable() ? t.update : t.install}
               disabled={isBusy()}
-              onClick={() => void install(entry())}>
+              onClick={() => void install(entry())}
+            >
               <Icon name={updatable() ? 'refresh-cw' : 'download'} />
             </button>
           </Show>
@@ -295,7 +298,7 @@ export default (props: {
   };
 
   return (
-    <Modal app={app} title={t.title} classList={{ 'ex-lua-modal': true }} onClose={props.onClose}>
+    <Modal app={props.app} title={t.title} classList={{ 'ex-lua-modal': true }} onClose={props.onClose}>
       <input
         type="text"
         class="ex-lua-search"
@@ -320,9 +323,7 @@ export default (props: {
       {/* One catalogue down still leaves the other worth showing, so it is said
           above the list rather than instead of it. */}
       <Show when={!catalogue.loading && !failedAll() && catalogue()?.failed.length > 0}>
-        <p class="ex-lua-notice">
-          {t.sourceUnavailable(catalogue().failed[0] === 'curated' ? t.filterCurated : t.filterUpstream)}
-        </p>
+        <p class="ex-lua-notice">{t.sourceUnavailable(catalogue().failed[0] === 'curated' ? t.filterCurated : t.filterUpstream)}</p>
       </Show>
 
       <div class="ex-lua-list">

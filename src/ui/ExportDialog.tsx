@@ -4,16 +4,18 @@ import { createSignal, createRoot, onCleanup, createMemo, untrack, createEffect,
 import { insert } from 'solid-js/web';
 import type UniversalExportPlugin from '../main';
 import { extractDefaultExtension as extractExtension, finalizeOptionsMeta } from '../settings';
-import { setPlatformValue, getPlatformValue, } from '../utils';
+import { setPlatformValue, getPlatformValue } from '../utils';
 import { exportToOo } from '../exporto0o';
 import Modal from './components/Modal';
 import Button from './components/Button';
 import PropertyGrid, { createDefaultObject } from './components/PropertyGrid';
-import Setting, {Text, DropDown, ExtraButton, Toggle} from './components/Setting';
+import Setting, { Text, DropDown, ExtraButton, Toggle } from './components/Setting';
 
-
-const Dialog = (props: { plugin: UniversalExportPlugin, currentFile: TFile, onClose?: () => void }) => {
-  const { plugin: { app, settings: globalSetting, lang }, currentFile } = props;
+const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onClose?: () => void }) => {
+  const {
+    plugin: { app, settings: globalSetting, lang },
+    currentFile,
+  } = props;
 
   const [hidden, setHidden] = createSignal(false);
   const [showOverwriteConfirmation, setShowOverwriteConfirmation] = createSignal(globalSetting.showOverwriteConfirmation);
@@ -25,7 +27,9 @@ const Dialog = (props: { plugin: UniversalExportPlugin, currentFile: TFile, onCl
   const title = createMemo(() => lang.exportDialog.title(setting().name));
   const optionsMeta = createMemo(() => finalizeOptionsMeta(setting().optionsMeta));
 
-  const [candidateOutputDirectory, setCandidateOutputDirectory] = createSignal(`${getPlatformValue(globalSetting.lastExportDirectory) ?? ct.remote.app.getPath('documents')}`);
+  const [candidateOutputDirectory, setCandidateOutputDirectory] = createSignal(
+    `${getPlatformValue(globalSetting.lastExportDirectory) ?? ct.remote.app.getPath('documents')}`
+  );
   const [candidateOutputFileName, setCandidateOutputFileName] = createSignal(`${currentFile.basename}${extension()}`);
 
   createEffect(() => {
@@ -35,7 +39,7 @@ const Dialog = (props: { plugin: UniversalExportPlugin, currentFile: TFile, onCl
 
   createEffect(() => {
     let fileName = untrack(candidateOutputFileName);
-    fileName =  fileName.includes('.') ? fileName.substring(0, fileName.lastIndexOf('.')) : fileName;
+    fileName = fileName.includes('.') ? fileName.substring(0, fileName.lastIndexOf('.')) : fileName;
     setCandidateOutputFileName(`${fileName}${extension()}`);
   });
 
@@ -47,7 +51,7 @@ const Dialog = (props: { plugin: UniversalExportPlugin, currentFile: TFile, onCl
   } else if (globalSetting.defaultExportDirectoryMode === 'Custom') {
     setCandidateOutputDirectory(getPlatformValue(globalSetting.customDefaultExportDirectory));
   }
-  
+
   const chooseFolder = async () => {
     const retval = await ct.remote.dialog.showOpenDialog({
       title: lang.exportDialog.selectExportFolder,
@@ -77,7 +81,7 @@ const Dialog = (props: { plugin: UniversalExportPlugin, currentFile: TFile, onCl
 
         globalSetting.lastExportType = untrack(setting).name;
         await plugin.saveSettings();
-        props.onClose && props.onClose();
+        props.onClose?.();
       },
       () => {
         setHidden(false);
@@ -85,68 +89,67 @@ const Dialog = (props: { plugin: UniversalExportPlugin, currentFile: TFile, onCl
     );
   };
 
-  return <>
-    <Modal app={app} title={title()} hidden={hidden()} onClose={props.onClose} >
-      <Setting name={lang.exportDialog.type}>
-        <DropDown options={exportTypes} onChange={(typ) => setExportType(typ)} selected={exportType()}/>
-      </Setting>
-
-      <Setting name={lang.exportDialog.fileName}>
-        <Text
-          title={candidateOutputFileName()}
-          value={candidateOutputFileName()}
-          onChange={(value) => setCandidateOutputFileName(value)}
-        />
-      </Setting>
-
-      <Show when={optionsMeta()}>
-        <PropertyGrid meta={optionsMeta()} value={options()} onChange={ (o) => setOptions(o)}/>
-      </Show>
-
-      <Setting name={lang.exportDialog.exportTo}>
-        <Text title={candidateOutputDirectory()} value={candidateOutputDirectory()} disabled />
-        <ExtraButton icon='folder' onClick={chooseFolder} />
-      </Setting>
-
-      <Show when={setting()?.type === 'pandoc'}>
-        <Setting name={lang.exportDialog.extraArguments}>
-          <Text
-            style="width: 100%"
-            value={extraArguments()}
-            onChange={(value) => setExtraArguments(value)}
-          />
+  return (
+    <>
+      <Modal app={app} title={title()} hidden={hidden()} onClose={props.onClose}>
+        <Setting name={lang.exportDialog.type}>
+          <DropDown options={exportTypes} onChange={typ => setExportType(typ)} selected={exportType()} />
         </Setting>
-      </Show>
 
-      <Setting name={lang.exportDialog.overwriteConfirmation} class="mod-toggle">
-        <Toggle checked={showOverwriteConfirmation()} onChange={setShowOverwriteConfirmation} />
-      </Setting>
+        <Setting name={lang.exportDialog.fileName}>
+          <Text title={candidateOutputFileName()} value={candidateOutputFileName()} onChange={value => setCandidateOutputFileName(value)} />
+        </Setting>
 
-      <div class="modal-button-container">
-        <Button cta={true} onClick={doExport}>{lang.exportDialog.export}</Button>
-      </div>
-    </Modal>
-  </>;
+        <Show when={optionsMeta()}>
+          <PropertyGrid meta={optionsMeta()} value={options()} onChange={o => setOptions(o)} />
+        </Show>
+
+        <Setting name={lang.exportDialog.exportTo}>
+          <Text title={candidateOutputDirectory()} value={candidateOutputDirectory()} disabled />
+          <ExtraButton icon="folder" onClick={chooseFolder} />
+        </Setting>
+
+        <Show when={setting()?.type === 'pandoc'}>
+          <Setting name={lang.exportDialog.extraArguments}>
+            <Text style="width: 100%" value={extraArguments()} onChange={value => setExtraArguments(value)} />
+          </Setting>
+        </Show>
+
+        <Setting name={lang.exportDialog.overwriteConfirmation} class="mod-toggle">
+          <Toggle checked={showOverwriteConfirmation()} onChange={setShowOverwriteConfirmation} />
+        </Setting>
+
+        <div class="modal-button-container">
+          <Button cta={true} onClick={doExport}>
+            {lang.exportDialog.export}
+          </Button>
+        </div>
+      </Modal>
+    </>
+  );
 };
 
-
-const show = (plugin: UniversalExportPlugin, currentFile: TFile) => createRoot(dispose => {
-  let disposed = false;
-  const cleanup = () => {
-    if (disposed) {
-      return;
-    }
-    disposed = true;
-    dispose();
-  };
-  const el = insert(document.body, () => <Dialog onClose={cleanup} plugin={plugin} currentFile={currentFile} />);
-  onCleanup(() => {
-    el instanceof Node && document.body.contains(el) && document.body.removeChild(el);
+const show = (plugin: UniversalExportPlugin, currentFile: TFile) =>
+  createRoot(dispose => {
+    let disposed = false;
+    const cleanup = () => {
+      if (disposed) {
+        return;
+      }
+      disposed = true;
+      dispose();
+    };
+    // `insert` is typed as returning anything solid can render; the guard below is
+    // what actually establishes this is a node, so the cast only gets tsc that far.
+    const el = insert(document.body, () => <Dialog onClose={cleanup} plugin={plugin} currentFile={currentFile} />) as Node;
+    onCleanup(() => {
+      if (el?.instanceOf(Node) && document.body.contains(el)) {
+        document.body.removeChild(el);
+      }
+    });
+    return cleanup;
   });
-  return cleanup;
-});
-
 
 export default {
-  show
+  show,
 };
