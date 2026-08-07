@@ -17,7 +17,8 @@ import PandocDashboard from './PandocDashboard';
 import TemplateActions from './TemplateActions';
 import TemplateTable from './TemplateTable';
 import LuaFilterStore from './LuaFilterStore';
-import { LuaFilterManager, addLuaFilterArg, removeLuaFilterArg, type InstalledLuaFilter } from '../lua_filters';
+import { LuaFilterManager, addLuaFilterArg, hasLuaFilterArg, removeLuaFilterArg, type InstalledLuaFilter } from '../lua_filters';
+import TemplateLuaFilters from './TemplateLuaFilters';
 import { MessageBox } from './message_box';
 import Modal from './components/Modal';
 import Button from './components/Button';
@@ -243,8 +244,6 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
   /** Add or replace a filter's record — an update reinstalls under the same id. */
   const recordLuaFilter = (filter: InstalledLuaFilter) => setInstalledLuaFilters(prev => [...prev.filter(f => f.id !== filter.id), filter]);
 
-  const forgetLuaFilter = (filter: InstalledLuaFilter) => setInstalledLuaFilters(prev => prev.filter(f => f.id !== filter.id));
-
   /**
    * Run a filter in a template, or stop running it. The flag goes in the extra
    * arguments rather than the arguments proper: those come from the output
@@ -267,11 +266,29 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     );
   };
 
-  const addLuaFilterToTemplate = (templateName: string, fileName: string) =>
-    updateTemplateArguments(templateName, args => addLuaFilterArg(args, fileName));
+  /** Which filter the template being edited is having switched on or off. */
+  const setLuaFilterOnCurrentTemplate = (fileName: string, running: boolean) => {
+    const template = currentEditCommandTemplate('pandoc');
+    if (!template) {
+      return;
+    }
+    updateTemplateArguments(template.name, args => (running ? addLuaFilterArg(args, fileName) : removeLuaFilterArg(args, fileName)));
+  };
 
-  const removeLuaFilterFromTemplate = (templateName: string, fileName: string) =>
-    updateTemplateArguments(templateName, args => removeLuaFilterArg(args, fileName));
+  /**
+   * Forget an uninstalled filter, and stop every template running it — the file
+   * is gone, so a template still naming it would fail the whole export.
+   */
+  const forgetLuaFilter = (filter: InstalledLuaFilter) => {
+    batch(() => {
+      for (const template of settings.items) {
+        if (template.type === 'pandoc' && hasLuaFilterArg(template.customArguments, filter.fileName)) {
+          updateTemplateArguments(template.name, args => removeLuaFilterArg(args, filter.fileName));
+        }
+      }
+      setInstalledLuaFilters(prev => prev.filter(f => f.id !== filter.id));
+    });
+  };
 
   const LuaFilterStoreModal = () => (
     <LuaFilterStore
@@ -279,11 +296,8 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
       app={app}
       manager={luaFilters}
       installed={settings.installedLuaFilters ?? []}
-      templates={settings.items}
       onInstalled={recordLuaFilter}
       onUninstalled={forgetLuaFilter}
-      onAddToTemplate={addLuaFilterToTemplate}
-      onRemoveFromTemplate={removeLuaFilterFromTemplate}
       onClose={() => setModal(undefined)}
     />
   );
@@ -307,6 +321,18 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
             value={template()?.customArguments ?? ''}
             title={template()?.customArguments}
             onChange={value => updateTemplate(v => (v.customArguments = value))}
+          />
+        </Setting>
+
+        {/* Sits under the extra arguments because that is the field it writes:
+            adding a filter appends its `--lua-filter` flag to the line above. */}
+        <Setting name={lang.settingTab.luaFilters}>
+          <TemplateLuaFilters
+            lang={lang}
+            installed={settings.installedLuaFilters ?? []}
+            args={template()?.customArguments}
+            onAdd={fileName => setLuaFilterOnCurrentTemplate(fileName, true)}
+            onRemove={fileName => setLuaFilterOnCurrentTemplate(fileName, false)}
           />
         </Setting>
 
@@ -497,6 +523,7 @@ export default class extends PluginSettingTab {
               settingTab.exportTemplates,
               settingTab.newTemplate,
               settingTab.browseLuaFilters,
+              settingTab.luaFilters,
               this.lang.luaFilterStore.title,
               settingTab.editCommandTemplate,
               settingTab.command,

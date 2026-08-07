@@ -80,6 +80,12 @@ export default {
 
     /* The card above the templates table. */
     browseLuaFilters: 'Browse lua-filters',
+
+    /* Running installed filters, from the template that runs them. */
+    luaFilters: 'Lua filters',
+    addLuaFilter: 'Add a filter…',
+    noLuaFiltersInstalled: 'No filters installed. Add some from Browse lua-filters.',
+    removeLuaFilter: strTpl`Stop running "${0}"`,
   },
   luaFilterStore: {
     title: 'Lua filters',
@@ -88,11 +94,12 @@ export default {
     filterAll: 'All',
     filterCurated: 'Curated',
     filterUpstream: 'pandoc-ext',
+    filterCourse: 'course-it-in-science',
     filterInstalled: 'Installed',
 
     loading: 'Loading filters…',
     loadError: 'Could not load the filter catalogue.',
-    sourceUnavailable: strTpl`The ${0} catalogue could not be loaded.`,
+    sourceUnavailable: strTpl`Could not load: ${0}.`,
     retry: 'Retry',
     emptyCatalogue: 'The catalogue is empty.',
     noResults: 'No filters match your search.',
@@ -109,12 +116,7 @@ export default {
     uninstalledNotice: strTpl`Uninstalled "${0}".`,
     uninstallFailed: strTpl`Uninstall failed: ${0}`,
 
-    /* Connecting an installed filter to the templates that run it. */
-    addToTemplate: 'Add to template…',
-    noPandocTemplates: 'No Pandoc templates to add it to.',
-    usedBy: 'Used by:',
-    removeFromTemplate: strTpl`Remove from "${0}"`,
-    addedToTemplate: strTpl`Added "${0}" to "${1}".`,
-    removedFromTemplate: strTpl`Removed "${0}" from "${1}".`,
+    /** Said on the cards, so it is clear where an installed filter is switched on. */
+    installedHint: 'Installed. Add it to a template to run it.',
   },
 };

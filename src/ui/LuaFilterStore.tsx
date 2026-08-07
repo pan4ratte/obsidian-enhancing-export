@@ -2,18 +2,18 @@ import * as ct from 'electron';
 import { Notice, type App } from 'obsidian';
 import { For, Match, Show, Switch, createMemo, createResource, createSignal } from 'solid-js';
 import type { Lang } from '../lang';
-import type { ExportSetting, PandocExportSetting } from '../settings';
-import { LuaFilterManager, hasLuaFilterArg, type InstalledLuaFilter, type LuaFilterEntry, type LuaFilterSource } from '../lua_filters';
+import { LUA_FILTER_SOURCES, LuaFilterManager, type InstalledLuaFilter, type LuaFilterEntry, type LuaFilterSource } from '../lua_filters';
 import Modal from './components/Modal';
 import Icon from './components/Icon';
 
 /** The chips above the list. `all` is every catalogue, not every state. */
-type Chip = 'all' | 'curated' | 'upstream' | 'installed';
+type Chip = LuaFilterSource | 'all' | 'installed';
 
-/** What each source is drawn as, and what the icon's tooltip calls it. */
+/** What each source is drawn as. */
 const SOURCE_ICON: Record<LuaFilterSource, string> = {
   curated: 'bookmark',
   upstream: 'github',
+  course: 'graduation-cap',
 };
 
 const openExternal = (url: string) => {
@@ -24,24 +24,21 @@ const openExternal = (url: string) => {
 const message = (e: unknown) => (e instanceof Error ? e.message : typeof e === 'string' ? e : JSON.stringify(e));
 
 /**
- * The lua-filter store: both catalogues in one list, with what is installed and
- * which templates run it.
+ * The lua-filter store: every catalogue in one list, and what is installed from
+ * them. Installing puts a filter on disk; which templates *run* it is settled in
+ * the template editor, so this list is only ever about what the vault has.
  *
  * The files are this component's to write — through the manager — but what is
  * installed is not: the records live in the settings, so every change goes back
- * out through a callback and comes back in as a prop. That is what keeps the
- * list's install states in step with the templates table behind it.
+ * out through a callback and comes back in as a prop.
  */
 export default (props: {
   lang: Lang;
   app: App;
   manager: LuaFilterManager;
   installed: InstalledLuaFilter[];
-  templates: ExportSetting[];
   onInstalled: (filter: InstalledLuaFilter) => void;
   onUninstalled: (filter: InstalledLuaFilter) => void;
-  onAddToTemplate: (templateName: string, fileName: string) => void;
-  onRemoveFromTemplate: (templateName: string, fileName: string) => void;
   onClose: () => void;
 }) => {
   const { lang } = props;
@@ -118,6 +115,7 @@ export default (props: {
         ['all', t.filterAll],
         ['curated', t.filterCurated],
         ['upstream', t.filterUpstream],
+        ['course', t.filterCourse],
         ['installed', t.filterInstalled],
       ] as const
     ).map(([value, label]) => ({
@@ -138,14 +136,12 @@ export default (props: {
       })
   );
 
-  /** Both catalogues down is the only state with nothing at all to show. */
-  const failedAll = createMemo(() => (catalogue()?.failed.length ?? 0) === 2);
+  /** Every catalogue down is the only state with nothing at all to show. */
+  const failedAll = createMemo(() => (catalogue()?.failed.length ?? 0) === LUA_FILTER_SOURCES.length);
 
-  // ── Templates a filter can be added to ──────────────────────────────────────
-
-  const pandocTemplates = createMemo(() => props.templates.filter((v): v is PandocExportSetting => v.type === 'pandoc'));
-  const usedBy = (fileName: string) => pandocTemplates().filter(v => hasLuaFilterArg(v.customArguments, fileName));
-  const notUsedBy = (fileName: string) => pandocTemplates().filter(v => !hasLuaFilterArg(v.customArguments, fileName));
+  /** What a chip and a card's icon call each source. */
+  const sourceLabel = (source: LuaFilterSource) =>
+    source === 'curated' ? t.filterCurated : source === 'upstream' ? t.filterUpstream : t.filterCourse;
 
   // ── Actions ─────────────────────────────────────────────────────────────────
 
@@ -168,10 +164,8 @@ export default (props: {
       }
       try {
         await props.manager.uninstall(filter);
-        // Nothing may be left running a filter that is no longer on disk.
-        for (const template of usedBy(filter.fileName)) {
-          props.onRemoveFromTemplate(template.name, filter.fileName);
-        }
+        // Whoever owns the records also takes it back out of the templates that
+        // run it: nothing may be left pointing at a file that is gone.
         props.onUninstalled(filter);
         new Notice(t.uninstalledNotice(filter.storeName));
       } catch (e) {
@@ -184,8 +178,7 @@ export default (props: {
   const Card = (cardProps: { entry: LuaFilterEntry }) => {
     const entry = () => cardProps.entry;
     const filter = () => installedOf(entry().id);
-    const fileName = () => filter()?.fileName ?? props.manager.fileNameOf(entry());
-    // ISO dates compare correctly as strings, and both catalogues record them
+    // ISO dates compare correctly as strings, and every catalogue records them
     // to the day for exactly that reason.
     const updatable = () => {
       const mine = filter();
@@ -195,18 +188,12 @@ export default (props: {
     // An orphan has nothing left to fetch, so it can only be removed.
     const installable = () => !!entry().url || !!entry().path;
 
-    let select!: HTMLSelectElement;
-
     return (
       <div class="ex-lua-card" classList={{ 'is-installed': !!filter() }}>
         <div class="ex-lua-card-main">
           <div class="ex-lua-card-head">
             <span class="ex-lua-name">{entry().storeName}</span>
-            <Icon
-              class="ex-lua-source-icon"
-              name={SOURCE_ICON[entry().source]}
-              title={entry().source === 'curated' ? t.filterCurated : t.filterUpstream}
-            />
+            <Icon class="ex-lua-source-icon" name={SOURCE_ICON[entry().source]} title={sourceLabel(entry().source)} />
           </div>
           <Show when={entry().author}>
             <span class="ex-lua-author">{t.byAuthor(entry().author)}</span>
@@ -215,59 +202,10 @@ export default (props: {
             <p class="ex-lua-desc">{entry().description}</p>
           </Show>
 
-          {/* Installing a filter does not run it — a template has to ask for it,
-              and this is where that is said. */}
+          {/* Installing a filter only puts it on disk. Saying so here is what
+              stops the store looking like it did nothing. */}
           <Show when={filter()}>
-            <div class="ex-lua-templates">
-              <Show when={usedBy(fileName()).length > 0}>
-                <div class="ex-lua-used-by">
-                  <span class="ex-lua-used-by-label">{t.usedBy}</span>
-                  <For each={usedBy(fileName())}>
-                    {template => (
-                      <span class="ex-lua-used-by-item">
-                        {template.name}
-                        <Icon
-                          name="x"
-                          title={t.removeFromTemplate(template.name)}
-                          onClick={() => {
-                            props.onRemoveFromTemplate(template.name, fileName());
-                            new Notice(t.removedFromTemplate(entry().storeName, template.name));
-                          }}
-                        />
-                      </span>
-                    )}
-                  </For>
-                </div>
-              </Show>
-
-              <Show
-                when={notUsedBy(fileName()).length > 0}
-                fallback={
-                  <Show when={pandocTemplates().length === 0}>
-                    <span class="ex-lua-no-templates">{t.noPandocTemplates}</span>
-                  </Show>
-                }
-              >
-                <select
-                  ref={select}
-                  class="dropdown ex-lua-add-select"
-                  onChange={e => {
-                    const name = e.currentTarget.value;
-                    // Back to the prompt: the control asks a question, it does
-                    // not hold an answer.
-                    select.value = '';
-                    if (!name) {
-                      return;
-                    }
-                    props.onAddToTemplate(name, fileName());
-                    new Notice(t.addedToTemplate(entry().storeName, name));
-                  }}
-                >
-                  <option value="">{t.addToTemplate}</option>
-                  <For each={notUsedBy(fileName())}>{template => <option value={template.name}>{template.name}</option>}</For>
-                </select>
-              </Show>
-            </div>
+            <p class="ex-lua-installed-hint">{t.installedHint}</p>
           </Show>
         </div>
 
@@ -323,7 +261,7 @@ export default (props: {
       {/* One catalogue down still leaves the other worth showing, so it is said
           above the list rather than instead of it. */}
       <Show when={!catalogue.loading && !failedAll() && catalogue()?.failed.length > 0}>
-        <p class="ex-lua-notice">{t.sourceUnavailable(catalogue().failed[0] === 'curated' ? t.filterCurated : t.filterUpstream)}</p>
+        <p class="ex-lua-notice">{t.sourceUnavailable(catalogue().failed.map(sourceLabel).join(', '))}</p>
       </Show>
 
       <div class="ex-lua-list">

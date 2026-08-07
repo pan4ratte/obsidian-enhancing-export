@@ -5,7 +5,7 @@ import type UniversalExportPlugin from './main';
 /*
  * The lua-filter store.
  *
- * Two catalogues feed it, and neither is a list this plugin has to keep by hand:
+ * Three catalogues feed it, and only the first is a list kept by hand:
  *
  * - `curated`  — an index.json in this plugin's own repo, for filters worth
  *                pointing at that live nowhere else. Entries may carry a path
@@ -14,12 +14,21 @@ import type UniversalExportPlugin from './main';
  *                the retired pandoc/lua-filters repo now live. One API call
  *                returns every repository with the description and default
  *                branch a card needs, so the catalogue is the org itself.
+ * - `course`   — the filters kept in the course-it-in-science vault, read
+ *                straight out of the folder they live in.
+ *
+ * They are read in that order and a file name is only taken once, so a filter
+ * already offered by an earlier source — or shipped with the plugin — is not
+ * offered again by a later one.
  *
  * Nothing here executes what it downloads: a filter is text written into `lua/`,
  * and only pandoc ever reads it.
  */
 
-export type LuaFilterSource = 'curated' | 'upstream';
+export type LuaFilterSource = 'curated' | 'upstream' | 'course';
+
+/** Every catalogue, in the order they get first claim on a file name. */
+export const LUA_FILTER_SOURCES = ['curated', 'upstream', 'course'] as const;
 
 /** One row of a catalogue — everything a card shows, plus where to fetch it. */
 export interface LuaFilterEntry {
@@ -56,6 +65,13 @@ export const DEFAULT_LUA_FILTER_REPO_URL = 'https://raw.githubusercontent.com/pa
 const UPSTREAM_ORG = 'pandoc-ext';
 const UPSTREAM_API = `https://api.github.com/orgs/${UPSTREAM_ORG}/repos?per_page=100&sort=full_name`;
 
+/** The vault whose pandoc filters are offered alongside the published ones. */
+const COURSE_REPO = 'pan4ratte/course-it-in-science';
+/** Where in that repository the filters sit. */
+const COURSE_DIR = 'Obsidian/Pandoc/filters';
+
+const GITHUB_HEADERS = { Accept: 'application/vnd.github+json' };
+
 /**
  * Repositories in the organisation that are not filters — the org's profile
  * README and the notes about the move away from pandoc/lua-filters.
@@ -70,6 +86,13 @@ interface GitHubRepo {
   pushed_at: string | null;
   html_url: string;
   archived: boolean;
+}
+
+/** One row of a GitHub directory listing. */
+interface GitHubContent {
+  name: string;
+  type: string;
+  download_url: string | null;
 }
 
 // ── The pandoc argument a filter is used through ──────────────────────────────
@@ -180,7 +203,7 @@ export class LuaFilterManager {
    * whole catalogue — the per-filter files are only fetched on install.
    */
   async fetchUpstream(): Promise<LuaFilterEntry[]> {
-    const res = await requestUrl({ url: UPSTREAM_API, headers: { Accept: 'application/vnd.github+json' } });
+    const res = await requestUrl({ url: UPSTREAM_API, headers: GITHUB_HEADERS });
     const repos = res.json as GitHubRepo[];
     if (!Array.isArray(repos)) {
       throw new Error('Malformed repository list');
@@ -205,23 +228,72 @@ export class LuaFilterManager {
   }
 
   /**
-   * Both catalogues at once. One source failing is reported rather than thrown:
-   * the other one's filters are still worth showing, and the GitHub API is rate
+   * The lua filters kept in the course-it-in-science vault. There is no manifest
+   * to read, so the folder listing is the catalogue: two requests, one to learn
+   * the default branch and when the repository last moved, one for the files.
+   * Nothing there describes a filter, so the cards carry names only.
+   */
+  async fetchCourse(): Promise<LuaFilterEntry[]> {
+    const repo = (await requestUrl({ url: `https://api.github.com/repos/${COURSE_REPO}`, headers: GITHUB_HEADERS })).json as GitHubRepo;
+    const branch = repo?.default_branch ?? 'main';
+    // One date for the lot: a directory listing does not say when each file
+    // changed, and the repository's own last push is the closest thing to it.
+    const updated = repo?.pushed_at?.substring(0, 10);
+
+    const res = await requestUrl({
+      url: `https://api.github.com/repos/${COURSE_REPO}/contents/${COURSE_DIR}?ref=${branch}`,
+      headers: GITHUB_HEADERS,
+    });
+    const files = res.json as GitHubContent[];
+    if (!Array.isArray(files)) {
+      throw new Error('Malformed directory listing');
+    }
+    return files
+      .filter(f => f?.type === 'file' && f.name?.endsWith('.lua') && !!f.download_url)
+      .map(f => ({
+        id: `course:${f.name.replace(/\.lua$/, '')}`,
+        storeName: f.name.replace(/\.lua$/, ''),
+        description: '',
+        author: COURSE_REPO,
+        updated,
+        fileName: f.name,
+        url: f.download_url,
+        homepage: `https://github.com/${COURSE_REPO}/blob/${branch}/${COURSE_DIR}/${f.name}`,
+        source: 'course' as const,
+      }));
+  }
+
+  /**
+   * Every catalogue at once. A source failing is reported rather than thrown:
+   * the others' filters are still worth showing, and the GitHub API is rate
    * limited per address in a way the curated catalogue is not.
+   *
+   * A file name is only offered once. The sources are read in the order they are
+   * declared, and anything the plugin already ships takes precedence over all of
+   * them — the name is what the `--lua-filter` argument names, so two filters
+   * answering to it would make which one runs a matter of install order.
    */
   async fetchAll(): Promise<{ entries: LuaFilterEntry[]; failed: LuaFilterSource[] }> {
-    const [curated, upstream] = await Promise.allSettled([this.fetchCurated(), this.fetchUpstream()]);
+    const results = await Promise.allSettled([this.fetchCurated(), this.fetchUpstream(), this.fetchCourse()]);
+
     const entries: LuaFilterEntry[] = [];
     const failed: LuaFilterSource[] = [];
-    for (const [source, result] of [
-      ['curated', curated],
-      ['upstream', upstream],
-    ] as const) {
-      if (result.status === 'fulfilled') {
-        entries.push(...result.value);
-      } else {
+    const taken = new Set<string>(this.bundled);
+
+    for (const [i, source] of LUA_FILTER_SOURCES.entries()) {
+      const result = results[i];
+      if (result.status === 'rejected') {
         failed.push(source);
         console.error(`[obsidian-enhancing-export] ${source} lua-filter catalogue failed`, result.reason);
+        continue;
+      }
+      for (const entry of result.value) {
+        const fileName = this.fileNameOf(entry);
+        if (taken.has(fileName)) {
+          continue;
+        }
+        taken.add(fileName);
+        entries.push(entry);
       }
     }
     return { entries, failed };

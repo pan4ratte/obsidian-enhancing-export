@@ -291,7 +291,10 @@
   gap: var(--size-4-2);
   min-width: 0;
   margin: 0;
-  padding: var(--size-4-3) var(--size-4-4);
+  /* Tall enough to read as a panel of the card rather than a button sitting in
+     it — the height is the point, so it is set rather than left to the label. */
+  min-height: 42px;
+  padding: var(--size-4-5) var(--size-4-4);
   background-color: transparent;
   border: none;
   border-radius: 0;
@@ -496,6 +499,59 @@
   min-width: 0;
 }
 
+/*
+ * Which lua filters a template runs. The chips are what it runs now; the
+ * dropdown offers the rest of what is installed.
+ */
+.ex-template-lua {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--size-4-2);
+  width: 100%;
+  min-width: 0;
+}
+
+.ex-template-lua-running {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-4-1);
+}
+
+/* A filter this template runs, with the control that stops it. */
+.ex-template-lua-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-2-1);
+  padding: var(--size-2-1) var(--size-4-1) var(--size-2-1) var(--size-4-2);
+  border-radius: 2em;
+  font-size: var(--font-ui-smaller);
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.ex-template-lua-chip .svg-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+.ex-template-lua-chip .clickable-icon:hover {
+  color: var(--text-error);
+}
+
+/* Overrides the modal's rule stretching every control to the full width: this
+   one is a picker, not a field. */
+.ex-template-modal .setting-item:not(.mod-toggle) > .setting-item-control > .ex-template-lua select.ex-template-lua-select {
+  width: auto;
+  max-width: 100%;
+}
+
+.ex-template-lua-empty {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+}
+
 /* A field the row above asks the question for. */
 .ex-template-modal .setting-item.ex-template-modal-nameless {
   border-top: none;
@@ -514,18 +570,34 @@
  * filter chips, and a list of cards with the actions at their end.
  */
 
-/* Wide enough for a card's text and its buttons to share a line, and tall
-   enough that the list is worth scrolling rather than the page behind it. */
-.ex-lua-modal .modal {
-  width: min(760px, 90vw);
-  max-height: 80vh;
+/*
+ * Wide enough for a card's text and its buttons to share a line. Obsidian sizes
+ * a modal from these variables, so setting them is what actually works — a bare
+ * `width` on `.modal` loses to the theme's own `max-width`, and the modal then
+ * overflowed its container and had its right edge clipped.
+ */
+.ex-lua-modal {
+  --modal-width: min(760px, 90vw);
+  --modal-max-width: min(760px, 90vw);
+  --modal-height: auto;
+  --modal-max-height: 80vh;
 }
 
-/* The modal's own content scrolls. Reserving the gutter on both edges keeps the
-   cards from shifting sideways when the scrollbar appears. */
+.ex-lua-modal .modal {
+  width: var(--modal-width);
+  max-width: var(--modal-max-width);
+  max-height: var(--modal-max-height);
+}
+
+/* The modal's own content scrolls. A single stable gutter keeps the cards from
+   shifting sideways when the scrollbar appears, without the second reservation
+   `both-edges` makes — that one narrowed the content box enough to cut the
+   cards off. */
 .ex-lua-modal .modal-content {
+  width: 100%;
+  overflow-x: hidden;
   overflow-y: auto;
-  scrollbar-gutter: stable both-edges;
+  scrollbar-gutter: stable;
   /* A scroll container trims a trailing child's margin but never its own
      padding, so the last card needs this to clear the bottom edge. */
   padding-bottom: var(--size-4-4);
@@ -605,16 +677,27 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: var(--size-4-2);
+  gap: var(--size-4-4);
   padding: var(--size-4-4);
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-m);
   background-color: var(--background-secondary);
+  /* The card is as wide as the list and no wider; its text wraps rather than
+     pushing the actions off the right-hand edge. */
+  max-width: 100%;
+  min-width: 0;
 }
 
 .ex-lua-card-main {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
+}
+
+/* A filter's name can be one long unbroken word; it wraps rather than overflows. */
+.ex-lua-name,
+.ex-lua-desc,
+.ex-lua-author {
+  overflow-wrap: anywhere;
 }
 
 .ex-lua-card-head {
@@ -660,74 +743,38 @@
   color: var(--text-muted);
 }
 
-/*
- * Installing a filter does not run it — a template has to ask for it. This is
- * the row that says which ones do, and adds it to one that does not.
- */
-.ex-lua-templates {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--size-4-2);
-  margin-top: var(--size-4-2);
-}
-
-.ex-lua-used-by {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--size-4-1);
+/* Installing puts a filter on disk; a template still has to ask for it. */
+.ex-lua-installed-hint {
+  margin: var(--size-4-2) 0 0;
   font-size: var(--font-ui-smaller);
+  color: var(--text-accent);
 }
 
-.ex-lua-used-by-label {
-  color: var(--text-faint);
-}
-
-/* A template the filter runs in, with the control that takes it back out. */
-.ex-lua-used-by-item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--size-2-1);
-  padding: 0 var(--size-4-1) 0 var(--size-4-2);
-  border-radius: 2em;
-  background: var(--background-modifier-hover);
-  color: var(--text-normal);
-}
-
-.ex-lua-used-by-item .svg-icon {
-  width: var(--icon-xs);
-  height: var(--icon-xs);
-}
-
-.ex-lua-used-by-item .clickable-icon:hover {
-  color: var(--text-error);
-}
-
-.ex-lua-add-select {
-  font-size: var(--font-ui-smaller);
-  max-width: 100%;
-}
-
-.ex-lua-no-templates {
-  font-size: var(--font-ui-smaller);
-  color: var(--text-faint);
-}
-
-/* Neutral buttons that take a colour only under the pointer, pinned to the end
-   of the card. */
+/* Neutral buttons that take a colour only under the pointer, at the end of the
+   card and never squeezed by the text beside them. */
 .ex-lua-actions {
   display: flex;
+  align-items: center;
   gap: var(--size-4-2);
-  flex-shrink: 0;
-  align-self: flex-end;
+  /* `flex: 0 0 auto` is the whole fix: the row was shrinking under a long
+     description, which squashed the buttons out of square. */
+  flex: 0 0 auto;
+  align-self: center;
 }
 
+/*
+ * Square, evenly sized icon buttons. The size is set rather than padded out from
+ * the icon, so every button matches whatever glyph it happens to hold.
+ */
 .ex-lua-actions button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: var(--size-4-1);
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: var(--radius-s);
   background: var(--interactive-normal);
   color: var(--text-normal);
   box-shadow: none;
