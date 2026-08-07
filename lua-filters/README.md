@@ -82,6 +82,17 @@ one click away, on the card's *Open readme* button.
       // One of the shelves above. An unknown or missing one becomes "other".
       "category": "tools",
 
+      // Optional. The output formats the filter is written for, as families:
+      // "latex" (latex, beamer, pdf), "docx", "odt", "html" (html*, epub*),
+      // "slides" (revealjs, beamer, pptx, …), "markdown" (markdown*,
+      // commonmark*, gfm, …) or "typst".
+      //
+      // A template only offers the filters that can do something for what it
+      // writes, so a filter setting Word styles is not offered to a LaTeX
+      // export. Leave it out for a filter that works on the document rather
+      // than on the output — most do — and it is offered everywhere.
+      "formats": ["latex"],
+
       // Optional. What has to exist before the filter can work — an external
       // program, a style in the reference document, another filter ahead of it.
       // Shown on the card *before* the Install button, so a missing dependency

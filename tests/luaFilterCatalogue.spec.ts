@@ -14,6 +14,7 @@ jest.mock('obsidian', () => ({
 import { existsSync } from 'fs';
 import path from 'path';
 import { DEFAULT_LUA_FILTER_REPO_URL, LUA_FILTER_CATEGORIES, LuaFilterManager, type LuaFilterEntry } from '../src/lua_filters';
+import { FORMAT_FAMILIES } from '../src/pandoc_format';
 import type UniversalExportPlugin from '../src/main';
 import catalogue from '../lua-filters/index.json';
 
@@ -105,6 +106,21 @@ describe('the catalogue in this repository', () => {
       expect(entry.homepage).toMatch(/^https:\/\//);
       expect(LUA_FILTER_CATEGORIES).toContain(entry.category);
     }
+  });
+
+  test('a filter written for particular outputs names families the editor knows', () => {
+    const restricted = entries.filter(e => e.formats);
+    // A typo here would not fail anything — it would quietly hide the filter
+    // from every template, since no writer would ever match it.
+    for (const entry of restricted) {
+      expect(entry.formats.length).toBeGreaterThan(0);
+      for (const family of entry.formats) {
+        expect(FORMAT_FAMILIES).toContain(family);
+      }
+    }
+    // The rest work on the document rather than the output; if that ever fell
+    // to nothing, the whole idea of narrowing by format would have gone wrong.
+    expect(entries.length - restricted.length).toBeGreaterThan(restricted.length);
   });
 
   test('the file name matches the path it is served from', () => {

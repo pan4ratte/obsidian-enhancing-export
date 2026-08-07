@@ -21,6 +21,8 @@ import { LuaFilterManager, addLuaFilterArg, hasLuaFilterArg, removeLuaFilterArg,
 import TemplateLuaFilters from './TemplateLuaFilters';
 import CheckGrid from './components/CheckGrid';
 import { TOC_MAX_DEPTH, setTocDepth, tocDepth } from '../toc_args';
+import { PANDOC_EXTENSIONS, enabledExtensions, setExtensions } from '../pandoc_extensions';
+import { outputFormat, supportsToc } from '../pandoc_format';
 import { MessageBox } from './message_box';
 import Modal from './components/Modal';
 import Button from './components/Button';
@@ -313,6 +315,12 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
       updateCurrentEditCommandTemplate(prev => (prev.type === 'pandoc' ? update(prev) : undefined));
     };
     /**
+     * What this template writes. Read from the arguments rather than the preset,
+     * so a hand-edited `-t` is what the rows below answer to.
+     */
+    const format = createMemo(() => outputFormat(template()?.arguments, template()?.customArguments));
+
+    /**
      * One box per heading level a table of contents can reach, ticked down to
      * the depth the arguments ask for — depth is one number, so the boxes fill
      * from the top rather than being picked out one at a time.
@@ -325,6 +333,24 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
         checked: depth >= i + 1,
       }));
     });
+
+    /** The reader extensions, ticked where the arguments switch them on. */
+    const extensions = createMemo(() => {
+      const on = enabledExtensions(template()?.customArguments);
+      return PANDOC_EXTENSIONS.map(id => ({
+        value: id,
+        label: lang.settingTab.extension[id],
+        // What the flag actually carries, as the filters' boxes do.
+        title: id,
+        checked: on.includes(id),
+      }));
+    });
+
+    const toggleExtension = (id: string, on: boolean) =>
+      updateTemplate(v => {
+        const current = enabledExtensions(v.customArguments).filter(e => e !== id);
+        v.customArguments = setExtensions(v.customArguments, on ? [...current, id] : current);
+      });
     return (
       <>
         <Setting name={lang.settingTab.arguments}>
@@ -339,18 +365,27 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
           />
         </Setting>
 
-        {/* Writes the extra arguments above: ticking a level puts `--toc
-            --toc-depth=N` in that line, and clearing them takes it back out. */}
-        <Setting name={lang.settingTab.tableOfContents} description={lang.settingTab.tableOfContentsDesc}>
-          <CheckGrid
-            items={tocLevels()}
-            onToggle={(value, checked) =>
-              // Ticking a level takes the contents down to it; clearing one
-              // stops them at the level above, so unticking the first is "none".
-              updateTemplate(v => (v.customArguments = setTocDepth(v.customArguments, Number(value) - (checked ? 0 : 1))))
-            }
-          />
+        {/* Writes the extra arguments above: ticking a box puts `-f
+            ${fromFormat}+extension` in that line. Every extension offered is one
+            pandoc leaves off, so a cleared box is the reader's own behaviour. */}
+        <Setting name={lang.settingTab.extensions} description={lang.settingTab.extensionsDesc}>
+          <CheckGrid items={extensions()} onToggle={toggleExtension} />
         </Setting>
+
+        {/* Only for the writers that would do something with it — asking man or
+            textile for a table of contents changes nothing at all. */}
+        <Show when={supportsToc(format())}>
+          <Setting name={lang.settingTab.tableOfContents} description={lang.settingTab.tableOfContentsDesc}>
+            <CheckGrid
+              items={tocLevels()}
+              onToggle={(value, checked) =>
+                // Ticking a level takes the contents down to it; clearing one
+                // stops them at the level above, so unticking the first is "none".
+                updateTemplate(v => (v.customArguments = setTocDepth(v.customArguments, Number(value) - (checked ? 0 : 1))))
+              }
+            />
+          </Setting>
+        </Show>
 
         {/* Writes that same field: adding a filter appends its `--lua-filter`
             flag to it. */}
@@ -358,6 +393,7 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
           <TemplateLuaFilters
             lang={lang}
             installed={settings.installedLuaFilters ?? []}
+            format={format()}
             args={template()?.customArguments}
             onAdd={fileName => setLuaFilterOnCurrentTemplate(fileName, true)}
             onRemove={fileName => setLuaFilterOnCurrentTemplate(fileName, false)}
@@ -557,6 +593,7 @@ export default class extends PluginSettingTab {
               settingTab.command,
               settingTab.arguments,
               settingTab.extraArguments,
+              settingTab.extensions,
               settingTab.tableOfContents,
               settingTab.targetFileExtensions,
               settingTab.showCommandOutput,

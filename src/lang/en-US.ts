@@ -81,6 +81,24 @@ export default {
     /* The card above the templates table. */
     browseLuaFilters: 'Browse lua-filters',
 
+    /* Writes `-f ${fromFormat}+extension` into the template's extra arguments.
+       Every one offered is off in pandoc's markdown by default, so a cleared
+       box means what pandoc does on its own. */
+    extensions: 'Markdown extensions',
+    extensionsDesc: 'Syntax pandoc does not read unless asked. Cleared is pandoc’s own behaviour.',
+    extension: {
+      alerts: 'Callouts (> [!note])',
+      mark: 'Highlights (==text==)',
+      hard_line_breaks: 'Keep single line breaks',
+      lists_without_preceding_blankline: 'Lists with no blank line above',
+      rebase_relative_paths: 'Paths relative to the note',
+      emoji: 'Emoji shortcodes (:smile:)',
+      autolink_bare_uris: 'Bare URLs as links',
+      tex_math_single_backslash: 'Math in \\( \\) and \\[ \\]',
+      east_asian_line_breaks: 'East Asian line breaks',
+      short_subsuperscripts: 'Short sub/superscripts',
+    },
+
     /* Writes `--toc --toc-depth=N` into the template's extra arguments. */
     tableOfContents: 'Table of contents',
     tableOfContentsDesc: 'Headings down to the deepest level ticked. Tick nothing for no contents.',
@@ -89,6 +107,7 @@ export default {
     /* Running installed filters, from the template that runs them. */
     luaFilters: 'Lua filters',
     noLuaFiltersInstalled: 'No filters installed. Add some from Browse lua-filters.',
+    noLuaFiltersForFormat: 'None of the installed filters are written for this output format.',
   },
   luaFilterStore: {
     title: 'Lua filters',

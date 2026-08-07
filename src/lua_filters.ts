@@ -44,6 +44,12 @@ export interface LuaFilterEntry {
   author: string;
   license?: string;
   category: LuaFilterCategory;
+  /**
+   * The output formats the filter is written for, as families from
+   * `pandoc_format`. Absent means it works on the document rather than on the
+   * output, and so is offered whatever a template writes.
+   */
+  formats?: string[];
   /** What has to be installed or set up for the filter to work at all. */
   requires?: string;
   /** Compared against the installed copy's to offer an update. */
@@ -65,6 +71,11 @@ export interface InstalledLuaFilter {
   storeName: string;
   updated?: string;
   category: LuaFilterCategory;
+  /**
+   * Recorded alongside the file so a template editor can tell whether the
+   * filter is any use to what it writes without the catalogue in front of it.
+   */
+  formats?: string[];
 }
 
 /** The catalogue, unless a vault points `luaFilterRepoUrl` elsewhere. */
@@ -177,6 +188,7 @@ export class LuaFilterManager {
         author: f.author ?? '',
         license: f.license,
         category: isCategory(f.category) ? f.category : DEFAULT_LUA_FILTER_CATEGORY,
+        formats: Array.isArray(f.formats) ? f.formats.filter(v => typeof v === 'string') : undefined,
         requires: f.requires,
         updated: f.updated,
         fileName: f.fileName,
@@ -229,6 +241,7 @@ export class LuaFilterManager {
       storeName: entry.storeName,
       updated: entry.updated,
       category: entry.category,
+      formats: entry.formats,
     };
   }
 
