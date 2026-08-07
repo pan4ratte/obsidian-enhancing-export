@@ -210,6 +210,143 @@
   min-width: 0;
 }
 
+/*
+ * Export templates.
+ */
+
+.ex-template-table {
+    width: 100%;
+    margin-bottom: var(--size-4-4);
+    border: 1px solid var(--background-modifier-border-hover);
+    padding: 0px 0px 8px 0px;
+    border-radius: var(--setting-items-radius);
+}
+
+.ex-template-table th,
+.ex-template-table td {
+  text-align: left;
+  vertical-align: middle;
+  padding: var(--size-4-2);
+  border-bottom: var(--border-width) solid var(--background-modifier-border);
+}
+
+.ex-template-table th:first-child,
+.ex-template-table td:first-child {
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.ex-template-table th:last-child,
+.ex-template-table td:last-child {
+    padding-inline-end: 0;
+    padding-right: 16px;
+}
+
+.ex-template-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+
+/* A column header, which is also the control that orders by it. */
+.ex-template-table-heading {
+  cursor: var(--cursor);
+  user-select: none;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-medium);
+}
+
+.ex-template-table-heading:hover {
+  color: var(--text-normal);
+}
+
+/* Inline, not on the cell itself: a `display` of its own would stop the header
+   being a table cell and take the column out of alignment with the rows. */
+.ex-template-table-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-4-1);
+}
+
+/* The arrow keeps its space whether or not this is the column being sorted by,
+   so the header does not jump as the order moves between columns. */
+.ex-template-table-sort {
+  opacity: 0;
+  transition: opacity 100ms ease-in-out;
+}
+
+.ex-template-table-heading:hover .ex-template-table-sort {
+  opacity: 0.5;
+}
+
+.ex-template-table-heading.is-sorted .ex-template-table-sort,
+.ex-template-table-heading.is-sorted:hover .ex-template-table-sort {
+  opacity: 1;
+}
+
+.ex-template-table-sort .svg-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+.ex-template-table-name {
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+}
+
+/* Only as wide as the format it holds — the name column takes the rest. */
+.ex-template-table-output {
+  width: 1%;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.ex-template-table-actions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* Wide enough apart that the trash is never the one hit by mistake. */
+.ex-template-table-row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--size-4-4);
+}
+
+/* Settings-pane buttons stretch; this one is the end of a header row. */
+.ex-template-table-add.ex-template-table-add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-4-1);
+  width: auto;
+  margin: 0;
+  transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
+}
+
+/* Accent under the pointer only: adding a template is what this table is for,
+   but not what it is about. */
+.ex-template-table-add.ex-template-table-add:hover {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.ex-template-table-add .svg-icon {
+  width: var(--icon-s);
+  height: var(--icon-s);
+}
+
+.ex-template-table-empty td {
+  padding-block: var(--size-4-6);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.ex-template-table-empty:hover {
+  background-color: transparent;
+}
+
 *[hidden] {
   display: none;
 }

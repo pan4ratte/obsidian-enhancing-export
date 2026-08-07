@@ -20,6 +20,8 @@ import type { Lang } from '../lang';
 
 import pandoc from '../pandoc';
 import PandocDashboard from './PandocDashboard';
+import TemplateTable from './TemplateTable';
+import { MessageBox } from './message_box';
 import Modal from './components/Modal';
 import Button from './components/Button';
 import Collapsible from './components/Collapsible';
@@ -60,7 +62,7 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
   const currentCommandTemplate = createMemo(() => settings.items.find(v => v.name === settings.lastEditName) ?? settings.items.first());
   const currentEditCommandTemplate = <T extends 'custom' | 'pandoc'>(type?: T) => {
     const template = currentCommandTemplate();
-    return (type === undefined || type === template.type ? template : undefined) as T extends 'custom' ? CustomExportSetting : T extends 'pandoc' ? PandocExportSetting : ExportSetting;
+    return (type === undefined || type === template?.type ? template : undefined) as T extends 'custom' ? CustomExportSetting : T extends 'pandoc' ? PandocExportSetting : ExportSetting;
   };
   const customDefaultExportDirectory = createMemo(() => getPlatformValue(settings.customDefaultExportDirectory));
 
@@ -78,6 +80,19 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
     }));
   };
 
+  /** `name`, or the first `name 2`, `name 3`… no other template answers to. */
+  const uniqueTemplateName = (name: string, except?: string) => {
+    const taken = new Set(settings.items.filter(v => v.name !== except).map(v => v.name));
+    if (!taken.has(name)) {
+      return name;
+    }
+    let n = 2;
+    while (taken.has(`${name} ${n}`)) {
+      n++;
+    }
+    return `${name} ${n}`;
+  };
+
   const [modal, setModal] = createSignal<() => JSX.Element>();
 
   const AddCommandTemplateModal = () => {
@@ -86,51 +101,92 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
     const [name, setName] = createSignal<string>();
     const doAdd = () => {
       const template = JSON.parse(JSON.stringify(export_templates[templateName()]));
-      template.name = name();
+      // A row of the table needs a name to be found by, so an empty field takes
+      // the one the preset came with.
+      template.name = uniqueTemplateName(name()?.trim() || template.name);
       batch(() => {
         setSettings('items', items => [...items, template]);
         setSettings('lastEditName', template.name);
       });
+      const added: string = template.name;
       setModal(undefined);
+      // Straight on to the arguments — naming a template is not the point of
+      // adding one. Only once this modal is gone, though: it clears the signal
+      // on its way out, and would take the next one with it.
+      queueMicrotask(() => editCommandTemplate(added));
     };
     return <>
-      <Modal app={app} title={lang.settingTab.new} onClose={() => setModal(undefined)}>
+      <Modal app={app} title={lang.settingTab.newTemplate} onClose={() => setModal(undefined)}>
         <Setting name={lang.settingTab.template}>
           <DropDown
             options={Object.entries(export_templates).map(([k, v]) => ({ name: v.name, value: k })).sort((a, b) => a.name.localeCompare(b.name))}
-            selected={name() ?? templateName()}
+            selected={templateName()}
             onChange={(v: TemplateKey) => setTemplateName(v)}
           />
         </Setting>
         <Setting name={lang.settingTab.name}>
-          <Text value={name() ?? ''} onChange={(value) => setName(value)} />
+          <Text value={name() ?? ''} placeholder={export_templates[templateName()].name} onChange={(value) => setName(value)} />
         </Setting>
         <div class="modal-button-container">
-          <Button cta={true} onClick={doAdd}>{lang.settingTab.save}</Button>
+          <Button cta={true} onClick={doAdd}>{lang.settingTab.add}</Button>
         </div>
       </Modal>
     </>;
   };
 
-  const RenameCommandTemplateModal = () => {
-    const [name, setName] = createSignal(currentEditCommandTemplate().name);
-    const doRename = () => {
-      batch(() => {
-        updateCurrentEditCommandTemplate((v) => v.name = name());
-        setSettings('lastEditName', name());
-      });
-      setModal(undefined);
-    };
-    return <>
-      <Modal app={app} title={lang.settingTab.rename} onClose={() => setModal(undefined)}>
-        <Setting name={lang.settingTab.name}>
-          <Text value={name() ?? ''} onChange={(value) => setName(value)} />
-        </Setting>
-        <div class="modal-button-container">
-          <Button cta={true} onClick={doRename}>{lang.settingTab.add}</Button>
-        </div>
-      </Modal>
-    </>;
+  const renameCurrentCommandTemplate = (value: string) => {
+    const name = uniqueTemplateName(value.trim() || currentEditCommandTemplate().name, currentEditCommandTemplate().name);
+    if (name === currentEditCommandTemplate().name) {
+      return;
+    }
+    // Both at once: the item is found again by the name the settings remember.
+    batch(() => {
+      updateCurrentEditCommandTemplate((v) => v.name = name);
+      setSettings('lastEditName', name);
+    });
+  };
+
+  /** The whole of one template. Every field writes straight through, so there is nothing to save. */
+  const EditCommandTemplateModal = () => <>
+    <Modal app={app} title={lang.settingTab.editCommandTemplate} onClose={() => setModal(undefined)}>
+      <Setting name={lang.settingTab.name}>
+        <Text value={currentEditCommandTemplate()?.name ?? ''} onChange={renameCurrentCommandTemplate} />
+      </Setting>
+
+      <Switch>
+        <Match when={currentEditCommandTemplate('pandoc')}>
+          <PandocCommandTempateEditBlock />
+        </Match>
+        <Match when={currentEditCommandTemplate('custom')}>
+          <CustomCommandTempateEditBlock />
+        </Match>
+      </Switch>
+
+      <div class="modal-button-container">
+        <Button cta={true} onClick={() => setModal(undefined)}>{lang.settingTab.done}</Button>
+      </div>
+    </Modal>
+  </>;
+
+  const editCommandTemplate = (name: string) => {
+    setSettings('lastEditName', name);
+    setModal(() => EditCommandTemplateModal);
+  };
+
+  const removeCommandTemplate = (name: string) => {
+    new MessageBox(app, {
+      title: lang.settingTab.remove,
+      message: lang.settingTab.removeTemplateConfirmation(name),
+      buttons: 'YesNo',
+      callback: {
+        yes: () => batch(() => {
+          setSettings('items', (items) => items.filter(v => v.name !== name));
+          if (settings.lastEditName === name) {
+            setSettings('lastEditName', settings.items.first()?.name);
+          }
+        }),
+      },
+    }).open();
   };
 
   const PandocCommandTempateEditBlock = () => {
@@ -268,40 +324,15 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
       />
     </Setting>
 
-    <Setting name={lang.settingTab.editCommandTemplate} heading={true} />
+    <Setting name={lang.settingTab.exportTemplates} heading={true} />
 
-    <Setting name={lang.settingTab.chooseCommandTemplate}>
-      <DropDown
-        options={settings.items.map(o => ({ name: o.name, value: o.name })).sort((a, b) => a.name.localeCompare(b.name))}
-        selected={settings.lastEditName}
-        onChange={(v) => setSettings('lastEditName', v)}
-      />
-      <ExtraButton
-        icon="plus"
-        tooltip={lang.settingTab.add}
-        onClick={() => setModal(() => AddCommandTemplateModal)} />
-      <ExtraButton
-        icon="pencil"
-        tooltip={lang.settingTab.rename}
-        onClick={() => setModal(() => RenameCommandTemplateModal)} />
-      <ExtraButton
-        icon="trash"
-        tooltip={lang.settingTab.remove}
-        onClick={() => batch(() => {
-          setSettings('items', (items) => items.filter(n => n.name !== currentEditCommandTemplate()?.name));
-          setSettings('lastEditName', settings.items.first()?.name);
-        })} />
-    </Setting>
-
-    <Switch>
-      <Match when={currentEditCommandTemplate('pandoc')}>
-        <PandocCommandTempateEditBlock />
-      </Match>
-      <Match when={currentEditCommandTemplate('custom')}>
-        <CustomCommandTempateEditBlock />
-      </Match>
-    </Switch>
-
+    <TemplateTable
+      lang={lang}
+      templates={settings.items}
+      onAdd={() => setModal(() => AddCommandTemplateModal)}
+      onEdit={editCommandTemplate}
+      onRemove={removeCommandTemplate}
+    />
 
     <Setting name={lang.settingTab.advanced} heading={true} />
 
@@ -364,8 +395,9 @@ export default class extends PluginSettingTab {
               settingTab.openExportedFileLocation,
               settingTab.openExportedFile,
               settingTab.ShowExportProgressBar,
+              settingTab.exportTemplates,
+              settingTab.newTemplate,
               settingTab.editCommandTemplate,
-              settingTab.chooseCommandTemplate,
               settingTab.command,
               settingTab.arguments,
               settingTab.extraArguments,
