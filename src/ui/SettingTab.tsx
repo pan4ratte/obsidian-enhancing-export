@@ -1,6 +1,7 @@
 import * as ct from 'electron';
 import process from 'process';
 import { PluginSettingTab } from 'obsidian';
+import type { SettingDefinitionItem } from 'obsidian';
 import type { SemVer } from 'semver'
 import type UniversalExportPlugin from '../main';
 import {
@@ -332,9 +333,17 @@ const SettingTab = (props: { lang: Lang, plugin: UniversalExportPlugin }) => {
 };
 
 
+/** Group element hosting the single row the whole tab is rendered into. */
+const GROUP_CLASS = 'ex-settings-group';
+/** The row itself — stripped of its stock chrome, see styles.css. */
+const ANCHOR_CLASS = 'ex-settings-anchor';
+/** Container the solid-js tree is mounted into. */
+const ROOT_CLASS = 'ex-settings-root';
+
 export default class extends PluginSettingTab {
   plugin: UniversalExportPlugin;
   #dispose?: () => void;
+  #root?: HTMLElement;
 
   public get lang() {
     return this.plugin.lang;
@@ -346,17 +355,78 @@ export default class extends PluginSettingTab {
     this.name = this.plugin.lang.settingTab.title;
   }
 
-  display() {
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    const { settingTab } = this.lang;
+    return [
+      {
+        type: 'group',
+        cls: GROUP_CLASS,
+        items: [
+          {
+            // The whole tab is one custom-rendered row: the name, description and
+            // aliases exist so the settings search can find and scroll to it, the
+            // visible labels are drawn by the solid-js tree below.
+            name: settingTab.title,
+            desc: this.plugin.manifest.description,
+            aliases: [
+              settingTab.general,
+              settingTab.pandocPath,
+              settingTab.defaultFolderForExportedFile,
+              settingTab.openExportedFileLocation,
+              settingTab.openExportedFile,
+              settingTab.ShowExportProgressBar,
+              settingTab.editCommandTemplate,
+              settingTab.chooseCommandTemplate,
+              settingTab.command,
+              settingTab.arguments,
+              settingTab.extraArguments,
+              settingTab.targetFileExtensions,
+              settingTab.showCommandOutput,
+              settingTab.runCommand,
+              settingTab.afterExport,
+              settingTab.advanced,
+              settingTab.environmentVariables,
+              'pandoc',
+            ],
+            render: setting => {
+              setting.settingEl.addClass(ANCHOR_CLASS);
+              // Must be built into settingEl: anything appended to the group's listEl
+              // is pruned by the reconciler at the end of the render pass. Reuse the
+              // existing root so a re-render cannot append a second copy of the UI.
+              const root =
+                setting.settingEl.querySelector<HTMLElement>(`:scope > .${ROOT_CLASS}`) ?? setting.settingEl.createDiv(ROOT_CLASS);
+              this.#mount(root);
+              return () => this.#unmount();
+            },
+          },
+        ],
+      },
+    ];
+  }
+
+  hide() {
+    this.#unmount();
+  }
+
+  #mount(root: HTMLElement) {
+    if (this.#dispose && this.#root === root && root.isConnected) {
+      return;
+    }
+    this.#unmount();
+    this.#root = root;
     this.#dispose = createRoot(dispose => {
-      insert(this.containerEl, <SettingTab plugin={this.plugin} lang={this.lang} />);
+      insert(root, <SettingTab plugin={this.plugin} lang={this.lang} />);
       onCleanup(() => {
-        this.containerEl.empty();
+        root.empty();
       });
       return dispose;
     });
   }
 
-  hide() {
-    this.#dispose();
+  #unmount() {
+    const dispose = this.#dispose;
+    this.#dispose = undefined;
+    this.#root = undefined;
+    dispose?.();
   }
 }
