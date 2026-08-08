@@ -57,7 +57,10 @@
 ]]
 
 -- ===== configuration =======================================================
-local FLATTEN_ORDERED = false   -- see note above
+-- Set from the template editor, which writes `-M list-flatten-ordered=true`.
+-- See the trade-off above: it is a choice between numbered lists that restart
+-- at 1 and numbered lists that look exactly like the style says.
+local FLATTEN_ORDERED = false
 
 local BULLET_STYLES = {
   "List Bullet", "List Bullet 2", "List Bullet 3",
@@ -145,6 +148,12 @@ transform_blocks = function(blocks, base)
 end
 
 function Pandoc(doc)
+  -- Read before the lists are rewritten: `Meta` in this same pass would run
+  -- after `Pandoc`, which is too late to change how they are rewritten.
+  local flatten = doc.meta['list-flatten-ordered']
+  if flatten ~= nil then
+    FLATTEN_ORDERED = flatten == true or pandoc.utils.stringify(flatten) == 'true'
+  end
   doc.blocks = transform_blocks(doc.blocks, 1)
   return doc
 end

@@ -87,19 +87,6 @@
       "homepage": "https://github.com/pandoc/lua-filters/tree/master/revealjs-codeblock"
     },
     {
-      "id": "pandoc-ext:run-lua",
-      "storeName": "Run embedded Lua",
-      "description": "Runs Lua written into the note itself and puts what it returns in its place — a generated table or a computed figure, worked out at export time.",
-      "author": "Albert Krewinkel",
-      "license": "MIT",
-      "category": "structure",
-      "updated": "2026-08-07",
-      "fileName": "run-lua.lua",
-      "path": "pandoc-ext/run-lua.lua",
-      "homepage": "https://github.com/pandoc-ext/run-lua"
-    },
-
-    {
       "id": "course:zotero",
       "storeName": "Zotero live citations",
       "description": "Resolves Better BibTeX citekeys against a running Zotero, so citations and the bibliography come out right without exporting a .bib file first.",
@@ -199,7 +186,6 @@
       "path": "pandoc/author-info-blocks.lua",
       "homepage": "https://github.com/pandoc/lua-filters/tree/master/author-info-blocks"
     },
-
     {
       "id": "pandoc-ext:diagram",
       "storeName": "Diagrams from code blocks",
@@ -212,20 +198,6 @@
       "fileName": "diagram.lua",
       "path": "pandoc-ext/diagram.lua",
       "homepage": "https://github.com/pandoc-ext/diagram"
-    },
-    {
-      "id": "course:figures",
-      "storeName": "Figure style for images",
-      "description": "Gives an image with no caption the reference document's \"Figure\" paragraph style, which pandoc otherwise leaves as ordinary body text. Captioned images are left alone.",
-      "author": "pan4ratte",
-      "license": "MIT",
-      "category": "figures",
-      "formats": ["docx", "odt"],
-      "requires": "A paragraph style named \"Figure\" in the reference document.",
-      "updated": "2026-08-07",
-      "fileName": "figures.lua",
-      "path": "pan4ratte/figures.lua",
-      "homepage": "https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/figures.lua"
     },
     {
       "id": "math2svg",
@@ -294,7 +266,6 @@
       "path": "pandoc/lilypond.lua",
       "homepage": "https://github.com/pandoc/lua-filters/tree/master/lilypond"
     },
-
     {
       "id": "pandoc-quotes",
       "storeName": "Quotation marks by language",
@@ -346,71 +317,6 @@
       "homepage": "https://github.com/pandoc-ext/pretty-urls"
     },
     {
-      "id": "course:keywords",
-      "storeName": "Keywords line",
-      "description": "Prints the note's \"keywords\" property as a bold \"Keywords: …\" line at the top of the document, and leaves it in the file's properties as well.",
-      "author": "pan4ratte",
-      "license": "MIT",
-      "category": "prose",
-      "updated": "2026-08-07",
-      "fileName": "keywords.lua",
-      "path": "pan4ratte/keywords.lua",
-      "homepage": "https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/keywords.lua"
-    },
-    {
-      "id": "course:today-date",
-      "storeName": "Today's date",
-      "description": "Replaces $today with the date of the export, anywhere it appears — body, headings, and the note's properties. English wording.",
-      "author": "pan4ratte",
-      "license": "MIT",
-      "category": "prose",
-      "updated": "2026-08-07",
-      "fileName": "today-date.lua",
-      "path": "pan4ratte/today-date.lua",
-      "homepage": "https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/today-date.lua"
-    },
-    {
-      "id": "course:today-date-ru",
-      "storeName": "Today's date (Russian)",
-      "description": "The same substitution of $today, written the Russian way — 7 августа 2026 г.",
-      "author": "pan4ratte",
-      "license": "MIT",
-      "category": "prose",
-      "updated": "2026-08-07",
-      "fileName": "today-date-ru.lua",
-      "path": "pan4ratte/today-date-ru.lua",
-      "homepage": "https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/today-date-ru.lua"
-    },
-
-    {
-      "id": "course:list-styles",
-      "storeName": "Word list styles",
-      "description": "Makes Word's own List Bullet and List Number styles draw the lists. Without it pandoc paints its own bullets and indents over your style, and the list only snaps into place when you click the style by hand.",
-      "author": "pan4ratte",
-      "license": "MIT",
-      "category": "word",
-      "formats": ["docx"],
-      "requires": "A reference document with List Bullet / List Number styles.",
-      "updated": "2026-08-07",
-      "fileName": "list-styles.lua",
-      "path": "pan4ratte/list-styles.lua",
-      "homepage": "https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/list-styles.lua"
-    },
-    {
-      "id": "course:table-styles",
-      "storeName": "Table cell styles",
-      "description": "Stops the DOCX writer stamping its \"Compact\" and \"Body Text\" styles on every cell, which outrank your table style and undo its font, indent and alignment.",
-      "author": "pan4ratte",
-      "license": "MIT",
-      "category": "word",
-      "formats": ["docx", "odt"],
-      "requires": "A paragraph style named \"Table Text\" in the reference document.",
-      "updated": "2026-08-07",
-      "fileName": "table-styles.lua",
-      "path": "pan4ratte/table-styles.lua",
-      "homepage": "https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/table-styles.lua"
-    },
-    {
       "id": "course:table-verbatim",
       "storeName": "Code inside tables",
       "description": "Lets inline code in a table cell take its own character style, so it can be sized for the table instead of the body text. Pandoc hardcodes VerbatimChar there and ignores anything else.",
@@ -449,7 +355,6 @@
       "path": "pandoc/track-changes.lua",
       "homepage": "https://github.com/pandoc/lua-filters/tree/master/track-changes"
     },
-
     {
       "id": "minted",
       "storeName": "Highlighted code in PDF",
@@ -491,7 +396,6 @@
       "path": "pandoc/scrlttr2.lua",
       "homepage": "https://github.com/pandoc/lua-filters/tree/master/scrlttr2"
     },
-
     {
       "id": "wordcount",
       "storeName": "Word count",
@@ -516,18 +420,6 @@
       "fileName": "spellcheck.lua",
       "path": "pandoc/spellcheck.lua",
       "homepage": "https://github.com/pandoc/lua-filters/tree/master/spellcheck"
-    },
-    {
-      "id": "pandoc-ext:logging",
-      "storeName": "Filter logging",
-      "description": "Prints pandoc's view of the document while a filter runs. For writing filters of your own, not for exporting.",
-      "author": "William Lupton",
-      "license": "MIT",
-      "category": "tools",
-      "updated": "2026-08-07",
-      "fileName": "logging.lua",
-      "path": "pandoc-ext/logging.lua",
-      "homepage": "https://github.com/pandoc-ext/logging"
     }
   ]
 }

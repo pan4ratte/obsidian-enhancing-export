@@ -3,9 +3,9 @@ import * as fs from 'fs';
 import process from 'process';
 import path from 'path';
 import argsParser from 'yargs-parser';
-import { Variables, ExportSetting, extractDefaultExtension as extractExtension, createEnv } from './settings';
+import { Variables, ExportSetting, extractDefaultExtension as extractExtension, createEnv, today } from './settings';
 import { MessageBox } from './ui/message_box';
-import { Notice, TFile, type EmbedCache } from 'obsidian';
+import { Notice, TFile, getLinkpath, moment, type EmbedCache } from 'obsidian';
 import { exec, renderTemplate, getPlatformValue, trimQuotes } from './utils';
 import ProgressBar from './ui/components/ProgressBar';
 import { describeExportFailure } from './export_error';
@@ -93,7 +93,7 @@ export async function exportToOo(
   let targetDirArray: string[] = [];
   for (const embed of embedArray ?? []) {
     const linkPath = embed.link;
-    const targetFile = metadataCache.getFirstLinkpathDest(linkPath, currentFile.path);
+    const targetFile = metadataCache.getFirstLinkpathDest(getLinkpath(linkPath), currentFile.path);
     if (targetFile instanceof TFile) {
       targetDirArray.push(path.join(vaultDir, path.dirname(targetFile.path)));
     } else if (targetFile === null) {
@@ -102,6 +102,45 @@ export async function exportToOo(
   }
   targetDirArray = [...new Set(targetDirArray)];
   const embedDirs = targetDirArray.join(path.delimiter);
+
+  /*
+   * Every note the note embeds, and every note those embed, as the link that
+   * was written against the file it stands for.
+   *
+   * Resolving a link is Obsidian's to do and nobody else's: which note
+   * `![[Methods]]` means depends on the vault's index, on where the note doing
+   * the embedding sits, and on the shortest-path rule — none of which is
+   * visible from a folder on disk, and all of which is one call away here. So
+   * the plugin resolves and the filter substitutes.
+   *
+   * Notes only. An embedded image is pandoc's business and always was, and it
+   * finds it through the resource path above.
+   */
+  const noteEmbeds = new Map<string, string>();
+  const walkedForEmbeds = new Set<string>([currentFile.path]);
+  const collectNoteEmbeds = (file: TFile, depth: number) => {
+    if (depth > 8) {
+      return;
+    }
+    for (const embed of metadataCache.getCache(file.path)?.embeds ?? []) {
+      const target = metadataCache.getFirstLinkpathDest(getLinkpath(embed.link), file.path);
+      if (!(target instanceof TFile) || target.extension !== 'md') {
+        continue;
+      }
+      // Keyed by the link as it was written, `#section` and all, because that
+      // is what the filter reads off the document.
+      noteEmbeds.set(embed.link, adapter.getFullPath(target.path));
+      if (!walkedForEmbeds.has(target.path)) {
+        walkedForEmbeds.add(target.path);
+        collectNoteEmbeds(target, depth + 1);
+      }
+    }
+  };
+  try {
+    collectNoteEmbeds(currentFile, 1);
+  } catch (e) {
+    console.error(e);
+  }
 
   const variables: Variables = {
     pluginDir,
@@ -121,6 +160,10 @@ export async function exportToOo(
     // now: new Date()
     metadata: frontMatter,
     embedDirs,
+    // In Obsidian's own language rather than the machine's: someone writing in
+    // Russian in a Russian-language Obsidian wants a Russian date, whatever the
+    // operating system was installed as.
+    today: today(moment.locale()),
     // Always an object: a template asking for `${options.something}` is asking
     // a question nothing puts to the user any more, and reading a field off
     // nothing would throw while the command was still being built.
@@ -158,6 +201,29 @@ export async function exportToOo(
 
   // process Environment variables..
   const env = (variables.env = createEnv(getPlatformValue(globalSetting.env) ?? {}, variables));
+
+  /*
+   * The embed map, handed to `embeds.lua` in the environment rather than on the
+   * command line: a link is whatever someone typed into a note — quotes,
+   * backslashes, semicolons, a `$` — and a command line is the wrong place to
+   * find that out. Set after `createEnv` so it is not run through the template
+   * renderer either, for the same reason.
+   *
+   * Windows caps an environment variable at 32k. A note reaching that has some
+   * thousands of embedded notes; the ones that do not fit are left as they are
+   * rather than truncating a path and reading the wrong file.
+   */
+  const EMBED_ENV_LIMIT = 30000;
+  let embedLines = '';
+  for (const [link, file] of noteEmbeds) {
+    const line = `${link}\t${file}\n`;
+    if (embedLines.length + line.length > EMBED_ENV_LIMIT) {
+      console.warn(`Too many embedded notes to pass to pandoc; ${link} and any after it are left as they are.`);
+      break;
+    }
+    embedLines += line;
+  }
+  env['OBSIDIAN_EMBEDS'] = embedLines;
 
   let pandocPath = pandoc.normalizePath(getPlatformValue(globalSetting.pandocPath));
 

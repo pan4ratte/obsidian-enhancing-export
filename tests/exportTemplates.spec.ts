@@ -1,3 +1,5 @@
+import { readdirSync } from 'fs';
+import path from 'path';
 import export_templates from '../src/export_templates';
 import { DEFAULT_TEMPLATE_PRESETS } from '../src/settings';
 import { renderTemplate } from '../src/utils';
@@ -125,11 +127,26 @@ describe('the corrections these presets carry', () => {
   });
 
   test('the lua filters named are ones the plugin still ships', () => {
-    const shipped = ['markdown.lua', 'markdown+hugo.lua', 'math_block.lua', 'pdf.lua', 'citefilter.lua'];
+    // Read off the folder rather than listed here: a preset naming a filter
+    // that is not written to `lua/` fails every export it is used for, and a
+    // list in a test is one more thing to forget to update.
+    const shipped = readdirSync(path.join(__dirname, '..', 'lua-filters', 'bundled'));
     for (const preset of pandocPresets) {
       for (const [, file] of render(preset).matchAll(/--lua-filter="[^"]*\/([^"/]+)"/g)) {
         expect(shipped).toContain(file);
       }
+    }
+  });
+
+  test('a note that embeds another is written out whole, wherever it is read', () => {
+    // Transclusion is Obsidian's own, and every format that renders a note for
+    // reading has to answer to it. The markdown writers deliberately do not:
+    // a vault-to-vault export keeps the embed as the embed it is.
+    for (const preset of ['PDF', 'Word (.docx)', 'Html', 'Epub', 'Latex', 'Typst', 'PowerPoint (.pptx)']) {
+      expect(render(preset)).toContain('embeds.lua');
+    }
+    for (const preset of ['Markdown', 'Markdown (GFM)', 'Markdown (Hugo)', 'TextBundle', 'Bibliography (.bib)']) {
+      expect(render(preset)).not.toContain('embeds.lua');
     }
   });
 });

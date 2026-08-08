@@ -167,6 +167,13 @@ export const isPdfOutput = (writer?: string): boolean => writer === 'pdf';
 export const supportsReferenceDoc = supportedBy(['docx', 'odt', 'pptx']);
 
 /**
+ * The writers that read a `custom-style` Div and set the named style on what is
+ * inside it — the two word processors, and not pptx, whose writer has no such
+ * thing. It is what the figure-styling row is worth offering for.
+ */
+export const supportsCustomStyle = supportedBy(['docx', 'odt']);
+
+/**
  * `--template`, the counterpart of the reference document: the writers that lay
  * their output out with a template of pandoc's that one of the user's can stand
  * in for.

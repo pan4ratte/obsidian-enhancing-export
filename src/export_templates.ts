@@ -42,7 +42,18 @@ import type { ExportSetting } from './settings';
 const RESOURCE_PATHS = '--resource-path="${currentDir}" --resource-path="${attachmentFolderPath}"';
 const EMBED_DIRS = '${ embedDirs ? `--resource-path="${embedDirs}"` : ` ` }';
 const IMAGE_PATHS = `${RESOURCE_PATHS} ${EMBED_DIRS}`;
-const OBSIDIAN_SYNTAX = '-f ${fromFormat}+mark';
+/**
+ * Two things every template that renders a note for reading starts with.
+ *
+ * `![[Another note]]` is a transclusion — Obsidian shows that note's text in
+ * place — and pandoc reads it as an image that is not there. The filter writes
+ * the note in; the plugin resolves which note it is, since that is Obsidian's
+ * to answer. It runs first, so everything below sees what it wrote in.
+ *
+ * A template that writes markdown is left out: an export from a vault to a
+ * vault wants the embed left as the embed it is.
+ */
+const OBSIDIAN_SYNTAX = '--lua-filter="${luaDir}/embeds.lua" -f ${fromFormat}+mark';
 
 /** Reassembles a `$$…$$` block the reader broke up over a LaTeX environment. */
 const MATH_BLOCK = '--lua-filter="${luaDir}/math_block.lua"';

@@ -32,14 +32,37 @@ its author and licence; all of them are MIT.
 
 | Folder | Origin |
 | --- | --- |
-| `bundled/` | This plugin's own. Not catalogue entries: they are embedded in `main.js` and written to the plugin's `lua/` folder on load, and the default templates run them by name. |
+| `bundled/` | This plugin's own — see below. Not catalogue entries: they are embedded in `main.js`, written to the plugin's `lua/` folder on load, and run by name. |
 | `pandoc-ext/` | The [pandoc-ext] organisation — the filters the pandoc project maintains today. |
 | `pandoc/` | The retired [pandoc/lua-filters] collection, for the filters pandoc-ext has not re-published. |
-| `pan4ratte/` | `Obsidian/Pandoc/filters` in [pan4ratte/course-it-in-science], written for exporting Obsidian notes to Word. `zotero.lua` there is [Better BibTeX]'s, vendored with it. |
+| `pan4ratte/` | `Obsidian/Pandoc/filters` in [pan4ratte/course-it-in-science], written for exporting Obsidian notes to Word. `zotero.lua` there is [Better BibTeX]'s, vendored with it. Several of these have since moved to `bundled/`. |
 
 [pandoc/lua-filters]: https://github.com/pandoc/lua-filters
 [pan4ratte/course-it-in-science]: https://github.com/pan4ratte/course-it-in-science
 [Better BibTeX]: https://retorque.re/zotero-better-bibtex/exporting/
+
+## What is bundled, and why it is not in the store
+
+A filter whose whole job is one row in the template editor belongs to the
+plugin, not to a shelf the user has to go shopping on first. Each of these fixes
+something that happens to *every* vault exporting to that format, needs no
+external program, and has one obvious answer — so it ships, and the row writes
+its `--lua-filter` and its `-M` fields together.
+
+| Filter | The row | What it fixes |
+| --- | --- | --- |
+| `embeds.lua` | Write in embedded notes | `![[a note]]` is a transclusion; pandoc reads it as an image that is not there. The plugin resolves the link (only Obsidian can) and hands the map over in `OBSIDIAN_EMBEDS`. |
+| `today.lua` | Write today's date for `$today` | The date arrives already written, as `-M today=…`, because the plugin can write it in any language the machine has. This used to be two filters, English and Russian. |
+| `keywords.lua` | Print the keywords property | The note's `keywords` property stays in the file's properties instead of appearing in the document. |
+| `figures.lua` | Style images as figures | A captionless image is a paragraph to pandoc, so it lands in body text. |
+| `table-styles.lua` | Style text in table cells | The docx writer stamps "Compact" on every cell, which outranks the table style in Word. |
+| `list-styles.lua` | Use Word's list styles | Pandoc's own numbering carries its own indent and bullet, and direct formatting beats a style. |
+| `markdown.lua`, `markdown+hugo.lua`, `math_block.lua`, `pdf.lua`, `citefilter.lua` | — | Named by the presets themselves rather than by a row. |
+| `polyfill.lua`, `url.lua` | — | Libraries `markdown.lua` requires. |
+
+Everything else stays in the catalogue: a filter needing a program installed, a
+network, or a judgement only the author of the document can make is a filter
+someone should choose deliberately.
 
 The folders are provenance only. What the **store** shows is the `category` —
 the shelves below — because a reader is looking for the thing that fixes their

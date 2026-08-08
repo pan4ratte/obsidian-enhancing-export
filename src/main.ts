@@ -5,7 +5,7 @@ import { exportToOo } from './exporto0o';
 import { getPlatformValue, PlatformKey } from './utils';
 import lang, { Lang } from './lang';
 import path from 'path';
-import resources from './resources';
+import resources, { BUNDLED_LUA_FILES } from './resources';
 // `styles.css` is not imported: Obsidian loads the plugin folder's stylesheet
 // itself, and keeping it out of the bundle means it can be edited live.
 
@@ -104,6 +104,13 @@ export default class UniversalExportPlugin extends Plugin {
     // in the export dropdown as templates that cannot export. Anything the user
     // made carries its own fields and stays.
     settings.items = settings.items.filter(v => v.type);
+    // A filter that used to come from the store and now comes with the plugin.
+    // The file is written on load either way and every template still names it,
+    // so nothing about an export changes; what goes is the claim that the user
+    // installed it, which would list it as theirs to uninstall.
+    if (settings.installedLuaFilters?.some(f => BUNDLED_LUA_FILES.includes(f.fileName))) {
+      settings.installedLuaFilters = settings.installedLuaFilters.filter(f => !BUNDLED_LUA_FILES.includes(f.fileName));
+    }
     for (const item of DEFAULT_SETTINGS.items) {
       if (settings.items.every(o => o.name !== item.name)) {
         settings.items.push(item);

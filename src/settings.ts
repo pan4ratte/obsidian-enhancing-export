@@ -2,6 +2,7 @@ import export_templates from './export_templates';
 import { setPlatformValue, PlatformValue, renderTemplate, getPlatformValue } from './utils';
 import type { PropertyGridMeta } from './ui/components/PropertyGrid';
 import type { InstalledLuaFilter } from './lua_filters';
+import type { TodayFormat } from './filter_args';
 
 /*
  * Variables
@@ -34,6 +35,31 @@ export interface Variables extends Record<string, unknown> {
   embedDirs: string;
   options?: unknown;
   env?: Record<string, string>;
+  /** Today's date, written out in the language Obsidian is set to. */
+  today: Record<TodayFormat, string>;
+}
+
+/**
+ * Today's date in each of the forms a template can ask for, in the language
+ * Obsidian is set to — which is the point of writing it here rather than in a
+ * filter, where every language has to be spelled out by hand.
+ */
+export function today(locale: string, now = new Date()): Record<TodayFormat, string> {
+  const write = (dateStyle: 'long' | 'medium' | 'short') => {
+    try {
+      return new Intl.DateTimeFormat(locale, { dateStyle }).format(now);
+    } catch {
+      // A locale the runtime does not know is not worth failing an export over.
+      return new Intl.DateTimeFormat(undefined, { dateStyle }).format(now);
+    }
+  };
+  return {
+    long: write('long'),
+    medium: write('medium'),
+    short: write('short'),
+    // Not a locale's business: the one form that means the same everywhere.
+    iso: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`,
+  };
 }
 
 export interface UniversalExportPluginSettings {

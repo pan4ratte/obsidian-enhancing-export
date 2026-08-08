@@ -180,6 +180,22 @@ export default {
     stripComments: 'Drop HTML comments',
     stripCommentsDesc: 'Leave <!-- … --> out of the written document rather than passing it through.',
 
+    /* The three the plugin ships a filter for, all done to the note on the way
+       in — so every writer answers to them. */
+    embedNotes: 'Write in embedded notes',
+    embedNotesDesc:
+      'Replace ![[a note]] with what that note says, and ![[a note#heading]] with that section. Without this, pandoc reads an embedded note as a missing image.',
+
+    today: 'Write today’s date for $today',
+    todayDesc: 'Every $today in the note — body, headings, properties — becomes today’s date, in Obsidian’s language.',
+    todayNone: 'Leave $today alone',
+
+    keywords: 'Print the keywords property',
+    keywordsDesc: 'Write the note’s keywords into the document itself, instead of leaving them in the file’s properties.',
+    keywordsTitle: 'Keywords label',
+    keywordsTitlePlaceholder: 'Keywords:',
+    keywordsTitleDesc: 'What the line is labelled. Left empty, it reads “Keywords:”.',
+
     topLevelDivision: 'Top-level headings',
     topLevelDivisionDesc: 'What a level-1 heading becomes in the written document.',
     division: {
@@ -235,6 +251,30 @@ export default {
     /* Written into the same field, each shown only where its writer reads it. */
     referenceDoc: 'Reference document',
     referenceDocDesc: 'A document of your own to take styles, fonts and page setup from.',
+
+    /* The rows that run a filter the plugin ships with, each undoing something
+       pandoc's word-processor writers do that a reference document then cannot
+       override. Every style named has to exist in that document. */
+    wordStyles: 'Styles',
+    wordStylesDesc: 'What the reference document gets to decide. Each of these is something pandoc otherwise settles for you.',
+
+    figureStyle: 'Style images as figures',
+    figureStyleDesc: 'Give an image with no caption a paragraph style of its own, instead of leaving it in body text.',
+    figureStyleName: 'Figure style',
+    styleNameDesc: 'The paragraph style to set, which the reference document has to hold.',
+
+    tableStyle: 'Style text in table cells',
+    tableStyleDesc: 'Stop pandoc stamping its own “Compact” style on every cell, which outranks the table style in Word.',
+    tableStyleName: 'Cell style',
+    tableHeadStyleName: 'Header cell style',
+    tableHeadStyleDesc: 'Left empty, header cells take the same style as the rest.',
+    tableHeadStylePlaceholder: 'Same as cells',
+
+    listStyles: 'Use Word’s list styles',
+    listStylesDesc: 'Let List Bullet and List Number draw the bullets and indents, instead of pandoc’s own numbering painting over them.',
+    flattenOrdered: 'Numbered lists too',
+    flattenOrderedDesc:
+      'Exactly the style’s look, at the price of the one thing only pandoc’s numbering can do: separate lists no longer restart at 1.',
 
     /* The same question as the reference document, for the writers laid out by a
        template instead. No writer is asked both. */

@@ -1,10 +1,10 @@
 import * as ct from 'electron';
 import process from 'process';
-import { Notice, PluginSettingTab } from 'obsidian';
+import { Notice, PluginSettingTab, moment } from 'obsidian';
 import type { SettingDefinitionItem } from 'obsidian';
 import type { SemVer } from 'semver';
 import type UniversalExportPlugin from '../main';
-import { CustomExportSetting, ExportSetting, PandocExportSetting, createEnv, DEFAULT_ENV } from '../settings';
+import { CustomExportSetting, ExportSetting, PandocExportSetting, createEnv, today, DEFAULT_ENV } from '../settings';
 import { setPlatformValue, getPlatformValue } from '../utils';
 
 import { createSignal, createRoot, onCleanup, createMemo, createEffect, For, Show, batch, Match, Switch, JSX } from 'solid-js';
@@ -22,6 +22,30 @@ import TemplateLuaFilters from './TemplateLuaFilters';
 import CheckGrid from './components/CheckGrid';
 import StepSlider from './components/StepSlider';
 import { TOC_MAX_DEPTH, TOC_NONE, setTocDepth, tocDepth } from '../toc_args';
+import {
+  FIGURE_DEFAULT_STYLE,
+  TABLE_DEFAULT_STYLE,
+  TODAY_FORMATS,
+  type TodayFormat,
+  embedNotes,
+  figureStyle,
+  flattenOrdered,
+  keywords,
+  keywordsTitle,
+  listStyles,
+  setEmbedNotes,
+  setFigureStyle,
+  setFlattenOrdered,
+  setKeywords,
+  setKeywordsTitle,
+  setListStyles,
+  setTableHeadStyle,
+  setTableStyle,
+  setTodayFormat,
+  tableHeadStyle,
+  tableStyle,
+  todayFormat,
+} from '../filter_args';
 import { PANDOC_EXTENSIONS, enabledExtensions, setExtensions } from '../pandoc_extensions';
 import {
   CURATED_VARIABLES,
@@ -151,6 +175,7 @@ import {
   supportsMathMethod,
   supportsNumberOffset,
   supportsNumberSections,
+  supportsCustomStyle,
   supportsReferenceDoc,
   supportsReferenceLinks,
   supportsReferenceLocation,
@@ -726,6 +751,13 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
       )
     );
 
+    /* Each form is shown as today's date actually written in it, since the name
+       of a date format says far less than the date does. */
+    const todayOptions = createMemo(() => {
+      const written = today(moment.locale());
+      return [{ name: lang.settingTab.todayNone, value: '' }, ...TODAY_FORMATS.map(format => ({ name: written[format], value: format }))];
+    });
+
     const eolOptions = createMemo(() =>
       withCurrent(
         [
@@ -825,6 +857,72 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
               onChange={value => writeArgs(a => setReferenceDoc(a, value.trim()))}
             />
           </Setting>
+        </Show>
+
+        {/* Beside the reference document, because they are the same question:
+            every style named here is one that document has to hold. Each row
+            runs a filter the plugin ships with — pandoc has no option for any
+            of this, and a word processor that ignores the styles it was given
+            is the commonest thing to go wrong in an export from a vault. */}
+        <Show when={supportsCustomStyle(format())}>
+          <Section name={lang.settingTab.wordStyles} description={lang.settingTab.wordStylesDesc}>
+            <Setting name={lang.settingTab.figureStyle} description={lang.settingTab.figureStyleDesc} class="mod-toggle">
+              <Toggle
+                checked={figureStyle(args()) !== undefined}
+                onChange={on => writeArgs(a => setFigureStyle(a, on ? FIGURE_DEFAULT_STYLE : undefined))}
+              />
+            </Setting>
+            <Show when={figureStyle(args()) !== undefined}>
+              <Setting name={lang.settingTab.figureStyleName} description={lang.settingTab.styleNameDesc}>
+                <Text
+                  value={figureStyle(args()) ?? FIGURE_DEFAULT_STYLE}
+                  placeholder={FIGURE_DEFAULT_STYLE}
+                  // Emptied is the filter's own default rather than nothing at
+                  // all: the row above is what switches the styling off.
+                  onChange={value => writeArgs(a => setFigureStyle(a, value.trim() || FIGURE_DEFAULT_STYLE))}
+                />
+              </Setting>
+            </Show>
+
+            <Setting name={lang.settingTab.tableStyle} description={lang.settingTab.tableStyleDesc} class="mod-toggle">
+              <Toggle
+                checked={tableStyle(args()) !== undefined}
+                onChange={on => writeArgs(a => setTableStyle(a, on ? TABLE_DEFAULT_STYLE : undefined))}
+              />
+            </Setting>
+            <Show when={tableStyle(args()) !== undefined}>
+              <Setting name={lang.settingTab.tableStyleName} description={lang.settingTab.styleNameDesc}>
+                <Text
+                  value={tableStyle(args()) ?? TABLE_DEFAULT_STYLE}
+                  placeholder={TABLE_DEFAULT_STYLE}
+                  onChange={value => writeArgs(a => setTableStyle(a, value.trim() || TABLE_DEFAULT_STYLE))}
+                />
+              </Setting>
+              {/* Empty is the filter's own behaviour: header cells take the
+                  same style as the rest. */}
+              <Setting name={lang.settingTab.tableHeadStyleName} description={lang.settingTab.tableHeadStyleDesc}>
+                <Text
+                  value={tableHeadStyle(args()) ?? ''}
+                  placeholder={lang.settingTab.tableHeadStylePlaceholder}
+                  onChange={value => writeArgs(a => setTableHeadStyle(a, value))}
+                />
+              </Setting>
+            </Show>
+
+            {/* Word's own List Bullet and List Number, which pandoc's numbering
+                otherwise paints over. docx only: the odt writer has no such
+                thing to override. */}
+            <Show when={format() === 'docx'}>
+              <Setting name={lang.settingTab.listStyles} description={lang.settingTab.listStylesDesc} class="mod-toggle">
+                <Toggle checked={listStyles(args())} onChange={on => writeArgs(a => setListStyles(a, on))} />
+              </Setting>
+              <Show when={listStyles(args())}>
+                <Setting name={lang.settingTab.flattenOrdered} description={lang.settingTab.flattenOrderedDesc} class="mod-toggle">
+                  <Toggle checked={flattenOrdered(args())} onChange={on => writeArgs(a => setFlattenOrdered(a, on))} />
+                </Setting>
+              </Show>
+            </Show>
+          </Section>
         </Show>
 
         <Show when={supportsTemplate(format())}>
@@ -927,6 +1025,35 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
             >
               <Toggle checked={stripComments(args())} onChange={checked => writeArgs(a => setStripComments(a, checked))} />
             </Setting>
+
+            {/* The three the plugin ships a filter for. They belong here rather
+                than beside a format's own options: each is done to the note on
+                the way in, so every writer answers to them. */}
+            <Setting name={lang.settingTab.embedNotes} description={lang.settingTab.embedNotesDesc} class="mod-toggle">
+              <Toggle checked={embedNotes(args())} onChange={on => writeArgs(a => setEmbedNotes(a, on))} />
+            </Setting>
+
+            <Setting name={lang.settingTab.today} description={lang.settingTab.todayDesc}>
+              <DropDown
+                options={todayOptions()}
+                selected={todayFormat(args()) ?? ''}
+                autofocus={false}
+                onChange={value => writeArgs(a => setTodayFormat(a, value ? (value as TodayFormat) : undefined))}
+              />
+            </Setting>
+
+            <Setting name={lang.settingTab.keywords} description={lang.settingTab.keywordsDesc} class="mod-toggle">
+              <Toggle checked={keywords(args())} onChange={on => writeArgs(a => setKeywords(a, on))} />
+            </Setting>
+            <Show when={keywords(args())}>
+              <Setting name={lang.settingTab.keywordsTitle} description={lang.settingTab.keywordsTitleDesc}>
+                <Text
+                  value={keywordsTitle(args()) ?? ''}
+                  placeholder={lang.settingTab.keywordsTitlePlaceholder}
+                  onChange={value => writeArgs(a => setKeywordsTitle(a, value))}
+                />
+              </Setting>
+            </Show>
           </div>
 
           <Show when={supportsTopLevelDivision(format())}>
@@ -1585,6 +1712,13 @@ export default class extends PluginSettingTab {
               settingTab.shiftHeadings,
               settingTab.tabStop,
               settingTab.stripComments,
+              settingTab.embedNotes,
+              settingTab.today,
+              settingTab.keywords,
+              settingTab.wordStyles,
+              settingTab.figureStyle,
+              settingTab.tableStyle,
+              settingTab.listStyles,
               settingTab.math,
               settingTab.mathUrl,
               settingTab.syntaxDefinition,
