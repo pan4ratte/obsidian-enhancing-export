@@ -7,7 +7,7 @@ import type PandocGuiPlugin from '../main';
 import { CustomExportSetting, ExportSetting, PandocExportSetting, createEnv, today, DEFAULT_ENV } from '../settings';
 import { setPlatformValue, getPlatformValue } from '../utils';
 
-import { createSignal, createRoot, onCleanup, createMemo, createEffect, For, Show, batch, Match, Switch, JSX } from 'solid-js';
+import { createSignal, createRoot, onCleanup, createMemo, createEffect, For, Index, Show, batch, Match, Switch, JSX } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { insert, Dynamic } from 'solid-js/web';
 import { t } from '../lang/helpers';
@@ -17,6 +17,7 @@ import PandocDashboard from './PandocDashboard';
 import TemplateActions from './TemplateActions';
 import TemplateTable from './TemplateTable';
 import LuaFilterStore from './LuaFilterStore';
+import EnvVars, { addEnvFolder } from './EnvVars';
 import { LuaFilterManager, addLuaFilterArg, hasLuaFilterArg, removeLuaFilterArg, type InstalledLuaFilter } from '../lua_filters';
 import TemplateLuaFilters from './TemplateLuaFilters';
 import CheckGrid from './components/CheckGrid';
@@ -190,6 +191,7 @@ import {
 import { MessageBox } from './message_box';
 import Modal from './components/Modal';
 import Button from './components/Button';
+import Icon from './components/Icon';
 import Collapsible from './components/Collapsible';
 import Section from './components/Section';
 import Setting, { Text, Toggle, ExtraButton, DropDown, TextArea } from './components/Setting';
@@ -199,6 +201,7 @@ import { BUNDLED_LUA_FILES } from '../resources';
 
 // Whether the template editor's panels stand open. Module scope, so a modal rebuilt on
 // every open reopens where it was; not written to `data.json` — a scroll position is not a setting.
+const [stylesOpen, setStylesOpen] = createSignal(false);
 const [advancedOpen, setAdvancedOpen] = createSignal(false);
 const [commandOpen, setCommandOpen] = createSignal(false);
 
@@ -224,10 +227,14 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
   const { app } = plugin;
   const [settings, setSettings0] = createStore(plugin.settings);
   const [pandocVersion, setPandocVersion] = createSignal<SemVer>();
-  // Read far more often than written, so the field stays out of the way until asked for.
+  // Read far more often than written, so the rows stay out of the way until asked for.
   const [editingEnvVars, setEditingEnvVars] = createSignal(false);
-  const envVars = createMemo(() =>
-    Object.entries(Object.assign({}, getPlatformValue(DEFAULT_ENV), getPlatformValue(settings.env) ?? {}))
+  // The pickers answer for the folders a variable lists, which is all three of the defaults are. The text is the way
+  // in to what they cannot say: a variable of one's own, or a value that is not a path at all.
+  const [envVarsAsText, setEnvVarsAsText] = createSignal(false);
+  const envVars = createMemo(() => Object.assign({}, getPlatformValue(DEFAULT_ENV), getPlatformValue(settings.env) ?? {}));
+  const envVarsText = createMemo(() =>
+    Object.entries(envVars())
       .map(([n, v]) => `${n}="${v}"`)
       .join('\n')
   );
@@ -235,7 +242,8 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
     (setSettings0 as (...args: unknown[]) => void)(...args);
     void plugin.saveSettings();
   };
-  const setEnvVars = (envItems: string) => {
+  const setEnvVars = (env: Record<string, string>) => setSettings('env', setPlatformValue(settings.env ?? {}, env));
+  const setEnvVarsText = (envItems: string) => {
     try {
       const env: Record<string, string> = {};
       for (let line of envItems.split('\n')) {
@@ -250,7 +258,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
           env[name] = value;
         }
       }
-      setSettings('env', setPlatformValue(settings.env ?? {}, env));
+      setEnvVars(env);
     } catch (e) {
       new Notice(String(e));
     }
@@ -736,7 +744,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         {/* Every style named here has to exist in that document. Each row runs a bundled
             filter — pandoc has no option for any of this. */}
         <Show when={supportsCustomStyle(format())}>
-          <Section name={t.WORD_STYLES} description={t.WORD_STYLES_DESC}>
+          <Section name={t.WORD_STYLES} description={t.WORD_STYLES_DESC} open={stylesOpen()} onToggle={setStylesOpen}>
             <Setting name={t.FIGURE_STYLE} description={t.FIGURE_STYLE_DESC} class="mod-toggle">
               <Toggle
                 checked={figureStyle(args()) !== undefined}
@@ -1399,13 +1407,39 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
           <Toggle checked={settings.openExportedFile} onChange={v => setSettings('openExportedFile', v)} />
         </Setting>
 
-        <Setting name={t.SETTING_ENV_VARS}>
+        <Setting name={t.SETTING_ENV_VARS} description={t.SETTING_ENV_VARS_DESC}>
           <ExtraButton icon="pencil" tooltip={t.ACTION_EDIT} onClick={() => setEditingEnvVars(v => !v)} />
         </Setting>
 
         <Collapsible when={editingEnvVars()}>
-          <Setting class="ex-nameless-setting">
-            <TextArea class="ex-env-vars" autoSize={true} visible={editingEnvVars()} value={envVars()} onChange={setEnvVars} />
+          <Setting class="ex-nameless-setting ex-env-panel">
+            <Show when={envVarsAsText()} fallback={<EnvVars env={envVars()} onChange={setEnvVars} />}>
+              <TextArea
+                class="ex-env-vars"
+                autoSize={true}
+                visible={editingEnvVars() && envVarsAsText()}
+                value={envVarsText()}
+                onChange={setEnvVarsText}
+              />
+            </Show>
+
+            {/* Everything the panel does that is not editing what is already in it: a folder for each variable,
+                and the way over to the text. Nothing to add to while the text is showing — it adds by being typed. */}
+            <div class="ex-env-actions">
+              <Show when={!envVarsAsText()}>
+                <Index each={Object.keys(envVars())}>
+                  {name => (
+                    <Button class="ex-env-action" onClick={() => void addEnvFolder(envVars(), name(), setEnvVars)}>
+                      {t.ENV_ADD_FOLDER(name())}
+                    </Button>
+                  )}
+                </Index>
+              </Show>
+              <Button class="ex-env-action" onClick={() => setEnvVarsAsText(v => !v)}>
+                <Icon name="pencil" />
+                {envVarsAsText() ? t.ENV_EDIT_AS_FOLDERS : t.ENV_EDIT_AS_TEXT}
+              </Button>
+            </div>
           </Setting>
         </Collapsible>
       </div>

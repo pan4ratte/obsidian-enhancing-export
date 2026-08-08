@@ -211,15 +211,98 @@
 }
 
 /*
- * Environment variables. The height is set from the script, one line at a time,
- * so there is nothing to scroll and nothing worth dragging: a drag would only
- * hold until the next keystroke measured the lines again.
+ * Environment variables. The rows and the text say the same thing two ways, and
+ * whichever is showing has the panel's actions under it.
  */
+.ex-env-panel > .setting-item-control {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--size-4-2);
+  /* A control ends its text where a row's answer ends, against the right edge.
+     This one is not an answer at the end of a row, it is a panel across the
+     card, and everything in it is read from the left. */
+  text-align: start;
+}
+
+/*
+ * A folder for each variable and the way over to the text, in one row across
+ * the card: equal shares of the width, so the row reads as a group of answers
+ * to the same question rather than as buttons that happen to sit together.
+ */
+.ex-env-actions {
+  display: flex;
+  gap: var(--size-4-2);
+  width: 100%;
+  /* Standing away from the last folder above it: the row belongs to the panel,
+     not to the variable it happens to follow. */
+  margin-top: var(--size-4-2);
+}
+
+.ex-env-action {
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--size-4-2);
+  transition: color 100ms ease-in-out;
+}
+
+/* Accent under the pointer only: these are what the panel is for, but not what
+   it is about. */
+.ex-env-action:hover {
+  color: var(--text-accent);
+}
+
+.ex-env-action .svg-icon {
+  width: var(--icon-s);
+  height: var(--icon-s);
+}
+
+/* The height is set from the script, one line at a time, so there is nothing to
+   scroll and nothing worth dragging: a drag would only hold until the next
+   keystroke measured the lines again. */
 .ex-env-vars {
   width: 100%;
   resize: none;
   overflow-y: hidden;
   min-height: 3em;
+}
+
+.ex-env-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-3);
+  width: 100%;
+}
+
+.ex-env-var {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-1);
+}
+
+/* The name a variable is known by, spelled as the system spells it. */
+.ex-env-var-name {
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+/* A folder, the button that picks another, and the one that drops it. */
+.ex-env-folder {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.ex-env-folder > input[type='text'] {
+  flex: 1;
+  min-width: 0;
+}
+
+.ex-env-folder > .setting-editor-extra-setting-button {
+  flex: 0 0 auto;
 }
 
 /*
@@ -820,10 +903,20 @@
   margin-top: var(--size-4-4);
 }
 
+/*
+ * Obsidian draws the track on the input itself, so the steps already passed are
+ * painted over it: an image in the accent as far as the thumb, and nothing at
+ * all after it, which leaves the track's own colour standing where it is.
+ */
 .ex-step-slider > input[type='range'] {
   display: block;
   width: 100%;
   margin: 0;
+  background-image: linear-gradient(
+    to right,
+    var(--interactive-accent) 0 var(--ex-step-slider-fill),
+    transparent var(--ex-step-slider-fill)
+  );
 }
 
 /* Absolutely placed children, so the row has no height of its own to take. */

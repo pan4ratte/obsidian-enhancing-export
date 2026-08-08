@@ -78,6 +78,10 @@ export default {
   SETTING_OPEN_LOCATION: 'Open exported file location',
   SETTING_OPEN_FILE: 'Open exported file',
   SETTING_ENV_VARS: 'Environment variables',
+  SETTING_ENV_VARS_DESC: 'The folders pandoc is run with. ${…} stands for what the system already has there.',
+  ENV_ADD_FOLDER: (name: string) => `Add ${name}`,
+  ENV_EDIT_AS_TEXT: 'Edit as text',
+  ENV_EDIT_AS_FOLDERS: 'Edit as folders',
 
   // ─── Export templates ────────────────────────────────────────────────────────
   SECTION_TEMPLATES: 'Export templates',

@@ -1,4 +1,4 @@
-import { JSX, Show } from 'solid-js';
+import { JSX, Show, createSignal } from 'solid-js';
 import Collapsible from './Collapsible';
 import Icon from './Icon';
 
@@ -17,16 +17,25 @@ export default (props: {
   actions?: JSX.Element;
   children?: JSX.Element;
 }) => {
-  const toggle = () => props.onToggle?.(!props.open);
+  // Its own, for a section given no state to keep: without this one it would answer a click by asking to be
+  // opened and nobody would open it.
+  const [ownOpen, setOwnOpen] = createSignal(false);
+  const open = () => props.open ?? ownOpen();
+
+  const toggle = () => {
+    const next = !open();
+    setOwnOpen(next);
+    props.onToggle?.(next);
+  };
 
   return (
     // `class` before `classList`: the two are applied in that order, so the string cannot take `is-open` back off.
-    <div class={`ex-section ex-card ${props.class ?? ''}`.trimEnd()} classList={{ 'is-open': props.open }}>
+    <div class={`ex-section ex-card ${props.class ?? ''}`.trimEnd()} classList={{ 'is-open': open() }}>
       <div
         class="setting-item setting-item-heading ex-section-header"
         role="button"
         tabIndex={0}
-        aria-expanded={props.open ? 'true' : 'false'}
+        aria-expanded={open() ? 'true' : 'false'}
         onClick={toggle}
         onKeyDown={e => {
           // The two keys a button answers to, since this one only looks like one.
@@ -52,7 +61,7 @@ export default (props: {
           <Icon name="chevron-down" class="ex-section-chevron" />
         </div>
       </div>
-      <Collapsible when={props.open}>{props.children}</Collapsible>
+      <Collapsible when={open()}>{props.children}</Collapsible>
     </div>
   );
 };

@@ -22,7 +22,8 @@ export default (props: {
   };
 
   return (
-    <div class="ex-step-slider">
+    // How far along the track the answer stands, for the fill drawn behind the thumb.
+    <div class="ex-step-slider" style={{ '--ex-step-slider-fill': at(value() - min()) }}>
       <input
         class="slider"
         type="range"
