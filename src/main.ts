@@ -102,6 +102,13 @@ export default class UniversalExportPlugin extends Plugin {
         settings.items.push(item);
       }
     }
+    // The template last exported with is remembered by name, and a version
+    // before this one could leave that name behind when the template it named
+    // was deleted. The export dialog opens on it, so a name nothing answers to
+    // is let go of here rather than carried into the UI.
+    if (settings.lastExportType && settings.items.every(o => o.name !== settings.lastExportType)) {
+      delete settings.lastExportType;
+    }
     this.settings = settings;
   }
 

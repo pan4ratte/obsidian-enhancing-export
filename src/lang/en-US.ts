@@ -4,7 +4,6 @@ export default {
   exportToOo: 'Export to...',
   exportSuccessNotice: strTpl`Export file ${0} success!`,
   exportCommandOutputMessage: strTpl`Command: ${0}`,
-  exportErrorOutputMessage: strTpl`Command: ${0}，Error:${1}`,
   exportWithPrevious: 'Export with Previous',
   pleaseOpenFile: 'Please open a file first.',
   preparing: strTpl`generating "${0}"...`,
@@ -19,6 +18,38 @@ export default {
     selectExportFolder: 'Please select an export folder.',
     overwriteConfirmation: 'Overwrite confirmation',
     type: 'Select export template',
+  },
+  /*
+   * The box a failed export ends in. It says which template was run and which
+   * file was being written, then the error itself — the command line is left
+   * out, since it is a screenful of options the template already holds and none
+   * of it is what went wrong.
+   */
+  exportError: {
+    title: 'Export failed',
+    template: 'Template',
+    file: 'File',
+    /* A command can fail silently — a wrong exit code and nothing on stderr. */
+    noOutput: 'The command failed without reporting anything. Check the command in the template.',
+
+    /* One suggestion per error the plugin can recognise, said as the next thing
+       to try rather than as a diagnosis. */
+    hint: {
+      fileInUse: 'The file may be open in another program — a PDF viewer, Word, or a preview pane. Close it and export again.',
+      outputFolder: 'The export folder could not be written to. Pick a folder that exists, or create it first.',
+      pdfEngine:
+        'The PDF engine is not installed. Install a LaTeX distribution (MiKTeX or TeX Live), or choose another engine under Advanced in the template.',
+      pandocNotFound: 'Pandoc could not be run. Install it, or set the Pandoc folder in this plugin’s settings.',
+      latexUnicode: 'pdfLaTeX cannot write these characters. Switch the template’s PDF engine to XeLaTeX or LuaLaTeX under Advanced.',
+      latexPackage: 'A LaTeX package is missing. Install it with your TeX distribution’s package manager, then export again.',
+      luaFilter: 'A Lua filter failed. Check what it needs in its readme, or remove it from the template’s Lua filters.',
+      missingDataFile:
+        'A file the template points at could not be read. Check the paths under Advanced — layout template, reference document, stylesheet.',
+      missingResource: 'An image or attachment the note links to could not be found. Check that the file is still in the vault.',
+      frontMatter: 'The note’s frontmatter could not be read. Check the YAML block at the top of the note.',
+      citations: 'The bibliography or citation style could not be used. Check those files under Citations in the template.',
+      unknownOption: 'Pandoc did not recognise one of the options. Check “Options of your own” in the template.',
+    },
   },
   messageBox: {
     yes: 'Yes',

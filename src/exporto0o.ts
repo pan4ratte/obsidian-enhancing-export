@@ -8,6 +8,7 @@ import { MessageBox } from './ui/message_box';
 import { Notice, TFile, type EmbedCache } from 'obsidian';
 import { exec, renderTemplate, getPlatformValue, trimQuotes } from './utils';
 import ProgressBar from './ui/components/ProgressBar';
+import { describeExportFailure } from './export_error';
 import type ExportPlugin from './main';
 import pandoc from './pandoc';
 
@@ -230,7 +231,29 @@ export async function exportToOo(
     }
   } catch (err) {
     progressBarHide();
-    new MessageBox(plugin.app, lang.exportErrorOutputMessage(cmd, err)).open();
+    const { detail, recommendation } = describeExportFailure(err, cmd, lang);
+    // What the reader can act on: which template was run, which file it was
+    // writing, what went wrong, and what to try. The command line itself stays
+    // in the console — it is long, and none of it is the error.
+    console.error(cmd, err);
+    new MessageBox(plugin.app, {
+      title: lang.exportError.title,
+      buttons: 'Ok',
+      render: contentEl => {
+        const root = contentEl.createDiv({ cls: 'ex-export-error' });
+        const fact = (label: string, value: string, title?: string) =>
+          root.createDiv({ cls: 'ex-export-error-fact' }, el => {
+            el.createSpan({ cls: 'ex-export-error-label', text: label });
+            el.createSpan({ cls: 'ex-export-error-value', text: value, title: title ?? value });
+          });
+        fact(lang.exportError.template, setting.name);
+        fact(lang.exportError.file, variables.outputFileFullName, variables.outputPath);
+        root.createDiv({ cls: 'ex-export-error-detail', text: detail });
+        if (recommendation) {
+          root.createDiv({ cls: 'ex-export-error-hint', text: recommendation });
+        }
+      },
+    }).open();
     onFailure?.();
   }
 }

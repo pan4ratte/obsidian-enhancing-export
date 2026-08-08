@@ -1,5 +1,5 @@
 import * as ct from 'electron';
-import { TFile } from 'obsidian';
+import { Notice, TFile } from 'obsidian';
 import { createSignal, createRoot, onCleanup, createMemo, untrack, createEffect, Show } from 'solid-js';
 import { insert } from 'solid-js/web';
 import type UniversalExportPlugin from '../main';
@@ -19,12 +19,20 @@ const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onCl
 
   const [hidden, setHidden] = createSignal(false);
   const [showOverwriteConfirmation, setShowOverwriteConfirmation] = createSignal(globalSetting.showOverwriteConfirmation);
-  const [exportType, setExportType] = createSignal(globalSetting.lastExportType ?? globalSetting.items.first()?.name);
+  /*
+   * The template last exported with, where it is still a template. It is
+   * remembered by name, and a name outlives the thing it names — a deleted or
+   * renamed template left this pointing at nothing, and the dialog opened on
+   * nothing rather than opening at all.
+   */
+  const [exportType, setExportType] = createSignal(
+    globalSetting.items.find(o => o.name === globalSetting.lastExportType)?.name ?? globalSetting.items.first()?.name
+  );
   const [options, setOptions] = createSignal({});
-  const setting = createMemo(() => globalSetting.items.find(o => o.name === exportType()));
-  const extension = createMemo(() => extractExtension(setting()));
-  const title = createMemo(() => lang.exportDialog.title(setting().name));
-  const optionsMeta = createMemo(() => finalizeOptionsMeta(setting().optionsMeta));
+  const setting = createMemo(() => globalSetting.items.find(o => o.name === exportType()) ?? globalSetting.items.first());
+  const extension = createMemo(() => (setting() ? extractExtension(setting()) : ''));
+  const title = createMemo(() => lang.exportDialog.title(setting()?.name));
+  const optionsMeta = createMemo(() => finalizeOptionsMeta(setting()?.optionsMeta));
 
   const [candidateOutputDirectory, setCandidateOutputDirectory] = createSignal(
     `${getPlatformValue(globalSetting.lastExportDirectory) ?? ct.remote.app.getPath('documents')}`
@@ -68,6 +76,11 @@ const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onCl
 
   const doExport = async () => {
     const plugin = props.plugin;
+    // Every template can be deleted, and then there is nothing to export with.
+    if (!untrack(setting)) {
+      new Notice(lang.settingTab.noTemplates, 2000);
+      return;
+    }
     setHidden(true);
     await exportToOo(
       plugin,

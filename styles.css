@@ -1467,6 +1467,74 @@
   opacity: 0.6;
 }
 
+/*
+ * The box a failed export ends in.
+ *
+ * Three things in order of what can be done about them: which template and file
+ * this was, what the program said, and what to try. The command line is not one
+ * of them — it went to the console.
+ */
+.ex-export-error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+}
+
+/* Label and value on one line, the labels in a column of their own so the two
+   facts read as a pair rather than as two sentences. */
+.ex-export-error-fact {
+  display: flex;
+  gap: var(--size-4-2);
+  font-size: var(--font-ui-small);
+  line-height: var(--line-height-tight);
+}
+
+.ex-export-error-label {
+  flex: 0 0 auto;
+  min-width: 5em;
+  color: var(--text-muted);
+}
+
+.ex-export-error-value {
+  /* A long name breaks rather than widening the modal, and can be selected:
+     half of what this box is for is being quoted into a bug report. */
+  overflow-wrap: anywhere;
+  user-select: text;
+  color: var(--text-normal);
+  font-weight: var(--font-medium);
+}
+
+/*
+ * The program's own output, kept as it was written — pandoc and every LaTeX
+ * engine line theirs up in columns. A long log scrolls inside the box instead
+ * of pushing the recommendation below the fold.
+ */
+.ex-export-error-detail {
+  margin-top: var(--size-4-1);
+  padding: var(--size-4-2) var(--size-4-3);
+  max-height: 40vh;
+  overflow: auto;
+  border-radius: var(--radius-s);
+  background: var(--background-secondary);
+  border-left: 3px solid var(--background-modifier-error);
+  color: var(--text-normal);
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-smaller);
+  line-height: var(--line-height-tight);
+  white-space: pre-wrap;
+  user-select: text;
+}
+
+/* The one line that says what to do next, so it is not read as more output. */
+.ex-export-error-hint {
+  padding: var(--size-4-2) var(--size-4-3);
+  border-radius: var(--radius-s);
+  background: var(--background-modifier-hover);
+  border-left: 3px solid var(--text-accent);
+  font-size: var(--font-ui-small);
+  color: var(--text-normal);
+}
+
 *[hidden] {
   display: none;
 }

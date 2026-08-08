@@ -272,6 +272,29 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     );
   };
 
+  /*
+   * Two settings remember a template by name rather than by the item itself:
+   * the row the editor reopens on, and the template the export dialog and
+   * "Export with previous" come back to. A name that no longer answers to
+   * anything left the dialog with nothing to open, so both follow a rename here
+   * and are let go of on delete.
+   */
+  const followTemplateRename = (previous: string | undefined, name: string) => {
+    setSettings('lastEditName', name);
+    if (settings.lastExportType === previous) {
+      setSettings('lastExportType', name);
+    }
+  };
+
+  const forgetTemplate = (name: string) => {
+    if (settings.lastEditName === name) {
+      setSettings('lastEditName', settings.items.first()?.name);
+    }
+    if (settings.lastExportType === name) {
+      setSettings('lastExportType', undefined);
+    }
+  };
+
   /** `name`, or the first `name 2`, `name 3`… no other template answers to. */
   const uniqueTemplateName = (name: string, except?: string) => {
     const taken = new Set(settings.items.filter(v => v.name !== except).map(v => v.name));
@@ -321,7 +344,7 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
         preset: key,
         name,
       });
-      setSettings('lastEditName', name);
+      followTemplateRename(template.name, name);
     });
   };
 
@@ -338,14 +361,15 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
   };
 
   const renameCurrentCommandTemplate = (value: string) => {
-    const name = uniqueTemplateName(value.trim() || currentEditCommandTemplate().name, currentEditCommandTemplate().name);
-    if (name === currentEditCommandTemplate().name) {
+    const previous = currentEditCommandTemplate().name;
+    const name = uniqueTemplateName(value.trim() || previous, previous);
+    if (name === previous) {
       return;
     }
     // Both at once: the item is found again by the name the settings remember.
     batch(() => {
       updateCurrentEditCommandTemplate(v => (v.name = name));
-      setSettings('lastEditName', name);
+      followTemplateRename(previous, name);
     });
   };
 
@@ -407,9 +431,7 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
         yes: () =>
           batch(() => {
             setSettings('items', items => items.filter(v => v.name !== name));
-            if (settings.lastEditName === name) {
-              setSettings('lastEditName', settings.items.first()?.name);
-            }
+            forgetTemplate(name);
           }),
       },
     }).open();

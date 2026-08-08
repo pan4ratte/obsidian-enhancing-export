@@ -2,7 +2,10 @@ import { App, Modal } from 'obsidian';
 import lang, { Lang } from '../lang';
 
 export interface MessageBoxOptions {
-  message: string;
+  /** The whole body of the box, where one run of text is the whole of it. */
+  message?: string;
+  /** Draws the body instead, for a box that is more than one run of text. */
+  render?: (contentEl: HTMLElement) => void;
   title?: string;
   buttons: 'Yes' | 'YesNo' | 'Ok' | 'OkCancel';
   buttonsLabel?: {
@@ -42,12 +45,16 @@ export class MessageBox extends Modal {
       titleEl,
       contentEl,
       lang,
-      options: { message, title, buttons, callback, buttonsLabel: label, buttonsClass },
+      options: { message, render, title, buttons, callback, buttonsLabel: label, buttonsClass },
     } = this;
     if (title) {
       titleEl.setText(title);
     }
-    contentEl.createDiv({ text: message });
+    if (render) {
+      render(contentEl);
+    } else {
+      contentEl.createDiv({ text: message });
+    }
     switch (buttons) {
       case 'Yes':
         contentEl.createDiv({ cls: ['modal-button-container'], parent: contentEl }, el => {
