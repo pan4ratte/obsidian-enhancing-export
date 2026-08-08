@@ -1,4 +1,7 @@
-# The lua-filter catalogue
+# The lua filters
+
+Every lua filter in this repository is kept here: the ones the plugin ships with,
+in `bundled/`, and the ones its store offers, in the folders they came from.
 
 `index.json` is the catalogue the plugin's **Browse lua-filters** store reads, and
 every filter it lists is kept **in this folder**. Browsing the store is one
@@ -29,6 +32,7 @@ its author and licence; all of them are MIT.
 
 | Folder | Origin |
 | --- | --- |
+| `bundled/` | This plugin's own. Not catalogue entries: they are embedded in `main.js` and written to the plugin's `lua/` folder on load, and the default templates run them by name. |
 | `pandoc-ext/` | The [pandoc-ext] organisation — the filters the pandoc project maintains today. |
 | `pandoc/` | The retired [pandoc/lua-filters] collection, for the filters pandoc-ext has not re-published. |
 | `pan4ratte/` | `Obsidian/Pandoc/filters` in [pan4ratte/course-it-in-science], written for exporting Obsidian notes to Word. `zotero.lua` there is [Better BibTeX]'s, vendored with it. |
@@ -128,6 +132,8 @@ a description, an author, a licence and a known category.
 ## Adding a filter
 
 1. Commit the `.lua` file under the folder for where it came from, unmodified.
+   Not `bundled/` — that folder is what the plugin ships, and a name in it is a
+   name the store will never offer.
 2. Add its entry, filling in `requires` if it needs anything the user has to
    provide.
 3. Run `npm test`.
@@ -137,8 +143,9 @@ a vault can point the store at a catalogue of its own instead.
 
 ## What installing does
 
-The file is downloaded into the plugin's `lua/` folder next to the filters the
-plugin ships with, and recorded in `data.json`. Two names are refused: one that
+The file is downloaded into the plugin's `lua/` folder — the one in an installed
+plugin folder, written on load from `bundled/` and never committed here — and
+recorded in `data.json`. Two names are refused: one that
 belongs to a bundled filter (it would be overwritten on the next start) and one
 already taken by a different installed filter.
 

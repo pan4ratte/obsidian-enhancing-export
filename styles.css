@@ -1153,21 +1153,21 @@
  */
 
 /*
- * Wide enough for a card's text and its buttons to share a line. Obsidian sizes
- * a modal from these variables, so setting them is what actually works — a bare
- * `width` on `.modal` loses to the theme's own `max-width`, and the modal then
- * overflowed its container and had its right edge clipped.
+ * The width is Obsidian's own — no `--modal-width` of this plugin's is set, so
+ * the store is as wide as every other modal here and as wide as the theme says
+ * a modal should be. It was pinned to 760px, which read as a narrower window
+ * than the template editor beside it for no reason a user could see.
+ *
+ * Height is still this plugin's business: the list is as long as the catalogue,
+ * so the modal stands only as tall as it needs to and stops well inside the
+ * window, and the content below scrolls.
  */
 .ex-lua-modal {
-  --modal-width: min(760px, 90vw);
-  --modal-max-width: min(760px, 90vw);
   --modal-height: auto;
   --modal-max-height: 80vh;
 }
 
 .ex-lua-modal .modal {
-  width: var(--modal-width);
-  max-width: var(--modal-max-width);
   max-height: var(--modal-max-height);
 }
 

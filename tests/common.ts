@@ -26,7 +26,7 @@ export const testConversion = async (name: string, filter?: string) => {
   const expect_out = `./markdowns/${name}.out`;
   let pandoc: string;
   if (filter) {
-    const lua_script = `../lua/${filter}.lua`;
+    const lua_script = `../lua-filters/bundled/${filter}.lua`;
     pandoc = `pandoc -s -L ${lua_script} -t native -f markdown "${input_file}" -o -`;
   } else {
     pandoc = `pandoc -s -t native -f markdown "${input_file}" -o -`;

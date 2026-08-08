@@ -2,7 +2,9 @@
 /data.json
 /node_modules
 /coverage
-/lua/main.lua
+# The plugin folder's runtime lua/: written on load from the filters embedded in
+# main.js, and written into by the store. The sources are in lua-filters/bundled.
+/lua/
 /.env.local
 /.idea
 package-lock.json

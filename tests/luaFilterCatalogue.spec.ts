@@ -11,7 +11,7 @@ jest.mock('obsidian', () => ({
   requestUrl: (options: { url: string }) => requestUrlMock(options),
 }));
 
-import { existsSync } from 'fs';
+import { existsSync, readdirSync } from 'fs';
 import path from 'path';
 import { DEFAULT_LUA_FILTER_REPO_URL, LUA_FILTER_CATEGORIES, LuaFilterManager, type LuaFilterEntry } from '../src/lua_filters';
 import { FORMAT_FAMILIES } from '../src/pandoc_format';
@@ -131,5 +131,18 @@ describe('the catalogue in this repository', () => {
 
   test('the default base URL is the folder the catalogue is committed to', () => {
     expect(DEFAULT_LUA_FILTER_REPO_URL).toMatch(/\/lua-filters\/$/);
+  });
+
+  test('nothing offered answers to the name of a filter the plugin ships', () => {
+    // `bundled/` is written over the plugin's `lua/` on every load, so an entry
+    // taking one of those names could never stay installed. `fetchCatalogue`
+    // drops it silently — which is how a duplicate went unnoticed once — so the
+    // clash is caught here instead, where it can be named.
+    const bundled = readdirSync(path.join(__dirname, '..', 'lua-filters', 'bundled')).filter(f => f.endsWith('.lua'));
+    expect(bundled.length).toBeGreaterThan(0);
+    const clashing = entries.filter(e => bundled.includes(e.fileName));
+    expect(clashing.map(e => e.id)).toEqual([]);
+    // And the catalogue never serves a file out of that folder either.
+    expect(entries.filter(e => e.path.startsWith('bundled/'))).toEqual([]);
   });
 });
