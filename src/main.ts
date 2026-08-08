@@ -97,6 +97,13 @@ export default class UniversalExportPlugin extends Plugin {
     settings.items.forEach(v => {
       Object.assign(v, Object.assign({}, DEFAULT_SETTINGS.items.find(o => o.name === v.name) ?? {}, v));
     });
+    // A template that came with the plugin is written to `data.json` as no more
+    // than what it does not share with its default — often nothing but a name.
+    // A default no longer seeded therefore leaves a husk: a name with nothing to
+    // run, which the merge above could not fill in. Those go, rather than stand
+    // in the export dropdown as templates that cannot export. Anything the user
+    // made carries its own fields and stays.
+    settings.items = settings.items.filter(v => v.type);
     for (const item of DEFAULT_SETTINGS.items) {
       if (settings.items.every(o => o.name !== item.name)) {
         settings.items.push(item);

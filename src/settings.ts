@@ -165,14 +165,37 @@ export const DEFAULT_ENV = (() => {
   return env;
 })();
 
+/**
+ * The templates a vault starts with — the formats a note is actually exported
+ * to, rather than every format pandoc can write.
+ *
+ * Every preset is still one click away: *New template* offers the whole list
+ * under *Output format*, and picking one there builds the same template this
+ * would have seeded. What is here is only what an export dropdown opens with,
+ * and a dropdown of twenty formats answers nobody's question — Textile, OPML,
+ * MediaWiki, reStructuredText, RTF and TextBundle were each one line of that
+ * list for every user who has never written one.
+ */
+export const DEFAULT_TEMPLATE_PRESETS: readonly string[] = [
+  'Markdown',
+  'Markdown (Hugo)',
+  'Html',
+  'Typst',
+  'PDF',
+  'Word (.docx)',
+  'OpenOffice',
+  'Epub',
+  'Latex',
+  'Bibliography (.bib)',
+  'PowerPoint (.pptx)',
+];
+
 export const DEFAULT_SETTINGS: UniversalExportPluginSettings = {
   // Each default is an instance of the preset it is named for, so it carries the
   // key it came from. Taking that from the key rather than the name matters:
   // `Bibliography (.bib)` holds a template called `Bibliography`, and the two
   // being different is exactly what a name could not tell us.
-  items: Object.entries(export_templates)
-    .filter(([, template]) => template.type !== 'custom')
-    .map(([preset, template]) => ({ ...template, preset })),
+  items: DEFAULT_TEMPLATE_PRESETS.filter(preset => export_templates[preset]).map(preset => ({ ...export_templates[preset], preset })),
   pandocPath: undefined,
   defaultExportDirectoryMode: 'Same',
   openExportedFile: true,

@@ -1,0 +1,135 @@
+import export_templates from '../src/export_templates';
+import { DEFAULT_TEMPLATE_PRESETS } from '../src/settings';
+import { renderTemplate } from '../src/utils';
+
+/*
+ * A preset is a command line with holes in it, and nothing type-checks the
+ * holes: a variable that is never filled in, or an input file named twice,
+ * reads perfectly well right up until pandoc is handed it.
+ *
+ * So every preset is rendered here the way `exporto0o` renders it — the pandoc
+ * path, the note, the preset's own arguments, then the extra ones — and held to
+ * what a command line has to be.
+ */
+
+const VARIABLES = {
+  pluginDir: '/vault/config/plugins/x',
+  luaDir: '/vault/config/plugins/x/lua',
+  outputDir: '/out',
+  outputPath: '/out/Note.docx',
+  outputFileName: 'Note',
+  outputFileFullName: 'Note.docx',
+  currentDir: '/vault/Notes',
+  currentPath: '/vault/Notes/Note.md',
+  currentFileName: 'Note',
+  currentFileFullName: 'Note.md',
+  attachmentFolderPath: '/vault/Attachments',
+  vaultDir: '/vault',
+  metadata: null as unknown,
+  embedDirs: '/vault/Notes/Note-attachments',
+  options: {} as Record<string, unknown>,
+  fromFormat: 'markdown+wikilinks_title_after_pipe',
+};
+
+/** The command line as `exporto0o` builds it, for a pandoc preset. */
+const render = (preset: string, variables: Record<string, unknown> = { ...VARIABLES }) => {
+  const template = export_templates[preset];
+  if (template.type !== 'pandoc') {
+    throw new Error(`${preset} is not a pandoc template`);
+  }
+  const cmdTpl = ['pandoc', '"${currentPath}"', template.arguments, template.customArguments]
+    .map(part => part?.trim())
+    .filter(Boolean)
+    .join(' ');
+  return renderTemplate(cmdTpl, variables);
+};
+
+const pandocPresets = Object.entries(export_templates)
+  .filter(([, t]) => t.type === 'pandoc')
+  .map(([key]) => key);
+
+describe('every preset renders a command', () => {
+  test.each(pandocPresets)('%s', preset => {
+    const cmd = render(preset);
+    // A variable nothing filled in is left as `${name}` rather than throwing,
+    // so an unrenderable command reaches pandoc looking almost right.
+    expect(cmd).not.toMatch(/\$\{/);
+    expect(cmd).toContain('-o "/out/');
+    // The note is an argument, not an option's value: naming it twice makes
+    // pandoc read it twice and write the document out doubled.
+    expect(cmd.split('"/vault/Notes/Note.md"')).toHaveLength(2);
+  });
+
+  test('a note that embeds nothing is not given an empty resource path', () => {
+    for (const preset of pandocPresets) {
+      const cmd = render(preset, { ...VARIABLES, embedDirs: '' });
+      expect(cmd).not.toContain('--resource-path=""');
+    }
+  });
+
+  test('the folders of embedded files are on the resource path of what carries images', () => {
+    for (const preset of ['PDF', 'Word (.docx)', 'OpenOffice', 'Html', 'Epub', 'PowerPoint (.pptx)', 'Latex']) {
+      expect(render(preset)).toContain('--resource-path="/vault/Notes/Note-attachments"');
+    }
+  });
+});
+
+describe('what the defaults are', () => {
+  test('every seeded preset exists, and none of them is the custom one', () => {
+    for (const preset of DEFAULT_TEMPLATE_PRESETS) {
+      expect(export_templates[preset]).toBeDefined();
+      expect(export_templates[preset].type).toBe('pandoc');
+    }
+  });
+
+  test('the list is shorter than the presets it is drawn from', () => {
+    // The point of the list: every format pandoc writes is still offered under
+    // *New template*, but an export dropdown opens with the ones people export.
+    expect(DEFAULT_TEMPLATE_PRESETS.length).toBeLessThan(pandocPresets.length);
+  });
+});
+
+describe('the corrections these presets carry', () => {
+  test('PDF is written by an engine that can set the whole of Unicode', () => {
+    expect(render('PDF')).toContain('--pdf-engine=xelatex');
+    expect(render('PDF')).not.toContain('pdflatex');
+  });
+
+  test('a bibliography is read from the note once', () => {
+    const cmd = render('Bibliography (.bib)');
+    expect(cmd.split('"/vault/Notes/Note.md"')).toHaveLength(2);
+    expect(cmd).toContain('--to=bibtex');
+  });
+
+  test("HTML asks for a page title without overruling the note's own", () => {
+    const cmd = render('Html');
+    expect(cmd).toContain('-V pagetitle="Note"');
+    expect(cmd).not.toContain('--metadata title');
+  });
+
+  test("Obsidian's own markdown is read where a document is rendered for reading", () => {
+    for (const preset of ['PDF', 'Word (.docx)', 'Html', 'Epub', 'Latex', 'Beamer slides (.pdf)']) {
+      // Last `-f` wins, so this is the one pandoc reads by — the preset's own
+      // `-f ${fromFormat}` stands ahead of it.
+      expect(render(preset)).toMatch(/-f markdown\+wikilinks_title_after_pipe\+mark$/);
+    }
+  });
+
+  test('callouts are left to the extensions row, which is where the caveat belongs', () => {
+    // Measured, not assumed: pandoc's `alerts` reads `> [!NOTE]`, and Obsidian
+    // writes `> [!note]`, which it leaves as a plain blockquote. Switching it on
+    // by default would raise the pandoc every user needs to 3.2 for nothing.
+    for (const preset of pandocPresets) {
+      expect(render(preset)).not.toContain('+alerts');
+    }
+  });
+
+  test('the lua filters named are ones the plugin still ships', () => {
+    const shipped = ['markdown.lua', 'markdown+hugo.lua', 'math_block.lua', 'pdf.lua', 'citefilter.lua'];
+    for (const preset of pandocPresets) {
+      for (const [, file] of render(preset).matchAll(/--lua-filter="[^"]*\/([^"/]+)"/g)) {
+        expect(shipped).toContain(file);
+      }
+    }
+  });
+});
