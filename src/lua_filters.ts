@@ -79,7 +79,7 @@ export interface InstalledLuaFilter {
 }
 
 /** The catalogue, unless a vault points `luaFilterRepoUrl` elsewhere. */
-export const DEFAULT_LUA_FILTER_REPO_URL = 'https://raw.githubusercontent.com/pan4ratte/obsidian-enhancing-export/main/lua-filters/';
+export const DEFAULT_LUA_FILTER_REPO_URL = 'https://raw.githubusercontent.com/pan4ratte/obsidian-pandoc-gui/main/lua-filters/';
 
 // ── The pandoc argument a filter is used through ──────────────────────────────
 

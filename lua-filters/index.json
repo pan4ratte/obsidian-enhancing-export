@@ -1,5 +1,5 @@
 {
-  "$comment": "The lua-filter catalogue for the Enhancing Export store. Every filter it lists is vendored in this folder, so the store never depends on a third-party host being up. See README.md for the entry schema and for how to add a filter.",
+  "$comment": "The lua-filter catalogue for the Pandoc GUI store. Every filter it lists is vendored in this folder, so the store never depends on a third-party host being up. See README.md for the entry schema and for how to add a filter.",
   "filters": [
     {
       "id": "abstract-section",

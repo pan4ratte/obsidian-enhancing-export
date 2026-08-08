@@ -29,7 +29,7 @@ export default class UniversalExportPlugin extends Plugin {
 
     this.addCommand({
       // Obsidian prefixes command ids with the plugin's own, so naming it here
-      // too produced `obsidian-enhancing-export:obsidian-enhancing-export:export`.
+      // too produced `pandoc-gui:pandoc-gui:export`.
       id: 'export',
       name: lang.exportToOo,
       icon: 'document',

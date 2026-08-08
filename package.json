@@ -1,7 +1,7 @@
 {
-  "name": "obsidian-enhancing-export",
-  "version": "1.12.0",
-  "description": "This is a enhancing export plugin for Obsidian. It allows to export to formats like Html, DOCX, ePub and PDF or Markdown(Hugo) etc.",
+  "name": "obsidian-pandoc-gui",
+  "version": "1.0.0",
+  "description": "Export notes with Pandoc from a graphical editor: templates for Word, PDF, LaTeX, HTML, EPUB, slides and more, every option as a row rather than a command line, plus a store of lua filters.",
   "main": "main.js",
   "scripts": {
     "dev": "vite build -w -m development",
@@ -13,12 +13,14 @@
     "lint-fix": "eslint --fix .",
     "format-check": "prettier --check \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\"",
     "format-fix": "prettier --write \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\"",
+    "docs:catalogue": "node scripts/gen-catalogue.js",
+    "docs:catalogue:check": "node scripts/gen-catalogue.js --check",
     "test": "jest"
   },
   "keywords": [],
-  "author": "YISH",
+  "author": "pan4ratte",
   "license": "MIT",
-  "repository": "https://github.com/mokeyish/obsidian-enhancing-export",
+  "repository": "https://github.com/pan4ratte/obsidian-pandoc-gui",
   "type": "module",
   "//overrides": "babel-plugin-istanbul <8 drags in the deprecated glob@7/inflight chain. The pnpm equivalent lives in pnpm-workspace.yaml.",
   "overrides": {

@@ -131,9 +131,12 @@ one click away, on the card's *Open readme* button.
       // filter simply never reports one.
       "updated": "2026-08-07",
 
-      // What the filter is called in the plugin's lua/ folder. Defaults to
-      // "<id>.lua". It is also the name the --lua-filter argument uses, so it
-      // must be unique across everything installed.
+      // What the filter is called in the plugin's lua/ folder. A catalogue of
+      // someone else's may leave it out, and it then defaults to "<id>.lua"; in
+      // this one it is written by the generator from the last segment of `path`,
+      // since that is the file being served. It is also the name the
+      // --lua-filter argument uses, so it must be unique across everything
+      // installed.
       "fileName": "wordcount.lua",
 
       // Optional. Adds the card's "Open readme" button — point it upstream.
@@ -150,7 +153,9 @@ the plugin already ships is never offered at all.
 
 `tests/luaFilterCatalogue.spec.ts` holds this file to the schema — every `path`
 must exist, ids and file names must be unique, and every entry must carry a name,
-a description, an author, a licence and a known category.
+a description, an author, a licence and a known category. `scripts/gen-catalogue.js`
+refuses the same things when it rewrites the file, and CI runs it in `--check`
+mode, so neither a malformed entry nor a stale table survives a pull request.
 
 ## Adding a filter
 
@@ -158,8 +163,14 @@ a description, an author, a licence and a known category.
    Not `bundled/` — that folder is what the plugin ships, and a name in it is a
    name the store will never offer.
 2. Add its entry, filling in `requires` if it needs anything the user has to
-   provide.
-3. Run `npm test`.
+   provide. Leave `fileName` out; it is derived from `path`.
+3. Run `npm run docs:catalogue`, which normalises the entry and rewrites the
+   catalogue table in the project's [readme](../README.md).
+4. Run `npm test`.
+
+The table in that readme is generated, never hand-written: it sits between two
+fixed prose lines — “The catalogue currently offers:” and “Want to add a filter
+of your own?” — and everything between them is replaced on every run.
 
 The base URL is overridable per vault through the `luaFilterRepoUrl` setting, so
 a vault can point the store at a catalogue of its own instead.

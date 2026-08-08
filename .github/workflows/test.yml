@@ -30,5 +30,7 @@ jobs:
           sudo dpkg -i pandoc-3.1.11.1-1-amd64.deb
       - name: Install Dependencies
         run: pnpm install
+      - name: Catalogue is generated, not hand-edited
+        run: npm run docs:catalogue:check
       - name: Test
         run: npm test

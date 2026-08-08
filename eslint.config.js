@@ -125,5 +125,13 @@ export default tseslint.config(
     // so the rules that need a type checker have nothing to ask.
     files: ['**/*.{js,mjs,cjs}'],
     ...tseslint.configs.disableTypeChecked,
+  },
+  {
+    // Repository tooling, run from a terminal by a maintainer and never shipped.
+    // Obsidian's guideline against logging is about a plugin filling a user's
+    // console; a command-line script reporting what it rewrote is the opposite.
+    files: ['scripts/**/*.{js,mjs,cjs}', 'version.mjs'],
+    languageOptions: { globals: globals.node },
+    rules: { 'obsidianmd/rule-custom-message': 'off' },
   }
 );

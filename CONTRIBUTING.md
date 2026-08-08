@@ -1,67 +1,179 @@
-# Contributing to Obsidian Enhancing Export
+# Contributing to Pandoc GUI
 
-First, thank you for your willingness to contribute to this project.
+Thank you for wanting to work on this plugin. Bug reports, export templates,
+lua filters for the catalogue and pull requests are all welcome, and this file
+says what you need to know before opening one.
 
-## Simple guide
+The shortest useful contributions are usually not code: a failing export with
+the *Resulting command* from the template editor and the text of the error box
+pasted into an issue tells us almost everything.
 
-1. Environment Preparing
+## Getting set up
 
-   - Install the `nodejs`
+1. **Node.js** — version 24 or newer, as in CI.
+   [https://nodejs.org/en/download](https://nodejs.org/en/download)
 
-     [https://nodejs.org/en/download](https://nodejs.org/en/download)
-
-   - Install the `pnpm`
-
-     ```shell
-     npm install -g pnpm
-     ```
-
-   - Clone the repository
-
-     ```shell'
-     git clone https://github.com/mokeyish/obsidian-enhancing-export.git
-     ```
-
-   - Install the dependencies
-
-     ```shell
-     cd obsidian-enhancing-export
-     pnpm install
-     ```
-
-2. Development & debugging  (Recommend [VsCode](https://code.visualstudio.com/))
-
-   - The build output (`main.js` / `styles.css`) is written to the project root by default, next to the
-     already present `manifest.json`, so the repository folder can be loaded by Obsidian as-is.
-
-     To build into another obsidian plugin directory instead, add `.env.local` to project root with
-     following content
-
-     ```shell
-     # export to obsidian plugin directory directly
-     OUT_DIR="path/to/.obsidian/plugins/obsidian-enhancing-export"
-     ```
-
-   - Enable `dev-mode `
-
-     To enable dev-mode in the obsidian, use the shortcut `Ctrl+Shift+I` or the `<F12>` key to open DevTools. and run following commands in the Console Tab of DevTools. 
-
-     ```shell
-     localStorage.setItem('debug-plugin', '1')
-     ```
-
-   - Build the code for debugging
-
-     ```shell
-     npm run dev
-     ```
-
-     More debug tips please see: [How to debug TypeScript in Chrome](https://blog.logrocket.com/how-to-debug-typescript-chrome/)
-
-3. Building for Production
+2. **pnpm**
 
    ```shell
-   npm run build
+   npm install -g pnpm
    ```
 
-4. Other commands please see `sciprts` of `package.json` in the project root.
+3. **Pandoc** — the plugin drives it and part of the test suite runs it, so it
+   has to be on your `PATH`. Version 3.1.9 or newer.
+   [https://pandoc.org/installing.html](https://pandoc.org/installing.html)
+
+4. **The repository**
+
+   ```shell
+   git clone https://github.com/pan4ratte/obsidian-pandoc-gui.git
+   cd obsidian-pandoc-gui
+   pnpm install
+   ```
+
+## Running it in a vault
+
+The repository folder is itself a loadable plugin folder: `manifest.json` and
+`styles.css` are committed at the root, and the build writes `main.js` beside
+them. So the quickest setup is to clone into a test vault's
+`.obsidian/plugins/` and build in place.
+
+```shell
+npm run dev      # rebuild on every change
+npm run build    # one production build
+```
+
+To keep the sources elsewhere and build into a vault instead, add `.env.local`
+at the project root:
+
+```shell
+# build straight into an obsidian plugin folder
+OUT_DIR="path/to/.obsidian/plugins/pandoc-gui"
+```
+
+When `OUT_DIR` points somewhere else, `manifest.json` and `styles.css` are
+copied along with `main.js`. When it does not — the default — only `main.js` is
+written, because copying those two onto themselves would fail.
+
+**`styles.css` is a source file, not build output.** It is edited by hand and
+committed; nothing generates it, and a build never overwrites it.
+
+Obsidian reloads a plugin when its folder changes if you have the
+[Hot Reload](https://github.com/pjeby/hot-reload) plugin installed, which is
+worth having for `npm run dev`.
+
+To see the plugin's own debug output, open DevTools with `Ctrl+Shift+I` (or
+`F12`) and run this once in the Console tab:
+
+```shell
+localStorage.setItem('debug-plugin', '1')
+```
+
+More debugging tips:
+[How to debug TypeScript in Chrome](https://blog.logrocket.com/how-to-debug-typescript-chrome/)
+
+## The checks
+
+Everything below runs in CI on every pull request, and all of it is quick:
+
+```shell
+npm run typecheck             # tsc --noEmit
+npm run lint                  # eslint, including the obsidianmd plugin rules
+npm run format-check          # prettier over src/ and tests/
+npm run docs:catalogue:check  # the lua-filter catalogue is generated, not hand-edited
+npm test                      # jest
+```
+
+`npm run lint-fix` and `npm run format-fix` apply what the first two can fix on
+their own. Anything else `package.json`'s `scripts` offers is fair game too.
+
+## What lives where
+
+| Path | What is in it |
+| --- | --- |
+| `src/` | The plugin. `main.ts` is the entry point; `exporto0o.ts` runs an export; `pandoc.ts` finds and questions the installed Pandoc. |
+| `src/export_templates.ts` | The templates the plugin ships with. |
+| `src/writer_args.ts`, `filter_args.ts`, `toc_args.ts` | The template editor's rows, read out of and written back into a template's arguments. |
+| `src/pandoc_format.ts` | What each output format is and which rows it can answer — the format families a row and a filter are narrowed by. |
+| `src/lua_filters.ts` | The store: reading the catalogue, installing, uninstalling, and the `--lua-filter` argument a template runs one through. |
+| `src/ui/` | The settings tab, the export dialog and the filter store, in Solid. |
+| `src/lang/` | Every string the user sees. `en-US.ts` is the only locale today, and the type of every other. |
+| `lua-filters/` | The filters: `bundled/` is what the plugin ships, the rest is the store's catalogue. See its [readme](lua-filters/README.md). |
+| `textemplate/` | LaTeX templates embedded into the build alongside the bundled filters. |
+| `scripts/` | `gen-catalogue.js`, which writes the catalogue table in the readme. |
+| `tests/` | Jest specs. Some shell out to the real Pandoc. |
+| `styles.css` | The stylesheet, edited by hand. |
+
+## Adding an export template
+
+Add an entry to `src/export_templates.ts`. A template is a name, a `type`, the
+arguments Pandoc is given and the extension the file is written with; the
+comments at the top of that file explain the variables the arguments may use and
+why the shared fragments exist. Templates the plugin ships are merged into a
+vault's saved settings on load — a user's edits to one are stored as the
+difference from the default, so renaming a shipped template retires it rather
+than updating it.
+
+Please export something real with a new template before proposing it.
+
+## Adding a row to the template editor
+
+A row is three things: the argument it reads and writes (in `writer_args.ts`,
+or `filter_args.ts` for the rows that run a bundled filter), the formats it is
+shown for (`pandoc_format.ts`), and its strings (`src/lang/en-US.ts`). Rows are
+offered only to the writers that would do something with them, so a row with no
+format restriction should genuinely apply everywhere.
+
+Two rules the editor depends on: a row never writes into *Options of your own*,
+which belongs to the user, and a row's argument must survive a round trip —
+written into a template, read back out, and shown as the same value.
+
+## Adding a lua filter to the catalogue
+
+The catalogue lives in `lua-filters/`, and its [readme](lua-filters/README.md)
+is the reference: what an entry carries, which folder the file goes in, and why
+every filter offered is vendored in this repository rather than fetched from
+wherever it was published.
+
+In short: commit the `.lua` file unmodified under the folder for where it came
+from, add its entry to `lua-filters/index.json` — leaving `fileName` out, since
+it is derived from `path` — then run
+
+```shell
+npm run docs:catalogue
+npm test
+```
+
+The first normalises your entry and rewrites the catalogue table in the
+project's readme; that table is generated between two fixed prose lines and
+should never be edited by hand. Include both changed files in the pull request,
+or CI's `docs:catalogue:check` will fail.
+
+Only add filters whose licence permits redistribution, and keep the original
+licence header in the file. Every entry has to name its author and licence.
+
+## Translations
+
+`src/lang/en-US.ts` is the only locale at the moment, and its shape is the type
+every other locale must satisfy — so a new one is a file beside it, exporting
+the same keys, registered in `src/lang/index.ts`. Nothing user-visible should be
+written as a literal outside that folder.
+
+## Pull requests
+
+- One subject per pull request; a rename, a refactor and a fix are three.
+- Run the checks above before pushing.
+- Say what you exported to test it — the format, and the platform you are on.
+  Word, PDF and LaTeX exports depend on things (a reference document, a TeX
+  distribution) that CI does not have.
+- Keep the existing style: comments explain *why* something is the way it is,
+  not what the next line does. Prettier settles everything else.
+- New behaviour that can be tested without Pandoc should come with a spec.
+
+## Reporting a bug
+
+Include the plugin version, your platform, the Pandoc version shown in the
+settings, the template you exported with, the *Resulting command* copied from
+the foot of the template editor, and what the error box said. An export that
+fails only for one note is worth attaching that note to, reduced to the part
+that still fails.

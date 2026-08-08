@@ -11,7 +11,9 @@ on:
         default: 'patch'
 
 env:
-  PLUGIN_NAME: obsidian-enhancing-export
+  # The plugin id, which is what the folder a manual install unzips to has to be
+  # called — not the repository name.
+  PLUGIN_NAME: pandoc-gui
 
 jobs:
   bump:
