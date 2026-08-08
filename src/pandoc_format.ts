@@ -1,3 +1,5 @@
+import type { CuratedVariable } from './writer_args';
+
 /*
  * What a template writes, and what that writer can be asked to do.
  *
@@ -156,6 +158,118 @@ export const supportsMathMethod = supportedBy([
 
 /** Whether pandoc will be handing the document to a PDF engine. */
 export const isPdfOutput = (writer?: string): boolean => writer === 'pdf';
+
+/** `--reference-doc`: "a style reference in producing a docx or ODT file", and pptx. */
+export const supportsReferenceDoc = supportedBy(['docx', 'odt', 'pptx']);
+
+/** `--css`: "only affects HTML (including HTML slide shows) and EPUB output". */
+export const supportsCss = supportedBy([
+  'html',
+  'html4',
+  'html5',
+  'chunkedhtml',
+  'revealjs',
+  'slidy',
+  'slideous',
+  'dzslides',
+  's5',
+  'epub',
+  'epub2',
+  'epub3',
+]);
+
+/*
+ * The include files, which the manual gives no list for: what happens to them
+ * is up to each writer's template, so the two sets below were measured against
+ * pandoc 3.10 the way `--toc` was — the same document written with each option
+ * and searched for the file's contents.
+ *
+ * Both are listed by what does *not* take them, since nearly everything does.
+ */
+const INCLUDES_UNSUPPORTED = new Set([
+  'bbcode',
+  'bbcode_fluxbb',
+  'bbcode_hubzilla',
+  'bbcode_phpbb',
+  'bbcode_steam',
+  'bbcode_xenforo',
+  'csljson',
+  'fb2',
+  'haddock',
+  'icml',
+  'ipynb',
+  'jats',
+  'jats_archiving',
+  'jats_articleauthoring',
+  'jats_publishing',
+  'json',
+  'native',
+  'opml',
+  'pptx',
+  'vimdoc',
+  'xml',
+]);
+
+/** Whether `--include-before-body` and `--include-after-body` reach the output. */
+export const supportsIncludes = (writer?: string): boolean => !!writer && !INCLUDES_UNSUPPORTED.has(writer);
+
+/** The writers with a body to include around but no header to include into. */
+const HEADER_UNSUPPORTED = new Set([
+  'docbook',
+  'docbook4',
+  'docbook5',
+  'docx',
+  'dokuwiki',
+  'jira',
+  'mediawiki',
+  't2t',
+  'tei',
+  'textile',
+  'xwiki',
+  'zimwiki',
+]);
+
+/** Whether `--include-in-header` reaches the output. */
+export const supportsHeaderInclude = (writer?: string): boolean => supportsIncludes(writer) && !HEADER_UNSUPPORTED.has(writer);
+
+/*
+ * The curated template variables, and who reads them.
+ *
+ * A variable is only ever read by the template it is written for, so these were
+ * measured rather than looked up: the same document written with and without
+ * each one, against pandoc 3.10. A writer left out ignores the variable
+ * entirely, and is not asked for it.
+ */
+const HTML_WRITERS = ['html', 'html4', 'html5', 'chunkedhtml'] as const;
+const EPUB_WRITERS = ['epub', 'epub2', 'epub3'] as const;
+const LATEX_WRITERS = ['latex', 'beamer', 'pdf'] as const;
+
+export const supportsVariable: Record<CuratedVariable, (writer?: string) => boolean> = {
+  papersize: supportedBy(['latex', 'pdf', 'context', 'ms', 'typst', ...EPUB_WRITERS]),
+  fontsize: supportedBy([...LATEX_WRITERS, 'context', 'typst', 'odt', ...HTML_WRITERS]),
+  mainfont: supportedBy([...LATEX_WRITERS, 'context', 'typst', ...HTML_WRITERS, ...EPUB_WRITERS]),
+  // The geometry package is LaTeX's; ConTeXt and Typst lay a page out their own way.
+  geometry: supportedBy([...LATEX_WRITERS]),
+  linkcolor: supportedBy([...LATEX_WRITERS, 'context', 'typst', ...HTML_WRITERS]),
+  lang: supportedBy([
+    ...LATEX_WRITERS,
+    'context',
+    'typst',
+    ...HTML_WRITERS,
+    ...EPUB_WRITERS,
+    'revealjs',
+    'slidy',
+    'slideous',
+    'dzslides',
+    's5',
+    'docx',
+    'odt',
+    'docbook',
+    'docbook5',
+    'tei',
+    'muse',
+  ]),
+};
 
 /*
  * The families a filter can be written for. A filter that reaches for

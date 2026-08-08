@@ -3,14 +3,20 @@ import {
   isPdfOutput,
   outputFormat,
   runsInFormat,
+  supportsCss,
+  supportsHeaderInclude,
   supportsHighlighting,
+  supportsIncludes,
   supportsMathMethod,
   supportsNumberOffset,
   supportsNumberSections,
+  supportsReferenceDoc,
   supportsSectionLists,
   supportsToc,
   supportsTopLevelDivision,
+  supportsVariable,
 } from '../src/pandoc_format';
+import { CURATED_VARIABLES } from '../src/writer_args';
 
 /*
  * What a template writes decides which rows the editor shows, so reading the
@@ -137,6 +143,75 @@ describe('which rows a writer is offered', () => {
     expect(isPdfOutput('pdf')).toBe(true);
     expect(isPdfOutput('latex')).toBe(false);
     expect(isPdfOutput(undefined)).toBe(false);
+  });
+
+  test('a reference document, for the three formats that take styles from one', () => {
+    for (const writer of ['docx', 'odt', 'pptx']) {
+      expect(supportsReferenceDoc(writer)).toBe(true);
+    }
+    for (const writer of ['latex', 'html', 'epub3', 'rtf', undefined]) {
+      expect(supportsReferenceDoc(writer)).toBe(false);
+    }
+  });
+
+  test('a stylesheet, in HTML — slide shows included — and EPUB', () => {
+    for (const writer of ['html', 'html4', 'html5', 'chunkedhtml', 'epub', 'epub3', 'revealjs', 's5']) {
+      expect(supportsCss(writer)).toBe(true);
+    }
+    // These have no stylesheet to link, whatever else they can be told.
+    for (const writer of ['latex', 'pdf', 'docx', 'odt', 'typst', undefined]) {
+      expect(supportsCss(writer)).toBe(false);
+    }
+  });
+
+  test('include files, which nearly every writer takes', () => {
+    for (const writer of ['latex', 'pdf', 'html', 'epub3', 'docx', 'odt', 'typst', 'commonmark_x', 'ms']) {
+      expect(supportsIncludes(writer)).toBe(true);
+    }
+    // Measured against pandoc: the file reaches none of these.
+    for (const writer of ['pptx', 'opml', 'jats', 'icml', 'json', 'ipynb', undefined]) {
+      expect(supportsIncludes(writer)).toBe(false);
+    }
+  });
+
+  test('a header to include into, which fewer of them have', () => {
+    for (const writer of ['latex', 'html', 'epub3', 'odt', 'typst', 'ms']) {
+      expect(supportsHeaderInclude(writer)).toBe(true);
+    }
+    // A body to wrap, but nowhere a header file could go.
+    for (const writer of ['docx', 'docbook5', 'mediawiki', 'textile', 'tei']) {
+      expect(supportsIncludes(writer)).toBe(true);
+      expect(supportsHeaderInclude(writer)).toBe(false);
+    }
+  });
+
+  test('each curated variable, only where the writer reads it', () => {
+    // Every one of them has a gate, so no row can be offered by accident.
+    for (const name of CURATED_VARIABLES) {
+      expect(typeof supportsVariable[name]).toBe('function');
+      expect(supportsVariable[name](undefined)).toBe(false);
+    }
+
+    expect(supportsVariable.geometry('latex')).toBe(true);
+    // The geometry package is LaTeX's; these lay a page out their own way.
+    expect(supportsVariable.geometry('context')).toBe(false);
+    expect(supportsVariable.geometry('typst')).toBe(false);
+
+    expect(supportsVariable.papersize('ms')).toBe(true);
+    expect(supportsVariable.papersize('html')).toBe(false);
+
+    expect(supportsVariable.fontsize('odt')).toBe(true);
+    expect(supportsVariable.mainfont('epub3')).toBe(true);
+    expect(supportsVariable.mainfont('odt')).toBe(false);
+
+    expect(supportsVariable.linkcolor('html5')).toBe(true);
+    expect(supportsVariable.linkcolor('docx')).toBe(false);
+
+    // The one nearly everything with a template says something about.
+    for (const writer of ['latex', 'pdf', 'html', 'epub3', 'docx', 'odt', 'revealjs', 'tei']) {
+      expect(supportsVariable.lang(writer)).toBe(true);
+    }
+    expect(supportsVariable.lang('ms')).toBe(false);
   });
 });
 

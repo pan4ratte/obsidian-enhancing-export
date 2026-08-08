@@ -158,6 +158,58 @@ export default {
     pdfEngineDesc: 'The program that turns the document into a PDF. XeLaTeX and LuaLaTeX handle system fonts and non-Latin scripts.',
     pdfEngineDefault: 'Default (pdfLaTeX)',
 
+    /* Citations. Citeproc is a filter over the document rather than a writer
+       option, so every output format can be asked for it. */
+    citations: 'Citations',
+    citationsDesc: 'Replace [@citekey] with a rendered citation and add a bibliography.',
+    bibliography: 'References',
+    bibliographyDesc: 'The file the references are read from — .bib, .json, .yaml or .ris.',
+    csl: 'Citation style',
+    cslDesc: 'A .csl file saying how citations and the bibliography are written. Pandoc’s own is Chicago author-date.',
+
+    /* Written into the same field, each shown only where its writer reads it. */
+    referenceDoc: 'Reference document',
+    referenceDocDesc: 'A document of your own to take styles, fonts and page setup from.',
+
+    stylesheet: 'Stylesheet',
+    stylesheetDesc: 'A CSS file the written page links to.',
+
+    includes: 'Include files',
+    includesDesc: 'Files copied into the document as they stand — a LaTeX preamble, a script, a footer.',
+    includeInHeader: 'In the header',
+    includeBeforeBody: 'Before the body',
+    includeAfterBody: 'After the body',
+
+    /* The template variables asked for by name. Each row is shown only for the
+       writers measured to read that variable. */
+    pageSetup: 'Page and fonts',
+    pageSetupDesc: 'What the output template is told about the page it is laying out.',
+    variableName: {
+      papersize: 'Paper size',
+      fontsize: 'Font size',
+      mainfont: 'Main font',
+      geometry: 'Page geometry',
+      linkcolor: 'Link colour',
+      lang: 'Language',
+    },
+    variablePlaceholder: {
+      papersize: 'Default',
+      fontsize: 'Default',
+      mainfont: 'e.g. PT Serif',
+      geometry: 'e.g. margin=1in',
+      linkcolor: 'e.g. blue',
+      lang: 'e.g. en-GB',
+    },
+    variableDefault: 'Default',
+
+    /* Everything else, typed rather than picked. */
+    variables: 'Other variables',
+    variablesDesc: 'One key=value a line, passed as -V. Read by the output template.',
+    metadata: 'Metadata',
+    metadataDesc: 'One key=value a line, passed as -M. Fields of the document itself — title, author, date.',
+
+    chooseFile: 'Choose file',
+
     /* Running installed filters, from the template that runs them. */
     luaFilters: 'Lua filters',
     noLuaFiltersInstalled: 'No filters installed. Add some from Browse lua-filters.',

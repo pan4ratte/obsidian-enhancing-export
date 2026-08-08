@@ -20,15 +20,24 @@ const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /** A value as it appears after an option, quoted or bare. */
 const VALUE = String.raw`("[^"]*"|[^\s"]+)`;
 
+/** Every spelling of one option, as one alternation. */
+const alternation = (names: Names) => (typeof names === 'string' ? [names] : names).map(escapeRegExp).join('|');
+
+/** The spelling written back, which is always the first one named. */
+const written = (names: Names) => (typeof names === 'string' ? names : names[0]);
+
+/** An option under all the names pandoc answers to for it, longest form first. */
+type Names = string | readonly string[];
+
 /**
  * Flags with nothing after them, as one alternation. The lookahead is what
  * keeps `--lof` from matching the front of a longer flag — the same trick
  * `toc_args` plays to keep `--toc` out of `--toc-depth`.
  */
-const flagsPattern = (names: readonly string[]) => String.raw`(?:^|\s)(?:${names.map(escapeRegExp).join('|')})(?=\s|$)`;
+const flagsPattern = (names: Names) => String.raw`(?:^|\s)(?:${alternation(names)})(?=\s|$)`;
 
 /** A flag carrying a value: `--pdf-engine=xelatex`, `--highlight-style kate`. */
-const optionPattern = (name: string) => String.raw`(?:^|\s)${escapeRegExp(name)}[= ]${VALUE}(?=\s|$)`;
+const optionPattern = (names: Names) => String.raw`(?:^|\s)(?:${alternation(names)})[= ]${VALUE}(?=\s|$)`;
 
 /** `args` without anything `pattern` matches, tidied up after. */
 const without = (args: string | undefined, pattern: string) =>
@@ -54,7 +63,7 @@ const lastMatch = (args: string | undefined, pattern: string): RegExpMatchArray 
 };
 
 /** The value `args` gives `name`, or undefined where it does not give one. */
-const valueOf = (args: string | undefined, name: string): string | undefined => {
+const valueOf = (args: string | undefined, name: Names): string | undefined => {
   const found = lastMatch(args, optionPattern(name))?.[1];
   return found === undefined ? undefined : unquote(found);
 };
@@ -64,17 +73,17 @@ const valueOf = (args: string | undefined, name: string): string | undefined => 
  * was there before is replaced rather than added to, so the option can never
  * end up in the line twice.
  */
-const setValue = (args: string | undefined, name: string, value?: string): string => {
+const setValue = (args: string | undefined, name: Names, value?: string): string => {
   const stripped = without(args, optionPattern(name));
-  return value ? append(stripped, `${name}=${quote(value)}`) : stripped;
+  return value ? append(stripped, `${written(name)}=${quote(value)}`) : stripped;
 };
 
-const has = (args: string | undefined, names: readonly string[]) => new RegExp(flagsPattern(names)).test(args ?? '');
+const has = (args: string | undefined, names: Names) => new RegExp(flagsPattern(names)).test(args ?? '');
 
 /** `args` carrying the first of `names`, or none of them. */
-const setPresence = (args: string | undefined, names: readonly string[], on: boolean): string => {
+const setPresence = (args: string | undefined, names: Names, on: boolean): string => {
   const stripped = without(args, flagsPattern(names));
-  return on ? append(stripped, names[0]) : stripped;
+  return on ? append(stripped, written(names)) : stripped;
 };
 
 /* -- Numbered headings ---------------------------------------------------- */
@@ -229,3 +238,188 @@ const PDF_ENGINE = '--pdf-engine';
 export const pdfEngine = (args?: string): string | undefined => valueOf(args, PDF_ENGINE);
 
 export const setPdfEngine = (args: string | undefined, engine: string): string => setValue(args, PDF_ENGINE, engine || undefined);
+
+/* -- Citations ------------------------------------------------------------ */
+
+/** `-C` is pandoc's short form; the long one is what gets written. */
+const CITEPROC = ['--citeproc', '-C'] as const;
+const BIBLIOGRAPHY = '--bibliography';
+const CSL = '--csl';
+
+export const citeproc = (args?: string): boolean => has(args, CITEPROC);
+
+export const setCiteproc = (args: string | undefined, on: boolean): string => {
+  const next = setPresence(args, CITEPROC, on);
+  // Neither file does anything by itself — both only set a metadata field that
+  // citeproc goes on to read — and the rows they are typed into are hidden
+  // along with the toggle. Left behind they would be answers nobody can see.
+  return on ? next : setValue(setValue(next, CSL), BIBLIOGRAPHY);
+};
+
+/**
+ * The references citeproc reads. Pandoc takes this option more than once and
+ * reads every file named; the modal asks for one, so a line naming several is
+ * read as the last of them and settles to that one when the row is changed.
+ */
+export const bibliography = (args?: string): string | undefined => valueOf(args, BIBLIOGRAPHY);
+
+export const setBibliography = (args: string | undefined, file: string): string => setValue(args, BIBLIOGRAPHY, file || undefined);
+
+/** The style file the citations and the bibliography are formatted to. */
+export const csl = (args?: string): string | undefined => valueOf(args, CSL);
+
+export const setCsl = (args: string | undefined, file: string): string => setValue(args, CSL, file || undefined);
+
+/* -- Reference document --------------------------------------------------- */
+
+/** The document a docx, odt or pptx export takes its styles from. */
+const REFERENCE_DOC = '--reference-doc';
+
+export const referenceDoc = (args?: string): string | undefined => valueOf(args, REFERENCE_DOC);
+
+export const setReferenceDoc = (args: string | undefined, file: string): string => setValue(args, REFERENCE_DOC, file || undefined);
+
+/* -- Stylesheet ----------------------------------------------------------- */
+
+/** `--css` is repeatable as well, and is read and written as the one file. */
+const CSS = ['--css', '-c'] as const;
+
+export const css = (args?: string): string | undefined => valueOf(args, CSS);
+
+export const setCss = (args: string | undefined, file: string): string => setValue(args, CSS, file || undefined);
+
+/* -- Include files -------------------------------------------------------- */
+
+/**
+ * Files copied into the written document verbatim — a LaTeX preamble, a script
+ * in an HTML head, a footer under the body. Each implies `--standalone`, which
+ * every shipped template already asks for.
+ */
+const INCLUDE_IN_HEADER = ['--include-in-header', '-H'] as const;
+const INCLUDE_BEFORE_BODY = ['--include-before-body', '-B'] as const;
+const INCLUDE_AFTER_BODY = ['--include-after-body', '-A'] as const;
+
+export const includeInHeader = (args?: string): string | undefined => valueOf(args, INCLUDE_IN_HEADER);
+export const setIncludeInHeader = (args: string | undefined, file: string): string => setValue(args, INCLUDE_IN_HEADER, file || undefined);
+
+export const includeBeforeBody = (args?: string): string | undefined => valueOf(args, INCLUDE_BEFORE_BODY);
+export const setIncludeBeforeBody = (args: string | undefined, file: string): string =>
+  setValue(args, INCLUDE_BEFORE_BODY, file || undefined);
+
+export const includeAfterBody = (args?: string): string | undefined => valueOf(args, INCLUDE_AFTER_BODY);
+export const setIncludeAfterBody = (args: string | undefined, file: string): string =>
+  setValue(args, INCLUDE_AFTER_BODY, file || undefined);
+
+/* -- Variables and metadata ----------------------------------------------- */
+
+/** One `key=value`. A value of `''` is pandoc's bare `-V key`, which is true. */
+export type Pair = { key: string; value: string };
+
+/**
+ * A `key=value` after `-V`, quoted whole (`-V "mainfont=PT Serif"`), quoted in
+ * part (`-V mainfont="PT Serif"`) or not at all. Unlike every other value here
+ * it is one token made of several, since the quotes may fall anywhere in it.
+ */
+const PAIR = String.raw`((?:"[^"]*"|[^\s"])+)`;
+
+const pairPattern = (names: Names) => String.raw`(?:^|\s)(?:${alternation(names)})[= ]${PAIR}(?=\s|$)`;
+
+/** `key=value` split at the first `=`, which is where pandoc splits it. */
+const readPair = (token: string): Pair => {
+  const bare = token.replace(/"/g, '');
+  const at = bare.indexOf('=');
+  return at === -1 ? { key: bare, value: '' } : { key: bare.slice(0, at), value: bare.slice(at + 1) };
+};
+
+const writePair = ({ key, value }: Pair) => quote(value ? `${key}=${value}` : key);
+
+/**
+ * The readers and writers a repeatable `KEY=VALUE` option needs.
+ *
+ * `-V` and `-M` are what get written, against the long forms every other option
+ * here settles to: `--variable=fontsize=12pt` carries two `=` and reads as a
+ * puzzle, and the short form is what pandoc's own documentation uses.
+ */
+const pairOption = (names: readonly string[]) => {
+  const pattern = pairPattern(names);
+
+  /** Every pair in the line, in the order pandoc reads them. */
+  const all = (args?: string): Pair[] => [...(args ?? '').matchAll(new RegExp(pattern, 'g'))].map(m => readPair(m[1]));
+
+  /** The line without the pairs `drop` names, the rest left where they were. */
+  const strip = (args: string | undefined, drop: (key: string) => boolean) =>
+    (args ?? '')
+      .replace(new RegExp(pattern, 'g'), (whole, token: string) => (drop(readPair(token).key) ? ' ' : whole))
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
+  const add = (args: string, pairs: readonly Pair[]) => pairs.reduce((line, pair) => append(line, `${names[0]} ${writePair(pair)}`), args);
+
+  return {
+    all,
+    /** The value the line gives `key` — the last, since that is the one pandoc takes. */
+    valueOf: (args: string | undefined, key: string): string | undefined =>
+      all(args)
+        .filter(p => p.key === key)
+        .pop()?.value,
+    /** The line with `key` set, or taken back out at an empty value. */
+    set: (args: string | undefined, key: string, value: string): string => {
+      const stripped = strip(args, k => k === key);
+      return value ? add(stripped, [{ key, value }]) : stripped;
+    },
+    /** The line rewritten to `pairs`, less the keys `keep` names — those are
+        written by rows of their own and are left exactly as they were found. */
+    setAll: (args: string | undefined, pairs: readonly Pair[], keep: readonly string[] = []): string => {
+      const stripped = strip(args, k => !keep.includes(k));
+      return add(
+        stripped,
+        pairs.filter(p => p.key && !keep.includes(p.key))
+      );
+    },
+  };
+};
+
+const VARIABLES = pairOption(['-V', '--variable']);
+const METADATA = pairOption(['-M', '--metadata']);
+
+export const variables = VARIABLES.all;
+export const variable = VARIABLES.valueOf;
+export const setVariable = VARIABLES.set;
+export const setVariables = VARIABLES.setAll;
+
+export const metadata = METADATA.all;
+export const metadataValue = METADATA.valueOf;
+export const setMetadataValue = METADATA.set;
+export const setMetadata = METADATA.setAll;
+
+/**
+ * The variables the modal asks for by name, each with a row of its own. Every
+ * other one is typed into the list, which leaves these alone — see `setAll`.
+ *
+ * Which writers read which of them is `pandoc_format`'s to say.
+ */
+export const CURATED_VARIABLES = ['papersize', 'fontsize', 'mainfont', 'geometry', 'linkcolor', 'lang'] as const;
+
+export type CuratedVariable = (typeof CURATED_VARIABLES)[number];
+
+/** The list as it is typed: one `key=value` a line, blank lines passed over. */
+export const pairsFromText = (text: string): Pair[] =>
+  text
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .map(line => {
+      const at = line.indexOf('=');
+      return at === -1 ? { key: line, value: '' } : { key: line.slice(0, at).trim(), value: line.slice(at + 1).trim() };
+    })
+    .filter(pair => pair.key.length > 0);
+
+/** The same list as it is shown. A pair with no value is pandoc's bare `-V key`. */
+export const textFromPairs = (pairs: readonly Pair[]): string =>
+  pairs.map(({ key, value }) => (value ? `${key}=${value}` : key)).join('\n');
+
+/** The sizes pandoc's own documentation names, in the spelling LaTeX takes. */
+export const PAPER_SIZES = ['a4', 'letter', 'a5', 'b5', 'legal', 'executive'] as const;
+
+/** What a LaTeX document class accepts; other writers take any CSS length. */
+export const FONT_SIZES = ['10pt', '11pt', '12pt'] as const;

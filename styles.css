@@ -707,6 +707,43 @@
 }
 
 /*
+ * A path and the button that fills it in are the one answer, so they share the
+ * row: the field takes what room there is, the button only what it needs. The
+ * field stays writable — a path is as often written with `${currentDir}` as it
+ * is picked off a disk — so the button sits beside it rather than replacing it.
+ */
+.ex-template-modal.ex-template-modal .setting-item-control > .setting-editor-extra-setting-button {
+  flex: 0 0 auto;
+  align-self: center;
+  margin-inline-start: var(--size-4-2);
+}
+
+/*
+ * The variables and the metadata, one `key=value` a line. The height is set
+ * from the script a line at a time, as the environment variables' is, so there
+ * is nothing to scroll and nothing worth dragging: a drag would only hold until
+ * the next keystroke measured the lines again.
+ */
+.ex-template-modal.ex-template-modal .ex-template-modal-pairs {
+  width: 100%;
+  resize: none;
+  overflow-y: hidden;
+  min-height: 3em;
+}
+
+/*
+ * A group's own heading, inside the card the group is drawn as — the include
+ * files, and the page the writer is told about. It names the rows under it and
+ * has no control of its own, so it keeps the plain look every row in a card
+ * has rather than being drawn as a card inside a card.
+ */
+.ex-template-modal.ex-template-modal .ex-card > .setting-item.setting-item-heading {
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+/*
  * Lua filter store.
  *
  * The chrome is the extensions store from the Advanced Word Count plugin,

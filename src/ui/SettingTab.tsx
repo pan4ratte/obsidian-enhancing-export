@@ -7,7 +7,7 @@ import type UniversalExportPlugin from '../main';
 import { CustomExportSetting, ExportSetting, PandocExportSetting, createEnv, DEFAULT_ENV } from '../settings';
 import { setPlatformValue, getPlatformValue } from '../utils';
 
-import { createSignal, createRoot, onCleanup, createMemo, createEffect, Show, batch, Match, Switch, JSX } from 'solid-js';
+import { createSignal, createRoot, onCleanup, createMemo, createEffect, For, Show, batch, Match, Switch, JSX } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { insert, Dynamic } from 'solid-js/web';
 import type { Lang } from '../lang';
@@ -23,38 +23,71 @@ import CheckGrid from './components/CheckGrid';
 import { TOC_MAX_DEPTH, setTocDepth, tocDepth } from '../toc_args';
 import { PANDOC_EXTENSIONS, enabledExtensions, setExtensions } from '../pandoc_extensions';
 import {
+  CURATED_VARIABLES,
+  FONT_SIZES,
   HIGHLIGHT_NONE,
   HIGHLIGHT_STYLES,
   MATH_METHODS,
+  PAPER_SIZES,
   PDF_ENGINES,
   TOP_LEVEL_DIVISIONS,
+  bibliography,
+  citeproc,
+  csl,
+  css,
   highlightStyle,
+  includeAfterBody,
+  includeBeforeBody,
+  includeInHeader,
   listOfFigures,
   listOfTables,
   mathMethod,
+  metadata,
   numberOffset,
   numberSections,
+  pairsFromText,
   pdfEngine,
+  referenceDoc,
+  setBibliography,
+  setCiteproc,
+  setCsl,
+  setCss,
   setHighlightStyle,
+  setIncludeAfterBody,
+  setIncludeBeforeBody,
+  setIncludeInHeader,
   setListOfFigures,
   setListOfTables,
   setMathMethod,
+  setMetadata,
   setNumberOffset,
   setNumberSections,
   setPdfEngine,
+  setReferenceDoc,
   setTopLevelDivision,
+  setVariable,
+  setVariables,
+  textFromPairs,
   topLevelDivision,
+  variable,
+  variables,
+  type CuratedVariable,
 } from '../writer_args';
 import {
   isPdfOutput,
   outputFormat,
+  supportsCss,
+  supportsHeaderInclude,
   supportsHighlighting,
+  supportsIncludes,
   supportsMathMethod,
   supportsNumberOffset,
   supportsNumberSections,
+  supportsReferenceDoc,
   supportsSectionLists,
   supportsToc,
   supportsTopLevelDivision,
+  supportsVariable,
 } from '../pandoc_format';
 import { MessageBox } from './message_box';
 import Modal from './components/Modal';
@@ -62,6 +95,7 @@ import Button from './components/Button';
 import Collapsible from './components/Collapsible';
 import Section from './components/Section';
 import Setting, { Text, Toggle, ExtraButton, DropDown, TextArea } from './components/Setting';
+import FileInput from './components/FileInput';
 import export_templates from '../export_templates';
 import { BUNDLED_LUA_FILES } from '../resources';
 
@@ -74,6 +108,26 @@ import { BUNDLED_LUA_FILES } from '../resources';
  * `data.json` — where someone is looking is not a setting.
  */
 const [advancedOpen, setAdvancedOpen] = createSignal(false);
+
+/*
+ * What the file dialogs offer to open. Every one of them ends in everything,
+ * since a path a template names is as often a file kept under a name of the
+ * user's own as it is one of these.
+ */
+const ANY_FILE = { name: 'All files', extensions: ['*'] };
+const BIBLIOGRAPHY_FILES = [{ name: 'Bibliography', extensions: ['bib', 'bibtex', 'json', 'yaml', 'yml', 'ris', 'enl', 'xml'] }, ANY_FILE];
+const CSL_FILES = [{ name: 'Citation style', extensions: ['csl'] }, ANY_FILE];
+const CSS_FILES = [{ name: 'Stylesheet', extensions: ['css'] }, ANY_FILE];
+
+/**
+ * The two curated variables with an answer short enough to be picked from a
+ * list. The rest are typed: a font is whatever is installed, and a geometry is
+ * a line of options to the LaTeX package that reads it.
+ */
+const VARIABLE_CHOICES: Partial<Record<CuratedVariable, readonly string[]>> = {
+  papersize: PAPER_SIZES,
+  fontsize: FONT_SIZES,
+};
 
 const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
   const { plugin, lang } = props;
@@ -467,17 +521,31 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
       )
     );
 
+    /** The curated variables this writer was measured to read, and no others. */
+    const curatedVariables = createMemo(() => CURATED_VARIABLES.filter(name => supportsVariable[name](format())));
+
+    const variableOptions = (name: CuratedVariable) =>
+      withCurrent(
+        [{ name: lang.settingTab.variableDefault, value: '' }, ...(VARIABLE_CHOICES[name] ?? []).map(value => ({ name: value, value }))],
+        variable(args(), name)
+      );
+
     /**
-     * Whether the advanced panel has anything to ask this writer. Every row in
-     * it is gated on the format, so a writer that answers none of them would
-     * otherwise be given a heading over an empty panel.
+     * Everything the rows above do not ask for, as one `key=value` a line.
+     *
+     * What is on screen in a row of its own is left out of the list rather than
+     * shown twice — and put back in the moment the format changes to one with
+     * no row for it, so a variable can never go quietly missing.
      */
-    const hasAdvanced = () =>
-      numbering().length > 0 ||
-      supportsTopLevelDivision(format()) ||
-      supportsHighlighting(format()) ||
-      supportsMathMethod(format()) ||
-      isPdfOutput(format());
+    const otherVariables = createMemo(() =>
+      textFromPairs(variables(args()).filter(v => !curatedVariables().includes(v.key as CuratedVariable)))
+    );
+
+    /** The document a docx, odt or pptx export takes its styles from. */
+    const referenceDocFiles = createMemo(() => [
+      { name: lang.settingTab.referenceDoc, extensions: [format() === 'pptx' ? 'pptx' : format() === 'odt' ? 'odt' : 'docx'] },
+      ANY_FILE,
+    ]);
 
     /*
      * The rows a template is usually opened for come first, under its name and
@@ -523,79 +591,229 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
           <CheckGrid items={extensions()} onToggle={toggleExtension} />
         </Setting>
 
-        <Show when={hasAdvanced()}>
-          <Section name={lang.settingTab.advanced} class="ex-template-modal-advanced" open={advancedOpen()} onToggle={setAdvancedOpen}>
-            <Show when={numbering().length > 0}>
-              <Setting name={lang.settingTab.numbering} description={lang.settingTab.numberingDesc} class="ex-template-modal-numbering">
-                <CheckGrid items={numbering()} onToggle={toggleNumbering} />
-              </Setting>
-            </Show>
+        {/* Not gated on the format the way the panel's rows once were: the
+            citations, the variables and the metadata at the foot of it are
+            asked of every writer, so there is always something to open. */}
+        <Section name={lang.settingTab.advanced} class="ex-template-modal-advanced" open={advancedOpen()} onToggle={setAdvancedOpen}>
+          <Show when={numbering().length > 0}>
+            <Setting name={lang.settingTab.numbering} description={lang.settingTab.numberingDesc} class="ex-template-modal-numbering">
+              <CheckGrid items={numbering()} onToggle={toggleNumbering} />
+            </Setting>
+          </Show>
 
-            {/* Once there is numbering for it to offset, and only in the two
-                formats pandoc says it reaches. */}
-            <Collapsible when={supportsNumberOffset(format()) && numberSections(args())} class="ex-template-modal-offset-panel">
-              <Setting
-                name={lang.settingTab.numberOffset}
-                description={lang.settingTab.numberOffsetDesc}
-                class="ex-template-modal-number-offset"
-              >
-                <Text value={numberOffset(args()) ?? ''} placeholder="0" onChange={value => writeArgs(a => setNumberOffset(a, value))} />
+          {/* Once there is numbering for it to offset, and only in the two
+              formats pandoc says it reaches. */}
+          <Collapsible when={supportsNumberOffset(format()) && numberSections(args())} class="ex-template-modal-offset-panel">
+            <Setting
+              name={lang.settingTab.numberOffset}
+              description={lang.settingTab.numberOffsetDesc}
+              class="ex-template-modal-number-offset"
+            >
+              <Text value={numberOffset(args()) ?? ''} placeholder="0" onChange={value => writeArgs(a => setNumberOffset(a, value))} />
+            </Setting>
+          </Collapsible>
+
+          <Show when={supportsTopLevelDivision(format())}>
+            <Setting
+              name={lang.settingTab.topLevelDivision}
+              description={lang.settingTab.topLevelDivisionDesc}
+              class="ex-template-modal-division"
+            >
+              <DropDown
+                options={divisionOptions}
+                selected={topLevelDivision(args()) ?? ''}
+                autofocus={false}
+                onChange={value => writeArgs(a => setTopLevelDivision(a, value))}
+              />
+            </Setting>
+          </Show>
+
+          <Show when={supportsHighlighting(format())}>
+            <Setting
+              name={lang.settingTab.syntaxHighlighting}
+              description={lang.settingTab.syntaxHighlightingDesc}
+              class="ex-template-modal-highlight"
+            >
+              <DropDown
+                options={highlightOptions()}
+                selected={highlightStyle(args()) ?? ''}
+                autofocus={false}
+                onChange={value => writeArgs(a => setHighlightStyle(a, value))}
+              />
+            </Setting>
+          </Show>
+
+          <Show when={supportsMathMethod(format())}>
+            <Setting name={lang.settingTab.math} description={lang.settingTab.mathDesc} class="ex-template-modal-math">
+              <DropDown
+                options={mathOptions}
+                selected={mathMethod(args()) ?? ''}
+                autofocus={false}
+                onChange={value => writeArgs(a => setMathMethod(a, value))}
+              />
+            </Setting>
+          </Show>
+
+          <Show when={isPdfOutput(format())}>
+            <Setting name={lang.settingTab.pdfEngine} description={lang.settingTab.pdfEngineDesc} class="ex-template-modal-pdf-engine">
+              <DropDown
+                options={engineOptions()}
+                selected={pdfEngine(args()) ?? ''}
+                autofocus={false}
+                onChange={value => writeArgs(a => setPdfEngine(a, value))}
+              />
+            </Setting>
+          </Show>
+
+          {/* Citeproc reads the document rather than writing it, so this is
+              the one row here with no format to be gated on. The two files are
+              only ever read on its behalf, and are folded away with it. */}
+          <div class="ex-card ex-template-modal-citations">
+            <Setting
+              name={lang.settingTab.citations}
+              description={lang.settingTab.citationsDesc}
+              class="ex-template-modal-citations-toggle"
+            >
+              <Toggle checked={citeproc(args())} onChange={checked => writeArgs(a => setCiteproc(a, checked))} />
+            </Setting>
+            <Collapsible when={citeproc(args())} class="ex-template-modal-citations-panel">
+              <Setting name={lang.settingTab.bibliography} description={lang.settingTab.bibliographyDesc}>
+                <FileInput
+                  value={bibliography(args())}
+                  filters={BIBLIOGRAPHY_FILES}
+                  tooltip={lang.settingTab.chooseFile}
+                  onChange={value => writeArgs(a => setBibliography(a, value.trim()))}
+                />
+              </Setting>
+              <Setting name={lang.settingTab.csl} description={lang.settingTab.cslDesc}>
+                <FileInput
+                  value={csl(args())}
+                  filters={CSL_FILES}
+                  tooltip={lang.settingTab.chooseFile}
+                  onChange={value => writeArgs(a => setCsl(a, value.trim()))}
+                />
               </Setting>
             </Collapsible>
+          </div>
 
-            <Show when={supportsTopLevelDivision(format())}>
-              <Setting
-                name={lang.settingTab.topLevelDivision}
-                description={lang.settingTab.topLevelDivisionDesc}
-                class="ex-template-modal-division"
-              >
-                <DropDown
-                  options={divisionOptions}
-                  selected={topLevelDivision(args()) ?? ''}
-                  autofocus={false}
-                  onChange={value => writeArgs(a => setTopLevelDivision(a, value))}
+          {/* The page itself, told to the writer as template variables. Each
+              row is shown only where that writer was measured to read it, so
+              the card is as long as the format has answers for. */}
+          <Show when={curatedVariables().length > 0}>
+            <div class="ex-card ex-template-modal-page-setup">
+              <Setting name={lang.settingTab.pageSetup} description={lang.settingTab.pageSetupDesc} heading={true} />
+              <For each={curatedVariables()}>
+                {name => (
+                  <Setting name={lang.settingTab.variableName[name]} class={`ex-template-modal-variable ex-template-modal-${name}`}>
+                    <Show
+                      when={VARIABLE_CHOICES[name]}
+                      fallback={
+                        <Text
+                          value={variable(args(), name) ?? ''}
+                          placeholder={lang.settingTab.variablePlaceholder[name]}
+                          onChange={value => writeArgs(a => setVariable(a, name, value.trim()))}
+                        />
+                      }
+                    >
+                      <DropDown
+                        options={variableOptions(name)}
+                        selected={variable(args(), name) ?? ''}
+                        autofocus={false}
+                        onChange={value => writeArgs(a => setVariable(a, name, value))}
+                      />
+                    </Show>
+                  </Setting>
+                )}
+              </For>
+            </div>
+          </Show>
+
+          <Show when={supportsCss(format())}>
+            <Setting name={lang.settingTab.stylesheet} description={lang.settingTab.stylesheetDesc} class="ex-template-modal-css">
+              <FileInput
+                value={css(args())}
+                filters={CSS_FILES}
+                tooltip={lang.settingTab.chooseFile}
+                onChange={value => writeArgs(a => setCss(a, value.trim()))}
+              />
+            </Setting>
+          </Show>
+
+          <Show when={supportsReferenceDoc(format())}>
+            <Setting
+              name={lang.settingTab.referenceDoc}
+              description={lang.settingTab.referenceDocDesc}
+              class="ex-template-modal-reference-doc"
+            >
+              <FileInput
+                value={referenceDoc(args())}
+                filters={referenceDocFiles()}
+                tooltip={lang.settingTab.chooseFile}
+                onChange={value => writeArgs(a => setReferenceDoc(a, value.trim()))}
+              />
+            </Setting>
+          </Show>
+
+          {/* Three files around the one document, so they share a card. The
+              header is left out of the writers that have a body to put a file
+              around but no header to put one into. */}
+          <Show when={supportsIncludes(format())}>
+            <div class="ex-card ex-template-modal-includes">
+              <Setting name={lang.settingTab.includes} description={lang.settingTab.includesDesc} heading={true} />
+              <Show when={supportsHeaderInclude(format())}>
+                <Setting name={lang.settingTab.includeInHeader}>
+                  <FileInput
+                    value={includeInHeader(args())}
+                    filters={[ANY_FILE]}
+                    tooltip={lang.settingTab.chooseFile}
+                    onChange={value => writeArgs(a => setIncludeInHeader(a, value.trim()))}
+                  />
+                </Setting>
+              </Show>
+              <Setting name={lang.settingTab.includeBeforeBody}>
+                <FileInput
+                  value={includeBeforeBody(args())}
+                  filters={[ANY_FILE]}
+                  tooltip={lang.settingTab.chooseFile}
+                  onChange={value => writeArgs(a => setIncludeBeforeBody(a, value.trim()))}
                 />
               </Setting>
-            </Show>
-
-            <Show when={supportsHighlighting(format())}>
-              <Setting
-                name={lang.settingTab.syntaxHighlighting}
-                description={lang.settingTab.syntaxHighlightingDesc}
-                class="ex-template-modal-highlight"
-              >
-                <DropDown
-                  options={highlightOptions()}
-                  selected={highlightStyle(args()) ?? ''}
-                  autofocus={false}
-                  onChange={value => writeArgs(a => setHighlightStyle(a, value))}
+              <Setting name={lang.settingTab.includeAfterBody}>
+                <FileInput
+                  value={includeAfterBody(args())}
+                  filters={[ANY_FILE]}
+                  tooltip={lang.settingTab.chooseFile}
+                  onChange={value => writeArgs(a => setIncludeAfterBody(a, value.trim()))}
                 />
               </Setting>
-            </Show>
+            </div>
+          </Show>
 
-            <Show when={supportsMathMethod(format())}>
-              <Setting name={lang.settingTab.math} description={lang.settingTab.mathDesc} class="ex-template-modal-math">
-                <DropDown
-                  options={mathOptions}
-                  selected={mathMethod(args()) ?? ''}
-                  autofocus={false}
-                  onChange={value => writeArgs(a => setMathMethod(a, value))}
-                />
-              </Setting>
-            </Show>
+          {/* The two lists everything else is said in. `visible` is the panel
+              they sit in rather than the field: a textarea that has never been
+              on screen has no height to measure itself against. */}
+          <Setting name={lang.settingTab.variables} description={lang.settingTab.variablesDesc} class="ex-template-modal-variables">
+            <TextArea
+              class="ex-template-modal-pairs"
+              autoSize={true}
+              visible={advancedOpen()}
+              value={otherVariables()}
+              placeholder="fontfamily=libertinus"
+              onChange={text => writeArgs(a => setVariables(a, pairsFromText(text), curatedVariables()))}
+            />
+          </Setting>
 
-            <Show when={isPdfOutput(format())}>
-              <Setting name={lang.settingTab.pdfEngine} description={lang.settingTab.pdfEngineDesc} class="ex-template-modal-pdf-engine">
-                <DropDown
-                  options={engineOptions()}
-                  selected={pdfEngine(args()) ?? ''}
-                  autofocus={false}
-                  onChange={value => writeArgs(a => setPdfEngine(a, value))}
-                />
-              </Setting>
-            </Show>
-          </Section>
-        </Show>
+          <Setting name={lang.settingTab.metadata} description={lang.settingTab.metadataDesc} class="ex-template-modal-metadata">
+            <TextArea
+              class="ex-template-modal-pairs"
+              autoSize={true}
+              visible={advancedOpen()}
+              value={textFromPairs(metadata(args()))}
+              placeholder="author=Ada Lovelace"
+              onChange={text => writeArgs(a => setMetadata(a, pairsFromText(text)))}
+            />
+          </Setting>
+        </Section>
 
         <Setting name={lang.settingTab.arguments} class="ex-template-modal-arguments">
           <Text style="width: 100%" value={template()?.arguments ?? ''} onChange={value => updateTemplate(v => (v.arguments = value))} />
@@ -808,6 +1026,15 @@ export default class extends PluginSettingTab {
               settingTab.extraArguments,
               settingTab.extensions,
               settingTab.tableOfContents,
+              settingTab.citations,
+              settingTab.bibliography,
+              settingTab.csl,
+              settingTab.referenceDoc,
+              settingTab.stylesheet,
+              settingTab.includes,
+              settingTab.pageSetup,
+              settingTab.variables,
+              settingTab.metadata,
               settingTab.targetFileExtensions,
               settingTab.showCommandOutput,
               settingTab.runCommand,
