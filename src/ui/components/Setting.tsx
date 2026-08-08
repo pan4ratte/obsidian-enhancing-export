@@ -112,6 +112,8 @@ export const TextArea = (props: {
   /** Turn this over when the field is shown: what is not rendered cannot be measured. */
   visible?: boolean;
   disabled?: boolean;
+  /** Shown to be read and selected from, rather than typed into. */
+  readOnly?: boolean;
   spellcheck?: boolean;
   onChange?: (value: string) => void;
 }) => {
@@ -151,6 +153,7 @@ export const TextArea = (props: {
       // A line per line, so a field that has never been on screen is still about
       // the right height for whatever reveals it.
       rows={props.autoSize ? Math.max(1, props.value?.split('\n').length ?? 1) : undefined}
+      readOnly={props.readOnly}
       spellcheck={props.spellcheck ?? false}
       style={props.style}
       value={props.value}

@@ -181,9 +181,15 @@ export async function exportToOo(
     }
   }
 
+  // Later options win, so the order is least specific first: the preset's
+  // plumbing, the template editor's rows, what the template's author typed by
+  // hand, and last of all whatever this one export was asked for.
   const cmdTpl =
     setting.type === 'pandoc'
-      ? `${pandocPath} "\${currentPath}" ${setting.arguments ?? ''} ${setting.customArguments ?? ''} ${extraArguments ?? ''}`
+      ? [pandocPath, '"${currentPath}"', setting.arguments, setting.customArguments, setting.userArguments, extraArguments]
+          .map(part => part?.trim())
+          .filter(Boolean)
+          .join(' ')
       : setting.command;
 
   const cmd = renderTemplate(cmdTpl, variables);
@@ -212,10 +218,6 @@ export async function exportToOo(
       }
       if (openExportedFile) {
         await ct.remote.shell.openPath(actualOutputPath);
-      }
-      if (setting.type === 'pandoc' && setting.runCommand === true && setting.command) {
-        const extCmd = renderTemplate(setting.command, variables);
-        await exec(extCmd, { cwd: variables.currentDir, env });
       }
       // success
       onSuccess?.();

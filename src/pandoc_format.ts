@@ -6,8 +6,8 @@ import type { CuratedVariable } from './writer_args';
  * The output format is read back out of the arguments rather than taken from
  * the preset: the preset is only what the template started as, and the `-t` in
  * the arguments is what pandoc will actually be told. Later options win, so the
- * last one on the line is the answer — extra arguments included, since they are
- * appended after the arguments proper.
+ * last one on the line is the answer — which is why the caller passes every part
+ * of the line, in the order pandoc is given them.
  */
 
 /** The `-t`/`--to` a template ends up passing, without any `+extensions`. */
@@ -111,7 +111,11 @@ export const supportsSectionLists = supportedBy(['latex', 'pdf', 'context', 'doc
 /** `--top-level-division`, honoured "in LaTeX, ConTeXt, DocBook, and TEI output". */
 export const supportsTopLevelDivision = supportedBy(['latex', 'pdf', 'context', 'docbook', 'docbook4', 'docbook5', 'tei']);
 
-/** The writers that colour code at all; the rest print it as it stands. */
+/**
+ * The writers that colour code at all; the rest print it as it stands. Covers
+ * `--syntax-definition` as well, which only teaches the highlighter a language
+ * and so is a question exactly where highlighting is one.
+ */
 export const supportsHighlighting = supportedBy([
   'latex',
   'beamer',
@@ -161,6 +165,28 @@ export const isPdfOutput = (writer?: string): boolean => writer === 'pdf';
 
 /** `--reference-doc`: "a style reference in producing a docx or ODT file", and pptx. */
 export const supportsReferenceDoc = supportedBy(['docx', 'odt', 'pptx']);
+
+/**
+ * `--template`, the counterpart of the reference document: the writers that lay
+ * their output out with a template of pandoc's that one of the user's can stand
+ * in for.
+ *
+ * Listed by what has none, since nearly every writer does. The word processors
+ * take a reference document instead, and the data formats — a notebook, pandoc's
+ * own AST, a CSL list, a bibliography — have no layout to replace.
+ */
+const TEMPLATE_UNSUPPORTED = new Set(['biblatex', 'bibtex', 'csljson', 'docx', 'ipynb', 'json', 'native', 'odt', 'opendocument', 'pptx']);
+
+export const supportsTemplate = (writer?: string): boolean => !!writer && !TEMPLATE_UNSUPPORTED.has(writer);
+
+/**
+ * `--eol`: the writers whose output is a text file with lines to end. A word
+ * processor's document, an EPUB and a PDF are containers, and pandoc writes the
+ * lines inside them its own way.
+ */
+const EOL_UNSUPPORTED = new Set(['docx', 'odt', 'opendocument', 'pptx', 'epub', 'epub2', 'epub3', 'pdf']);
+
+export const supportsEol = (writer?: string): boolean => !!writer && !EOL_UNSUPPORTED.has(writer);
 
 /** `--css`: "only affects HTML (including HTML slide shows) and EPUB output". */
 export const supportsCss = supportedBy([
@@ -270,6 +296,38 @@ export const supportsVariable: Record<CuratedVariable, (writer?: string) => bool
     'muse',
   ]),
 };
+
+/**
+ * `--ascii`: "Currently supported only for XML and HTML formats (which use
+ * entities instead of UTF-8 when this option is selected), CommonMark, gfm, and
+ * Markdown (which use entities), roff ms (which use hexadecimal escapes), and to
+ * a limited degree LaTeX (which uses standard commands for accented characters
+ * when possible)."
+ */
+export const supportsAscii = supportedBy([
+  ...HTML_WRITERS,
+  ...EPUB_WRITERS,
+  ...LATEX_WRITERS,
+  'docbook',
+  'docbook4',
+  'docbook5',
+  'jats',
+  'jats_archiving',
+  'jats_articleauthoring',
+  'jats_publishing',
+  'tei',
+  'opml',
+  'xml',
+  'markdown',
+  'markdown_strict',
+  'markdown_mmd',
+  'markdown_phpextra',
+  'markdown_github',
+  'commonmark',
+  'commonmark_x',
+  'gfm',
+  'ms',
+]);
 
 /*
  * The format-specific rows: a group each for the source a text writer produces,

@@ -71,10 +71,22 @@ export default {
     sameFolderWithCurrentFile: 'Same folder with current file',
     targetFileExtensions: 'Target file extensions',
     showCommandOutput: 'Show command output',
-    runCommand: 'Run command after export',
-    extraArguments: 'Extra arguments',
     new: 'New',
-    arguments: 'Arguments',
+
+    /* The panel at the foot of the template editor: the whole command as it will
+       be run, shown to be read rather than edited. The `${...}` are filled in at
+       export from the note and the chosen output folder, so they are shown as
+       they stand rather than guessed at here. */
+    resultingCommand: 'Resulting command',
+    resultingCommandDesc: 'Everything above, as it is handed to pandoc. ${…} are filled in when a note is exported.',
+    copyCommand: 'Copy command',
+    commandCopied: 'Command copied.',
+    commandCopyFailed: 'Could not copy the command.',
+
+    /* The one field at the foot of that panel: options with no row of their own,
+       kept in a field of their own so no row can rewrite them. */
+    userArguments: 'Options of your own',
+    userArgumentsDesc: 'Anything pandoc takes that has no row above. Written at the end of the command, so it has the last word.',
 
     environmentVariables: 'Environment Variables',
 
@@ -119,6 +131,20 @@ export default {
     numberOffset: 'Start numbering at',
     numberOffsetDesc: 'The number before the first heading — 5 to start at 6. One per level, separated by commas.',
 
+    /* Read on the way in, before any writer sees the note, so these are asked of
+       every format. */
+    reading: 'Reading the note',
+    readingDesc: 'What pandoc makes of the note itself, whatever it goes on to write.',
+    shiftHeadings: 'Shift heading levels',
+    shiftHeadingsDesc: 'Where the note’s headings land in the written document. Promoting a lone top heading makes it the title.',
+    shiftHeadingsNone: 'Keep as written',
+    shiftHeadingsDown: strTpl`${0} level deeper`,
+    shiftHeadingsUp: strTpl`${0} level higher`,
+    tabStop: 'Tab width',
+    tabStopDesc: 'How many spaces a tab in the note stands for.',
+    stripComments: 'Drop HTML comments',
+    stripCommentsDesc: 'Leave <!-- … --> out of the written document rather than passing it through.',
+
     topLevelDivision: 'Top-level headings',
     topLevelDivisionDesc: 'What a level-1 heading becomes in the written document.',
     division: {
@@ -153,6 +179,10 @@ export default {
       webtex: 'WebTeX (images)',
       gladtex: 'GladTeX',
     },
+    /* Only for the three methods that fetch something. */
+    mathUrl: 'Script URL',
+    mathUrlDesc: 'The build the page loads. Leave empty for the one pandoc names.',
+    mathUrlPlaceholder: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js',
 
     pdfEngine: 'PDF engine',
     pdfEngineDesc: 'The program that turns the document into a PDF. XeLaTeX and LuaLaTeX handle system fonts and non-Latin scripts.',
@@ -170,6 +200,27 @@ export default {
     /* Written into the same field, each shown only where its writer reads it. */
     referenceDoc: 'Reference document',
     referenceDocDesc: 'A document of your own to take styles, fonts and page setup from.',
+
+    /* The same question as the reference document, for the writers laid out by a
+       template instead. No writer is asked both. */
+    outputTemplate: 'Layout template',
+    outputTemplateDesc: 'A pandoc template of your own, in place of the built-in one for this format.',
+
+    syntaxDefinition: 'Syntax definition',
+    syntaxDefinitionDesc: 'A KDE .xml file teaching the highlighter a language it does not know.',
+
+    lineEndings: 'Line endings',
+    lineEndingsDefault: 'Default (this platform’s)',
+    lineEnding: {
+      native: 'This platform’s',
+      lf: 'LF (Unix, macOS)',
+      crlf: 'CRLF (Windows)',
+    },
+    asciiOnly: 'ASCII only',
+    asciiOnlyDesc: 'Escape everything outside ASCII — entities in HTML, commands in LaTeX.',
+
+    epubSubdirectory: 'Contents folder',
+    epubSubdirectoryDesc: 'The folder inside the EPUB the contents are put in. Pandoc’s own is EPUB.',
 
     stylesheet: 'Stylesheet',
     stylesheetDesc: 'A CSS file the written page links to.',

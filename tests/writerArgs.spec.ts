@@ -1,15 +1,19 @@
 import {
   HIGHLIGHT_NONE,
+  ascii,
   bibliography,
   citeproc,
   columns,
+  commandLines,
   csl,
   css,
   dpi,
   emailObfuscation,
   embedResources,
+  eol,
   epubCoverImage,
   epubEmbedFont,
+  epubSubdirectory,
   epubTitlePage,
   extractMedia,
   highlightStyle,
@@ -22,6 +26,7 @@ import {
   listOfFigures,
   listOfTables,
   mathMethod,
+  mathUrl,
   metadata,
   numberOffset,
   numberSections,
@@ -31,6 +36,7 @@ import {
   referenceLinks,
   referenceLocation,
   sectionDivs,
+  setAscii,
   setBibliography,
   setCiteproc,
   setColumns,
@@ -39,7 +45,9 @@ import {
   setDpi,
   setEmailObfuscation,
   setEmbedResources,
+  setEol,
   setEpubCoverImage,
+  setEpubSubdirectory,
   setEpubTitlePage,
   setHighlightStyle,
   setIdPrefix,
@@ -51,6 +59,7 @@ import {
   setListOfFigures,
   setListOfTables,
   setMathMethod,
+  setMathUrl,
   setMetadata,
   setNumberOffset,
   setNumberSections,
@@ -59,13 +68,24 @@ import {
   setReferenceLinks,
   setReferenceLocation,
   setSectionDivs,
+  setShiftHeadingLevelBy,
   setSlideLevel,
   setSplitLevel,
+  setStripComments,
+  setSyntaxDefinition,
+  setTabStop,
+  setTemplateFile,
   setTopLevelDivision,
   setVariable,
   setVariables,
+  shiftHeadingLevelBy,
   slideLevel,
   splitLevel,
+  stripComments,
+  syntaxDefinition,
+  tabStop,
+  takesMathUrl,
+  templateFile,
   textFromPairs,
   topLevelDivision,
   variable,
@@ -211,6 +231,124 @@ describe('math', () => {
     expect(setMathMethod('--mathjax="https://example.com/mathjax.js"', 'katex')).toBe('--katex');
     expect(setMathMethod(`${FILTER} --katex`, '')).toBe(FILTER);
     expect(setMathMethod('--katex', 'mathml')).toBe('--mathml');
+  });
+
+  test('the pinned build is read back as a field of its own', () => {
+    const url = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg-full.js';
+    expect(mathUrl(`--mathjax="${url}"`)).toBe(url);
+    expect(mathUrl('--webtex=https://latex.codecogs.com/svg?')).toBe('https://latex.codecogs.com/svg?');
+    // Nothing pinned, and nothing that could be.
+    expect(mathUrl('--katex')).toBeUndefined();
+    expect(mathUrl('--mathml')).toBeUndefined();
+    expect(mathUrl(FILTER)).toBeUndefined();
+  });
+
+  test('a URL is written onto whichever method is already chosen', () => {
+    expect(setMathUrl('--katex', 'https://example.com/katex/')).toBe('--katex=https://example.com/katex/');
+    expect(setMathUrl(`${FILTER} --mathjax`, 'https://example.com/a b.js')).toBe(`${FILTER} --mathjax="https://example.com/a b.js"`);
+    // Emptying the field leaves the method behind, on pandoc's own script.
+    expect(setMathUrl('--mathjax="https://example.com/mathjax.js"', '  ')).toBe('--mathjax');
+  });
+
+  test('there is no URL to set without a method to hang it on, or on a method that reads none', () => {
+    expect(setMathUrl(FILTER, 'https://example.com/mathjax.js')).toBe(FILTER);
+    expect(setMathUrl('--mathml', 'https://example.com/mathjax.js')).toBe('--mathml');
+    expect(takesMathUrl('mathjax')).toBe(true);
+    expect(takesMathUrl('gladtex')).toBe(false);
+    expect(takesMathUrl(undefined)).toBe(false);
+  });
+});
+
+describe('reading the note', () => {
+  test('a tab width is a count, and nothing else', () => {
+    expect(tabStop('--tab-stop=2')).toBe('2');
+    expect(tabStop('--tab-stop 8')).toBe('8');
+    expect(tabStop(FILTER)).toBeUndefined();
+    expect(setTabStop('', '2')).toBe('--tab-stop=2');
+    expect(setTabStop('--tab-stop=2', 'wide')).toBe('');
+    expect(setTabStop(`${FILTER} --tab-stop=2`, '')).toBe(FILTER);
+  });
+
+  test('dropping comments is off unless the line says so', () => {
+    expect(stripComments(FILTER)).toBe(false);
+    expect(stripComments('--strip-comments')).toBe(true);
+    // A later `=false` undoes an earlier flag, as pandoc reads it.
+    expect(stripComments('--strip-comments=false')).toBe(false);
+    expect(setStripComments(FILTER, true)).toBe(`${FILTER} --strip-comments`);
+    // Agreeing with the default is written as nothing at all.
+    expect(setStripComments('--strip-comments', false)).toBe('');
+  });
+});
+
+describe('the output template', () => {
+  test('a template of the user’s own is read and written as a path', () => {
+    expect(templateFile('--template=eisvogel.latex')).toBe('eisvogel.latex');
+    expect(templateFile('--template "C:/My Templates/thesis.latex"')).toBe('C:/My Templates/thesis.latex');
+    expect(templateFile(FILTER)).toBeUndefined();
+    expect(setTemplateFile('', 'C:/My Templates/thesis.latex')).toBe('--template="C:/My Templates/thesis.latex"');
+    expect(setTemplateFile(`${FILTER} --template=old.latex`, '')).toBe(FILTER);
+  });
+});
+
+describe('the syntax definition', () => {
+  test('both of pandoc’s spellings name the same file', () => {
+    expect(syntaxDefinition('--syntax-definition=obsidian.xml')).toBe('obsidian.xml');
+    expect(syntaxDefinition('--syntax-highlighting=obsidian.xml')).toBe('obsidian.xml');
+    expect(setSyntaxDefinition('--syntax-highlighting=old.xml', 'new.xml')).toBe('--syntax-definition=new.xml');
+  });
+});
+
+describe('the bytes written', () => {
+  test('line endings are read as they stand', () => {
+    expect(eol('--eol=crlf')).toBe('crlf');
+    expect(eol('--eol lf')).toBe('lf');
+    expect(eol(FILTER)).toBeUndefined();
+    expect(setEol('--eol=crlf', '')).toBe('');
+    expect(setEol(FILTER, 'native')).toBe(`${FILTER} --eol=native`);
+  });
+
+  test('escaping to ASCII is off unless the line says so', () => {
+    expect(ascii(FILTER)).toBe(false);
+    expect(ascii('--ascii')).toBe(true);
+    expect(ascii('--ascii=false')).toBe(false);
+    expect(setAscii(FILTER, true)).toBe(`${FILTER} --ascii`);
+    expect(setAscii('--ascii', false)).toBe('');
+  });
+});
+
+describe('the EPUB contents folder', () => {
+  test('a folder is read back, and an empty field is pandoc’s own', () => {
+    expect(epubSubdirectory('--epub-subdirectory=OEBPS')).toBe('OEBPS');
+    expect(epubSubdirectory(FILTER)).toBeUndefined();
+    expect(setEpubSubdirectory('', 'OEBPS')).toBe('--epub-subdirectory=OEBPS');
+    expect(setEpubSubdirectory('--epub-subdirectory=OEBPS', '  ')).toBe('');
+  });
+});
+
+describe('shifting the heading level', () => {
+  test('a shift is read in either direction', () => {
+    expect(shiftHeadingLevelBy('--shift-heading-level-by=1')).toBe('1');
+    expect(shiftHeadingLevelBy('--shift-heading-level-by -2')).toBe('-2');
+    expect(shiftHeadingLevelBy(FILTER)).toBeUndefined();
+  });
+
+  test('a shift of nothing is written as no option at all', () => {
+    expect(setShiftHeadingLevelBy('', '1')).toBe('--shift-heading-level-by=1');
+    expect(setShiftHeadingLevelBy('', '-1')).toBe('--shift-heading-level-by=-1');
+    expect(setShiftHeadingLevelBy('--shift-heading-level-by=2', '0')).toBe('');
+    expect(setShiftHeadingLevelBy(`${FILTER} --shift-heading-level-by=2`, '')).toBe(FILTER);
+  });
+
+  test('nothing pandoc would refuse gets written', () => {
+    expect(setShiftHeadingLevelBy('', '7')).toBe('');
+    expect(setShiftHeadingLevelBy('', '1.5')).toBe('');
+    expect(setShiftHeadingLevelBy('', 'up')).toBe('');
+  });
+
+  test('changing the shift replaces the one that was there', () => {
+    expect(setShiftHeadingLevelBy(`${FILTER} --shift-heading-level-by=1 ${TOC}`, '-1')).toBe(
+      `${FILTER} ${TOC} --shift-heading-level-by=-1`
+    );
   });
 });
 
@@ -375,6 +513,51 @@ describe('variables and metadata', () => {
 
   test('emptying the list takes every variable out but the kept ones', () => {
     expect(setVariables(`${FILTER} -V fontsize=12pt -V lang=fr`, [], ['lang'])).toBe(`${FILTER} -V lang=fr`);
+  });
+});
+
+describe('the command, laid out to be read', () => {
+  test('a line starts at each flag, and the binary keeps the note company', () => {
+    expect(commandLines('pandoc "${currentPath}" -s -o "${outputPath}" -t docx')).toEqual([
+      'pandoc "${currentPath}"',
+      '-s',
+      '-o "${outputPath}"',
+      '-t docx',
+    ]);
+  });
+
+  test('a value stays with the flag that asked for it, however it was written', () => {
+    expect(commandLines('--toc --toc-depth=3 --pdf-engine xelatex')).toEqual(['--toc', '--toc-depth=3', '--pdf-engine xelatex']);
+  });
+
+  test('a quoted value is one token, spaces and all', () => {
+    expect(commandLines('-V "mainfont=PT Serif" --css "C:/My Notes/print.css"')).toEqual([
+      '-V "mainfont=PT Serif"',
+      '--css "C:/My Notes/print.css"',
+    ]);
+  });
+
+  test('a brace inside a quoted path is not the end of a substitution', () => {
+    expect(commandLines('--resource-path="${currentDir}/a}b" -t html')).toEqual(['--resource-path="${currentDir}/a}b"', '-t html']);
+  });
+
+  /*
+   * The PDF and Latex presets carry a conditional in one substitution. It holds
+   * spaces, quotes, flags and substitutions of its own, and none of that is the
+   * layout's to take apart.
+   */
+  test('a substitution is left whole, and stands on a line of its own', () => {
+    const options = '${ options.textemplate ? `--template="${options.textemplate}"` : ` ` }';
+    expect(commandLines(`--lua-filter="\${luaDir}/pdf.lua" ${options} -o "\${outputPath}"`)).toEqual([
+      '--lua-filter="${luaDir}/pdf.lua"',
+      options,
+      '-o "${outputPath}"',
+    ]);
+  });
+
+  test('the whole of an empty command is no lines at all', () => {
+    expect(commandLines('')).toEqual([]);
+    expect(commandLines('   ')).toEqual([]);
   });
 });
 

@@ -707,6 +707,19 @@
 }
 
 /*
+ * Buttons belonging to the section rather than to opening it — the copy beside
+ * the resulting command. They sit inside the heading's own control, before the
+ * chevron, and keep the gap from the label that any control in a row would.
+ */
+.ex-section-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--size-4-1);
+  margin-inline-start: var(--size-4-2);
+}
+
+/*
  * A path and the button that fills it in are the one answer, so they share the
  * row: the field takes what room there is, the button only what it needs. The
  * field stays writable — a path is as often written with `${currentDir}` as it
@@ -729,6 +742,35 @@
   resize: none;
   overflow-y: hidden;
   min-height: 3em;
+}
+
+/*
+ * The command as it will be run, one option a line. Monospace, so the flags line
+ * up down the left; wrapped rather than scrolled, since a long path that runs off
+ * the edge is a path nobody reads. Sized from the script like the lists above, so
+ * however many options a template carries, the whole of it is on screen.
+ *
+ * Drawn as a field rather than as text so it can be selected from and scrolled
+ * by keyboard, and given the flat secondary background to say it takes no
+ * typing — the row below it is the one that does.
+ */
+.ex-template-modal.ex-template-modal .ex-template-modal-command-line {
+  width: 100%;
+  resize: none;
+  overflow-y: hidden;
+  font-family: var(--font-monospace);
+  font-size: var(--font-smaller);
+  line-height: var(--line-height-tight);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  cursor: text;
+}
+
+/* Nothing to focus into, so nothing to draw a focus ring for. */
+.ex-template-modal.ex-template-modal .ex-template-modal-command-line:focus {
+  box-shadow: none;
 }
 
 /*

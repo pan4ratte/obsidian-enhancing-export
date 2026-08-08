@@ -85,12 +85,20 @@ interface CommonExportSetting {
 
 export interface PandocExportSetting extends CommonExportSetting {
   type: 'pandoc';
+  /** The preset's own plumbing: the reader, the resource paths, `-o` and `-t`. */
   arguments: string;
+  /** What the template editor's rows write. Theirs alone — nothing types here. */
   customArguments?: string;
+  /**
+   * Options typed by hand, kept apart from the rows' own line.
+   *
+   * Two fields rather than one because the rows rewrite what they own: an option
+   * typed into the same line could not be told from one a row had written, and
+   * would be moved or dropped the next time a row was changed. Written last, so
+   * whatever is here is pandoc's final word on any option it names twice.
+   */
+  userArguments?: string;
   extension: string;
-
-  runCommand?: boolean; // run command after export
-  command?: string; // command to run after export
 }
 
 export interface CustomExportSetting extends CommonExportSetting {

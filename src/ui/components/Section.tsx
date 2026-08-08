@@ -1,4 +1,4 @@
-import { JSX } from 'solid-js';
+import { JSX, Show } from 'solid-js';
 import Collapsible from './Collapsible';
 import Icon from './Icon';
 
@@ -20,6 +20,12 @@ export default (props: {
   class?: string;
   open?: boolean;
   onToggle?: (open: boolean) => void;
+  /**
+   * Controls in the header, beside the chevron — for something the section is
+   * about that is worth doing without opening it. A click on one is stopped from
+   * reaching the header, since the whole row is the toggle.
+   */
+  actions?: JSX.Element;
   children?: JSX.Element;
 }) => {
   const toggle = () => props.onToggle?.(!props.open);
@@ -47,6 +53,14 @@ export default (props: {
           <div class="setting-item-description">{props.description}</div>
         </div>
         <div class="setting-item-control">
+          <Show when={props.actions}>
+            {/* Its own click, not the header's: a button here is for the section,
+                not for opening it. `keydown` too, or Enter and Space on a focused
+                action would fold the section under it. */}
+            <div class="ex-section-actions" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
+              {props.actions}
+            </div>
+          </Show>
           <Icon name="chevron-down" class="ex-section-chevron" />
         </div>
       </div>

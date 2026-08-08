@@ -148,6 +148,47 @@ export const setNumberOffset = (args: string | undefined, offset: string): strin
   return setValue(args, NUMBER_OFFSET, cleaned || undefined);
 };
 
+/* -- Reading the note ----------------------------------------------------- */
+
+/*
+ * Options pandoc applies as it reads the note, before any writer sees it. None
+ * of them is asked of a format, because all of them reach every format.
+ */
+
+const TAB_STOP = '--tab-stop';
+const STRIP_COMMENTS = '--strip-comments';
+
+/** How many spaces a tab in the note stands for. Pandoc's own answer is 4. */
+export const tabStop = (args?: string): string | undefined => valueOf(args, TAB_STOP);
+
+export const setTabStop = (args: string | undefined, spaces: string): string => setValue(args, TAB_STOP, digits(spaces) || undefined);
+
+/** Whether HTML comments in the note are dropped rather than passed through. */
+export const stripComments = (args?: string): boolean => switchValue(args, STRIP_COMMENTS) ?? false;
+
+export const setStripComments = (args: string | undefined, on: boolean): string => setSwitch(args, STRIP_COMMENTS, on);
+
+/* -- Heading level -------------------------------------------------------- */
+
+const SHIFT_HEADING_LEVEL_BY = '--shift-heading-level-by';
+
+/**
+ * How far the note's headings move on the way out: `1` makes an `#` into an `##`,
+ * `-1` promotes it and turns a single top-level heading into the document title.
+ *
+ * Pandoc reaches six levels either way, and a `0` is the default said out loud —
+ * both are written as no option at all.
+ */
+export const SHIFT_HEADING_LEVELS = [-3, -2, -1, 1, 2, 3] as const;
+
+export const shiftHeadingLevelBy = (args?: string): string | undefined => valueOf(args, SHIFT_HEADING_LEVEL_BY);
+
+export const setShiftHeadingLevelBy = (args: string | undefined, shift: string): string => {
+  const level = Number(shift);
+  const wanted = Number.isInteger(level) && level !== 0 && Math.abs(level) <= 6;
+  return setValue(args, SHIFT_HEADING_LEVEL_BY, wanted ? String(level) : undefined);
+};
+
 /* -- Lists of figures and tables ------------------------------------------ */
 
 const LIST_OF_FIGURES = ['--list-of-figures', '--lof'] as const;
@@ -225,22 +266,97 @@ export const setHighlightStyle = (args: string | undefined, style: string): stri
 /**
  * How TeX math reaches HTML.
  *
- * Each of these may carry a URL of its own — the HTML preset pins a MathJax
- * build that way — so the URL is read past rather than tripped over. Choosing a
- * method writes the bare flag, which is pandoc's own script for it: a pinned
- * URL is replaced, and plainly so, since the line is on screen above.
+ * Three of these may carry a URL naming the build to load — the Html preset pins
+ * one that way — and it is read and written as a field of its own, since nothing
+ * else in the modal could say it. The URL belongs to the method that reads it, so
+ * changing the method drops it: a MathJax build is no use to KaTeX.
  */
 export const MATH_METHODS = ['mathjax', 'katex', 'mathml', 'webtex', 'gladtex'] as const;
 export type MathMethod = (typeof MATH_METHODS)[number];
+
+/**
+ * The three that load something from somewhere. `--mathml` writes the markup
+ * itself and `--gladtex` leaves the work to a program that runs afterwards, so
+ * neither has a URL to be given.
+ */
+const MATH_URL_METHODS: readonly MathMethod[] = ['mathjax', 'katex', 'webtex'];
+
+export const takesMathUrl = (method?: string): boolean => MATH_URL_METHODS.includes(method as MathMethod);
 
 const MATH = String.raw`(?:^|\s)--(${MATH_METHODS.join('|')})(?:=${VALUE})?(?=\s|$)`;
 
 export const mathMethod = (args?: string): MathMethod | undefined => lastMatch(args, MATH)?.[1] as MathMethod | undefined;
 
+/** The build the chosen method is pointed at, where it names one. */
+export const mathUrl = (args?: string): string | undefined => {
+  const found = lastMatch(args, MATH);
+  return found?.[2] === undefined ? undefined : unquote(found[2]);
+};
+
+const writeMath = (args: string, method: string, url?: string) =>
+  append(args, url && takesMathUrl(method) ? `--${method}=${quote(url)}` : `--${method}`);
+
 export const setMathMethod = (args: string | undefined, method: string): string => {
   const stripped = without(args, MATH);
-  return MATH_METHODS.includes(method as MathMethod) ? append(stripped, `--${method}`) : stripped;
+  return MATH_METHODS.includes(method as MathMethod) ? writeMath(stripped, method) : stripped;
 };
+
+/** The URL for whichever method is already chosen; nothing to set it on without one. */
+export const setMathUrl = (args: string | undefined, url: string): string => {
+  const method = mathMethod(args);
+  if (!method) {
+    return args ?? '';
+  }
+  return writeMath(without(args, MATH), method, url.trim() || undefined);
+};
+
+/* -- The output template -------------------------------------------------- */
+
+const TEMPLATE = '--template';
+
+/**
+ * A layout of the user's own, in place of pandoc's built-in one for the writer.
+ *
+ * The counterpart of `--reference-doc`, and no writer takes both: the word
+ * processors are laid out by a document, everything else by a template.
+ */
+export const templateFile = (args?: string): string | undefined => valueOf(args, TEMPLATE);
+
+export const setTemplateFile = (args: string | undefined, file: string): string => setValue(args, TEMPLATE, file || undefined);
+
+/* -- Syntax definition ---------------------------------------------------- */
+
+const SYNTAX_DEFINITION = ['--syntax-definition', '--syntax-highlighting'] as const;
+
+/**
+ * A KDE XML syntax file, teaching the highlighter a language it does not know.
+ *
+ * `--syntax-highlighting` is pandoc's newer spelling of the same option and is
+ * read as well, the way every other option here answers to all its names.
+ */
+export const syntaxDefinition = (args?: string): string | undefined => valueOf(args, SYNTAX_DEFINITION);
+
+export const setSyntaxDefinition = (args: string | undefined, file: string): string => setValue(args, SYNTAX_DEFINITION, file || undefined);
+
+/* -- The bytes written ---------------------------------------------------- */
+
+/** How lines end. `native` is the platform's own, and pandoc's default. */
+export const EOL_MODES = ['native', 'lf', 'crlf'] as const;
+
+const EOL = '--eol';
+const ASCII = '--ascii';
+
+export const eol = (args?: string): string | undefined => valueOf(args, EOL);
+
+export const setEol = (args: string | undefined, mode: string): string => setValue(args, EOL, mode || undefined);
+
+/**
+ * Whether anything outside ASCII is escaped rather than written as itself —
+ * entities in HTML and XML, commands in LaTeX, hexadecimal in roff.
+ */
+export const ascii = (args?: string): boolean => switchValue(args, ASCII) ?? false;
+
+export const setAscii = (args: string | undefined, on: boolean): string => setSwitch(args, ASCII, on);
 
 /* -- PDF engine ----------------------------------------------------------- */
 
@@ -449,6 +565,89 @@ export const pairsFromText = (text: string): Pair[] =>
 export const textFromPairs = (pairs: readonly Pair[]): string =>
   pairs.map(({ key, value }) => (value ? `${key}=${value}` : key)).join('\n');
 
+/* -- The command, for reading --------------------------------------------- */
+
+/**
+ * The command's tokens, in the order pandoc reads them.
+ *
+ * Whitespace separates them, except where it falls inside a quoted string or a
+ * `${...}` substitution: the PDF and Latex presets carry a whole conditional in
+ * one of those, spaces and quotes and all, and splitting it would make nonsense
+ * of it. Nesting is counted rather than matched loosely, since a substitution
+ * holds substitutions of its own.
+ */
+const commandTokens = (command: string): string[] => {
+  const tokens: string[] = [];
+  let token = '';
+  let depth = 0;
+  let quoted = false;
+
+  const end = () => {
+    if (token) {
+      tokens.push(token);
+      token = '';
+    }
+  };
+
+  for (let i = 0; i < command.length; i += 1) {
+    const char = command[i];
+    // Everything up to the closing quote belongs to the token, `}` included —
+    // a brace inside a path is not the end of a substitution.
+    if (quoted) {
+      token += char;
+      quoted = char !== '"';
+      continue;
+    }
+    if (char === '"') {
+      quoted = true;
+      token += char;
+      continue;
+    }
+    if (char === '$' && command[i + 1] === '{') {
+      depth += 1;
+      token += '${';
+      i += 1;
+      continue;
+    }
+    if (char === '}' && depth > 0) {
+      depth -= 1;
+      token += char;
+      continue;
+    }
+    if (depth === 0 && /\s/.test(char)) {
+      end();
+      continue;
+    }
+    token += char;
+  }
+  end();
+  return tokens;
+};
+
+/**
+ * The command as one line an option — the form it is read in, not the form it is
+ * run in.
+ *
+ * A line starts at each `-` flag and carries whatever follows it that is not a
+ * flag of its own, so an option and its value stay together. A `${...}` standing
+ * on its own gets a line too, unless the flag before it is bare and so takes it
+ * as its value: `-o "${outputPath}"` is one option, not two.
+ */
+export const commandLines = (command: string): string[] => {
+  const tokens = commandTokens(command);
+  return tokens.reduce<string[]>((lines, token, i) => {
+    const previous = tokens[i - 1];
+    const takesValue = previous !== undefined && previous.startsWith('-') && !previous.includes('=');
+    const starts = lines.length === 0 || token.startsWith('-') || (token.startsWith('${') && !takesValue);
+    if (starts) {
+      lines.push(token);
+    } else {
+      lines[lines.length - 1] += ` ${token}`;
+    }
+    return lines;
+  }, []);
+};
+
 /** The sizes pandoc's own documentation names, in the spelling LaTeX takes. */
 export const PAPER_SIZES = ['a4', 'letter', 'a5', 'b5', 'legal', 'executive'] as const;
 
@@ -532,6 +731,7 @@ export const setSlideLevel = (args: string | undefined, level: string): string =
 const EPUB_COVER_IMAGE = '--epub-cover-image';
 const EPUB_EMBED_FONT = '--epub-embed-font';
 const EPUB_TITLE_PAGE = '--epub-title-page';
+const EPUB_SUBDIRECTORY = '--epub-subdirectory';
 
 /** The heading level a new file is started at — a chapter, in an EPUB. */
 export const SPLIT_LEVELS = ['1', '2', '3'] as const;
@@ -556,6 +756,19 @@ export const setEpubTitlePage = (args: string | undefined, on: boolean): string 
 export const splitLevel = (args?: string): string | undefined => valueOf(args, SPLIT_LEVEL);
 
 export const setSplitLevel = (args: string | undefined, level: string): string => setValue(args, SPLIT_LEVEL, digits(level) || undefined);
+
+/**
+ * The folder inside the EPUB container the contents are put in. Pandoc's own
+ * answer is `EPUB`, written as no option at all.
+ *
+ * Pandoc reads an empty string here as "put them at the top level", which an
+ * empty field cannot say — an empty field is the default, as everywhere else in
+ * the modal. A reader that needs the top level says so in the extra arguments.
+ */
+export const epubSubdirectory = (args?: string): string | undefined => valueOf(args, EPUB_SUBDIRECTORY);
+
+export const setEpubSubdirectory = (args: string | undefined, name: string): string =>
+  setValue(args, EPUB_SUBDIRECTORY, name.trim() || undefined);
 
 /* -- The written page ----------------------------------------------------- */
 
