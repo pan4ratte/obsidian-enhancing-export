@@ -41,8 +41,6 @@ export async function exportToOo(
     showOverwriteConfirmation = globalSetting.showOverwriteConfirmation;
   }
 
-  const showExportProgressBar = globalSetting.showExportProgressBar;
-
   /* Variables
    *   /User/aaa/Documents/test.pdf
    * - ${outputDir}             --> /User/aaa/Documents/
@@ -147,12 +145,12 @@ export async function exportToOo(
     variables.outputFileName = path.basename(variables.outputFileFullName, path.extname(variables.outputFileFullName));
   }
 
-  // show progress
-  let progressBarHide: (() => void) | undefined = undefined;
-  if (showExportProgressBar) {
-    beforeExport?.();
-    progressBarHide = ProgressBar.show(lang.preparing(variables.outputFileFullName));
-  }
+  // An export takes as long as pandoc takes, which on a long note with a PDF
+  // engine behind it is long enough to look like nothing happened. The bar is
+  // shown for every export rather than asked about: a setting for whether the
+  // plugin says it is working is a setting for whether it seems broken.
+  beforeExport?.();
+  const progressBarHide = ProgressBar.show(lang.preparing(variables.outputFileFullName));
 
   // process Environment variables..
   const env = (variables.env = createEnv(getPlatformValue(globalSetting.env) ?? {}, variables));
@@ -207,7 +205,7 @@ export async function exportToOo(
     }
 
     await exec(cmd, { cwd: variables.currentDir, env });
-    progressBarHide?.();
+    progressBarHide();
 
     const next = async () => {
       if (openExportedFileLocation) {
@@ -231,7 +229,7 @@ export async function exportToOo(
       await next();
     }
   } catch (err) {
-    progressBarHide?.();
+    progressBarHide();
     new MessageBox(plugin.app, lang.exportErrorOutputMessage(cmd, err)).open();
     onFailure?.();
   }

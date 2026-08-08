@@ -1,4 +1,4 @@
-import { For, createMemo, createSignal } from 'solid-js';
+import { For, createMemo } from 'solid-js';
 import type { Lang } from '../lang';
 import { extractDefaultExtension, type ExportSetting } from '../settings';
 import Icon from './components/Icon';
@@ -40,24 +40,29 @@ const describeOutput = (extension?: string) => {
 
 /**
  * Every export template in one table: what it is called, what it writes, and
- * the two things to do with it. Ordering lives here — it is a view of the
- * settings, not part of them, so it is not saved. Making a template is not one
- * of the table's jobs; that lives in the card above it.
+ * the two things to do with it. Making a template is not one of the table's
+ * jobs; that lives in the card above it.
+ *
+ * The order is the caller's to keep — it is written to the settings, so a table
+ * ordered by output format is still ordered by output format the next time the
+ * tab is opened. Name ascending is what it falls back to, which is the order a
+ * table nobody has touched should be in.
  */
-export default (props: { lang: Lang; templates: ExportSetting[]; onEdit?: (name: string) => void; onRemove?: (name: string) => void }) => {
+export default (props: {
+  lang: Lang;
+  templates: ExportSetting[];
+  sort?: { column: Column; ascending: boolean };
+  onSort?: (sort: { column: Column; ascending: boolean }) => void;
+  onEdit?: (name: string) => void;
+  onRemove?: (name: string) => void;
+}) => {
   const { lang } = props;
-  const [column, setColumn] = createSignal<Column>('name');
-  const [ascending, setAscending] = createSignal(true);
+  const column = () => props.sort?.column ?? 'name';
+  const ascending = () => props.sort?.ascending ?? true;
 
   // A second click on the column already sorted turns it around.
-  const sortBy = (next: Column) => {
-    if (column() === next) {
-      setAscending(v => !v);
-      return;
-    }
-    setColumn(next);
-    setAscending(true);
-  };
+  const sortBy = (next: Column) =>
+    props.onSort?.(column() === next ? { column: next, ascending: !ascending() } : { column: next, ascending: true });
 
   const rows = createMemo(() => {
     const key = column();

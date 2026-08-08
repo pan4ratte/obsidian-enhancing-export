@@ -52,7 +52,17 @@ export interface UniversalExportPluginSettings {
   lastExportDirectory?: PlatformValue<string>;
   lastExportType?: string;
 
-  showExportProgressBar?: boolean;
+  /**
+   * How the templates table was last ordered.
+   *
+   * A view of the settings rather than one of them, which is why it took a
+   * while to end up here — but a table that forgets goes back to being sorted
+   * by name every time the tab is opened, and someone who works by output
+   * format has to say so again each time. Kept beside the other `last…` fields,
+   * which are the same kind of thing: not what the plugin does, but where the
+   * person using it left off.
+   */
+  lastTemplateSort?: { column: 'name' | 'output'; ascending: boolean };
 
   /**
    * Lua filters downloaded through the store, in `lua/` beside the bundled ones.
@@ -167,7 +177,6 @@ export const DEFAULT_SETTINGS: UniversalExportPluginSettings = {
   defaultExportDirectoryMode: 'Same',
   openExportedFile: true,
   env: DEFAULT_ENV,
-  showExportProgressBar: true,
 };
 
 export function extractDefaultExtension(s: ExportSetting): string {

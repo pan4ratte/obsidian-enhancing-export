@@ -1475,10 +1475,6 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
           <Toggle checked={settings.openExportedFile} onChange={v => setSettings('openExportedFile', v)} />
         </Setting>
 
-        <Setting name={lang.settingTab.ShowExportProgressBar}>
-          <Toggle checked={settings.showExportProgressBar} onChange={v => setSettings('showExportProgressBar', v)} />
-        </Setting>
-
         {/* TODO:// optimize UI as https://www.jetbrains.com/help/idea/absolute-path-variables.html */}
         <Setting name={lang.settingTab.environmentVariables}>
           <ExtraButton icon="pencil" tooltip={lang.settingTab.edit} onClick={() => setEditingEnvVars(v => !v)} />
@@ -1495,7 +1491,14 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
 
       <TemplateActions lang={lang} onAdd={addCommandTemplate} onBrowseLuaFilters={() => setModal(() => LuaFilterStoreModal)} />
 
-      <TemplateTable lang={lang} templates={settings.items} onEdit={editCommandTemplate} onRemove={removeCommandTemplate} />
+      <TemplateTable
+        lang={lang}
+        templates={settings.items}
+        sort={settings.lastTemplateSort}
+        onSort={sort => setSettings('lastTemplateSort', sort)}
+        onEdit={editCommandTemplate}
+        onRemove={removeCommandTemplate}
+      />
 
       <Show when={modal()}>
         <Dynamic component={modal()} ref={(el: Node) => document.body.appendChild(el)} />
@@ -1546,7 +1549,6 @@ export default class extends PluginSettingTab {
               settingTab.defaultFolderForExportedFile,
               settingTab.openExportedFileLocation,
               settingTab.openExportedFile,
-              settingTab.ShowExportProgressBar,
               settingTab.exportTemplates,
               settingTab.newTemplate,
               settingTab.browseLuaFilters,
