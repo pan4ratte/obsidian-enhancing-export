@@ -1,7 +1,7 @@
 {
   "name": "obsidian-pandoc-gui",
   "version": "1.0.0",
-  "description": "Export notes with Pandoc from a graphical editor: templates for Word, PDF, LaTeX, HTML, EPUB, slides and more, every option as a row rather than a command line, plus a store of lua filters.",
+  "description": "Export notes with Pandoc and modern GUI. Create templates for Word, PDF, LaTeX, HTML, EPUB, and other formats, and use store to add lua filters.",
   "main": "main.js",
   "scripts": {
     "dev": "vite build -w -m development",
