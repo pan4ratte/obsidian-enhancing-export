@@ -180,7 +180,7 @@ export const setKeywordsTitle = (args: string | undefined, title?: string): stri
 
 /**
  * The forms today's date can take. Not pandoc's business and not the filter's:
- * `exporto0o` writes the date itself, in the language Obsidian is set to, and
+ * `export.ts` writes the date itself, in the language Obsidian is set to, and
  * offers each form as a variable. The row picks which variable to write, so the
  * command shown in the editor says exactly what will be substituted, and a
  * language the plugin has never heard of costs nothing.

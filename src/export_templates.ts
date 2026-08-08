@@ -212,7 +212,7 @@ export default {
   'Bibliography (.bib)': {
     name: 'Bibliography',
     type: 'pandoc',
-    // The note itself is not named here: `exporto0o` puts `"${currentPath}"`
+    // The note itself is not named here: `export.ts` puts `"${currentPath}"`
     // ahead of these arguments already, and naming it twice had pandoc read the
     // note twice.
     arguments: `-f \${fromFormat} ${RESOURCE_PATHS} --lua-filter="\${luaDir}/citefilter.lua" -o "\${outputPath}" --to=bibtex`,

@@ -9,7 +9,7 @@ import { renderTemplate } from '../src/utils';
  * holes: a variable that is never filled in, or an input file named twice,
  * reads perfectly well right up until pandoc is handed it.
  *
- * So every preset is rendered here the way `exporto0o` renders it — the pandoc
+ * So every preset is rendered here the way `export.ts` renders it — the pandoc
  * path, the note, the preset's own arguments, then the extra ones — and held to
  * what a command line has to be.
  */
@@ -33,7 +33,7 @@ const VARIABLES = {
   fromFormat: 'markdown+wikilinks_title_after_pipe',
 };
 
-/** The command line as `exporto0o` builds it, for a pandoc preset. */
+/** The command line as `export.ts` builds it, for a pandoc preset. */
 const render = (preset: string, variables: Record<string, unknown> = { ...VARIABLES }) => {
   const template = export_templates[preset];
   if (template.type !== 'pandoc') {

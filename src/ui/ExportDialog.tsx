@@ -2,45 +2,36 @@ import * as ct from 'electron';
 import { Notice, TFile } from 'obsidian';
 import { createSignal, createRoot, onCleanup, createMemo, untrack } from 'solid-js';
 import { insert } from 'solid-js/web';
-import type UniversalExportPlugin from '../main';
+import type PandocGuiPlugin from '../main';
+import { t } from '../lang/helpers';
 import { extractDefaultExtension as extractExtension } from '../settings';
 import { setPlatformValue, getPlatformValue } from '../utils';
-import { exportToOo } from '../exporto0o';
+import { exportNote } from '../export';
 import Modal from './components/Modal';
 import Button from './components/Button';
 import Setting, { Text, DropDown, ExtraButton, Toggle } from './components/Setting';
 
-const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onClose?: () => void }) => {
+const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: () => void }) => {
   const {
-    plugin: { app, settings: globalSetting, lang },
+    plugin: { app, settings: globalSetting },
     currentFile,
   } = props;
 
   const [hidden, setHidden] = createSignal(false);
   const [showOverwriteConfirmation, setShowOverwriteConfirmation] = createSignal(globalSetting.showOverwriteConfirmation);
-  /*
-   * The template last exported with, where it is still a template. It is
-   * remembered by name, and a name outlives the thing it names — a deleted or
-   * renamed template left this pointing at nothing, and the dialog opened on
-   * nothing rather than opening at all.
-   */
+  // The template last exported with, where it is still a template: it is remembered
+  // by name, and a deleted or renamed one would leave this pointing at nothing.
   const [exportType, setExportType] = createSignal(
     globalSetting.items.find(o => o.name === globalSetting.lastExportType)?.name ?? globalSetting.items.first()?.name
   );
   const setting = createMemo(() => globalSetting.items.find(o => o.name === exportType()) ?? globalSetting.items.first());
   const extension = createMemo(() => (setting() ? extractExtension(setting()) : ''));
-  const title = createMemo(() => lang.exportDialog.title(setting()?.name));
+
 
   const [candidateOutputDirectory, setCandidateOutputDirectory] = createSignal(
     `${getPlatformValue(globalSetting.lastExportDirectory) ?? ct.remote.app.getPath('documents')}`
   );
-  /*
-   * The name only. What it is written as is the template's business — the
-   * format picker above is where that is chosen, and an extension typed into a
-   * name that the picker then changed was a contradiction the dialog had to
-   * keep quietly rewriting. It is put back on at export, where the exporter
-   * expects a full file name.
-   */
+  // The name only — the extension is the template's, and is put back on at export.
   const [candidateOutputFileName, setCandidateOutputFileName] = createSignal(currentFile.basename);
 
   /** The name as it will be written, extension and all. */
@@ -57,7 +48,7 @@ const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onCl
 
   const chooseFolder = async () => {
     const retval = await ct.remote.dialog.showOpenDialog({
-      title: lang.exportDialog.selectExportFolder,
+      title: t.EXPORT_DIALOG_SELECT_FOLDER,
       defaultPath: candidateOutputDirectory(),
       properties: ['createDirectory', 'openDirectory'],
     });
@@ -70,20 +61,18 @@ const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onCl
     const plugin = props.plugin;
     // Every template can be deleted, and then there is nothing to export with.
     if (!untrack(setting)) {
-      new Notice(lang.settingTab.noTemplates, 2000);
+      new Notice(t.TEMPLATES_EMPTY, 2000);
       return;
     }
     setHidden(true);
-    await exportToOo(
+    await exportNote(
       plugin,
       currentFile,
       untrack(candidateOutputDirectory),
       untrack(outputFileFullName),
       untrack(setting),
       untrack(showOverwriteConfirmation),
-      // The dialog asks for no options of its own. A template's `optionsMeta` is
-      // left where it is; nothing in the modal fills it in, so `${options.…}` in
-      // a template's arguments reads as unset.
+      // The dialog asks for no options of its own, so `${options.…}` reads as unset.
       {},
       async () => {
         globalSetting.showOverwriteConfirmation = untrack(showOverwriteConfirmation);
@@ -101,27 +90,27 @@ const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onCl
 
   return (
     <>
-      <Modal app={app} title={title()} hidden={hidden()} classList={{ 'ex-export-modal': true }} onClose={props.onClose}>
-        <Setting name={lang.exportDialog.type}>
+      <Modal app={app} title={t.EXPORT_DIALOG_TITLE} hidden={hidden()} classList={{ 'ex-export-modal': true }} onClose={props.onClose}>
+        <Setting name={t.EXPORT_DIALOG_TEMPLATE}>
           <DropDown options={exportTypes} onChange={typ => setExportType(typ)} selected={exportType()} />
         </Setting>
 
-        <Setting name={lang.exportDialog.fileName} description={lang.exportDialog.fileNameDesc(extension())}>
+        <Setting name={t.EXPORT_DIALOG_FILE_NAME} description={t.EXPORT_DIALOG_FILE_NAME_DESC(extension())}>
           <Text title={outputFileFullName()} value={candidateOutputFileName()} onChange={value => setCandidateOutputFileName(value)} />
         </Setting>
 
-        <Setting name={lang.exportDialog.exportTo}>
+        <Setting name={t.EXPORT_DIALOG_LOCATION}>
           <Text title={candidateOutputDirectory()} value={candidateOutputDirectory()} disabled />
           <ExtraButton icon="folder" onClick={chooseFolder} />
         </Setting>
 
-        <Setting name={lang.exportDialog.overwriteConfirmation} class="mod-toggle">
+        <Setting name={t.EXPORT_DIALOG_OVERWRITE} class="mod-toggle">
           <Toggle checked={showOverwriteConfirmation()} onChange={setShowOverwriteConfirmation} />
         </Setting>
 
         <div class="modal-button-container">
           <Button cta={true} onClick={doExport}>
-            {lang.exportDialog.export}
+            {t.EXPORT_DIALOG_SUBMIT}
           </Button>
         </div>
       </Modal>
@@ -129,7 +118,7 @@ const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onCl
   );
 };
 
-const show = (plugin: UniversalExportPlugin, currentFile: TFile) =>
+const show = (plugin: PandocGuiPlugin, currentFile: TFile) =>
   createRoot(dispose => {
     let disposed = false;
     const cleanup = () => {
@@ -139,8 +128,7 @@ const show = (plugin: UniversalExportPlugin, currentFile: TFile) =>
       disposed = true;
       dispose();
     };
-    // `insert` is typed as returning anything solid can render; the guard below is
-    // what actually establishes this is a node, so the cast only gets tsc that far.
+    // `insert` returns anything solid can render; the guard below establishes it is a node.
     const el = insert(document.body, () => <Dialog onClose={cleanup} plugin={plugin} currentFile={currentFile} />) as Node;
     onCleanup(() => {
       if (el?.instanceOf(Node) && document.body.contains(el)) {

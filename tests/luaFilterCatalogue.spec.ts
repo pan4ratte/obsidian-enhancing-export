@@ -15,10 +15,10 @@ import { existsSync, readdirSync } from 'fs';
 import path from 'path';
 import { DEFAULT_LUA_FILTER_REPO_URL, LUA_FILTER_CATEGORIES, LuaFilterManager, type LuaFilterEntry } from '../src/lua_filters';
 import { FORMAT_FAMILIES } from '../src/pandoc_format';
-import type UniversalExportPlugin from '../src/main';
+import type PandocGuiPlugin from '../src/main';
 import catalogue from '../lua-filters/index.json';
 
-const plugin = { settings: {}, manifest: { dir: 'plugins/x' } } as unknown as UniversalExportPlugin;
+const plugin = { settings: {}, manifest: { dir: 'plugins/x' } } as unknown as PandocGuiPlugin;
 const manager = (bundled: string[] = []) => new LuaFilterManager(plugin, bundled);
 
 const serve = (filters: unknown[]) => {

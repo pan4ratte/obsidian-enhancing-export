@@ -7,13 +7,14 @@ import { Variables, ExportSetting, extractDefaultExtension as extractExtension, 
 import { MessageBox } from './ui/message_box';
 import { Notice, TFile, getLinkpath, moment, type EmbedCache } from 'obsidian';
 import { exec, renderTemplate, getPlatformValue, trimQuotes } from './utils';
+import { t } from './lang/helpers';
 import ProgressBar from './ui/components/ProgressBar';
 import { describeExportFailure } from './export_error';
-import type ExportPlugin from './main';
+import type PandocGuiPlugin from './main';
 import pandoc from './pandoc';
 
-export async function exportToOo(
-  plugin: ExportPlugin,
+export async function exportNote(
+  plugin: PandocGuiPlugin,
   currentFile: TFile,
   candidateOutputDirectory: string,
   candidateOutputFileName: string | undefined,
@@ -26,7 +27,6 @@ export async function exportToOo(
 ) {
   const {
     settings: globalSetting,
-    lang,
     manifest,
     app: {
       vault: { adapter, config: obsidianConfig },
@@ -42,19 +42,9 @@ export async function exportToOo(
     showOverwriteConfirmation = globalSetting.showOverwriteConfirmation;
   }
 
-  /* Variables
-   *   /User/aaa/Documents/test.pdf
-   * - ${outputDir}             --> /User/aaa/Documents/
-   * - ${outputPath}            --> /User/aaa/Documents/test.pdf
-   * - ${outputFileName}        --> test
-   * - ${outputFileFullName}    --> test.pdf
-   *
-   *   /User/aaa/Documents/test.pdf
-   * - ${currentDir}            --> /User/aaa/Documents/
-   * - ${currentPath}           --> /User/aaa/Documents/test.pdf
-   * - ${CurrentFileName}       --> test
-   * - ${CurrentFileFullName}   --> test.pdf
-   */
+  // Template variables, for `/User/aaa/Documents/test.pdf`: `${outputDir}` is the folder,
+  // `${outputPath}` the whole path, `${outputFileName}` is `test`, `${outputFileFullName}`
+  // is `test.pdf`. The `current*` set says the same of the note being exported.
   const vaultDir = adapter.getBasePath();
   const pluginDir = `${vaultDir}/${manifest.dir}`;
   const luaDir = `${pluginDir}/lua`;
@@ -103,19 +93,9 @@ export async function exportToOo(
   targetDirArray = [...new Set(targetDirArray)];
   const embedDirs = targetDirArray.join(path.delimiter);
 
-  /*
-   * Every note the note embeds, and every note those embed, as the link that
-   * was written against the file it stands for.
-   *
-   * Resolving a link is Obsidian's to do and nobody else's: which note
-   * `![[Methods]]` means depends on the vault's index, on where the note doing
-   * the embedding sits, and on the shortest-path rule — none of which is
-   * visible from a folder on disk, and all of which is one call away here. So
-   * the plugin resolves and the filter substitutes.
-   *
-   * Notes only. An embedded image is pandoc's business and always was, and it
-   * finds it through the resource path above.
-   */
+  // Every embedded note, transitively, as the written link against the file it means.
+  // Only Obsidian can resolve a link, so the plugin resolves and the filter substitutes.
+  // Notes only — an embedded image is pandoc's business, found through the resource path.
   const noteEmbeds = new Map<string, string>();
   const walkedForEmbeds = new Set<string>([currentFile.path]);
   const collectNoteEmbeds = (file: TFile, depth: number) => {
@@ -127,8 +107,7 @@ export async function exportToOo(
       if (!(target instanceof TFile) || target.extension !== 'md') {
         continue;
       }
-      // Keyed by the link as it was written, `#section` and all, because that
-      // is what the filter reads off the document.
+      // Keyed by the link as written, `#section` and all — that is what the filter reads.
       noteEmbeds.set(embed.link, adapter.getFullPath(target.path));
       if (!walkedForEmbeds.has(target.path)) {
         walkedForEmbeds.add(target.path);
@@ -155,18 +134,11 @@ export async function exportToOo(
     currentFileFullName,
     attachmentFolderPath,
     vaultDir,
-    // date: new Date(currentFile.stat.ctime),
-    // lastMod: new Date(currentFile.stat.mtime),
-    // now: new Date()
     metadata: frontMatter,
     embedDirs,
-    // In Obsidian's own language rather than the machine's: someone writing in
-    // Russian in a Russian-language Obsidian wants a Russian date, whatever the
-    // operating system was installed as.
+    // In Obsidian's language rather than the machine's.
     today: today(moment.locale()),
-    // Always an object: a template asking for `${options.something}` is asking
-    // a question nothing puts to the user any more, and reading a field off
-    // nothing would throw while the command was still being built.
+    // Always an object: reading `${options.x}` off nothing would throw while building the command.
     options: options ?? {},
     fromFormat: obsidianConfig.useMarkdownLinks ? 'markdown' : 'markdown+wikilinks_title_after_pipe',
   };
@@ -177,7 +149,7 @@ export async function exportToOo(
 
   if (showOverwriteConfirmation && fs.existsSync(outputPath)) {
     const result = await ct.remote.dialog.showSaveDialog({
-      title: lang.overwriteConfirmationDialog.title(outputFileFullName),
+      title: t.OVERWRITE_TITLE(outputFileFullName),
       defaultPath: outputPath,
       properties: ['showOverwriteConfirmation', 'createDirectory'],
     });
@@ -192,27 +164,15 @@ export async function exportToOo(
     variables.outputFileName = path.basename(variables.outputFileFullName, path.extname(variables.outputFileFullName));
   }
 
-  // An export takes as long as pandoc takes, which on a long note with a PDF
-  // engine behind it is long enough to look like nothing happened. The bar is
-  // shown for every export rather than asked about: a setting for whether the
-  // plugin says it is working is a setting for whether it seems broken.
+  // Shown for every export: a PDF engine on a long note takes long enough to look stuck.
   beforeExport?.();
-  const progressBarHide = ProgressBar.show(lang.preparing(variables.outputFileFullName));
+  const progressBarHide = ProgressBar.show(t.NOTICE_EXPORTING(variables.outputFileFullName));
 
-  // process Environment variables..
   const env = (variables.env = createEnv(getPlatformValue(globalSetting.env) ?? {}, variables));
 
-  /*
-   * The embed map, handed to `embeds.lua` in the environment rather than on the
-   * command line: a link is whatever someone typed into a note — quotes,
-   * backslashes, semicolons, a `$` — and a command line is the wrong place to
-   * find that out. Set after `createEnv` so it is not run through the template
-   * renderer either, for the same reason.
-   *
-   * Windows caps an environment variable at 32k. A note reaching that has some
-   * thousands of embedded notes; the ones that do not fit are left as they are
-   * rather than truncating a path and reading the wrong file.
-   */
+  // The embed map goes to `embeds.lua` in the environment, not on the command line: a link
+  // is whatever someone typed. Set after `createEnv` so the template renderer skips it too.
+  // Windows caps a variable at 32k; what does not fit is left alone rather than truncated.
   const EMBED_ENV_LIMIT = 30000;
   let embedLines = '';
   for (const [link, file] of noteEmbeds) {
@@ -248,9 +208,7 @@ export async function exportToOo(
     }
   }
 
-  // Later options win, so the order is least specific first: the preset's
-  // plumbing, the template editor's rows, and last what the template's author
-  // typed by hand.
+  // Later options win, so least specific first: preset, editor rows, then hand-typed.
   const cmdTpl =
     setting.type === 'pandoc'
       ? [pandocPath, '"${currentPath}"', setting.arguments, setting.customArguments, setting.userArguments]
@@ -286,27 +244,24 @@ export async function exportToOo(
       if (openExportedFile) {
         await ct.remote.shell.openPath(actualOutputPath);
       }
-      // success
       onSuccess?.();
     };
 
     if (showCommandLineOutput) {
-      const box = new MessageBox(plugin.app, lang.exportCommandOutputMessage(cmd));
+      const box = new MessageBox(plugin.app, t.EXPORT_COMMAND_OUTPUT(cmd));
       box.onClose = next;
       box.open();
     } else {
-      new Notice(lang.exportSuccessNotice(variables.outputFileFullName), 1500);
+      new Notice(t.NOTICE_EXPORT_SUCCESS(variables.outputFileFullName), 1500);
       await next();
     }
   } catch (err) {
     progressBarHide();
-    const { detail, recommendation } = describeExportFailure(err, cmd, lang);
-    // What the reader can act on: which template was run, which file it was
-    // writing, what went wrong, and what to try. The command line itself stays
-    // in the console — it is long, and none of it is the error.
+    const { detail, recommendation } = describeExportFailure(err, cmd);
+    // Only what the reader can act on. The command line stays in the console.
     console.error(cmd, err);
     new MessageBox(plugin.app, {
-      title: lang.exportError.title,
+      title: t.ERROR_TITLE,
       buttons: 'Ok',
       render: contentEl => {
         const root = contentEl.createDiv({ cls: 'ex-export-error' });
@@ -315,8 +270,8 @@ export async function exportToOo(
             el.createSpan({ cls: 'ex-export-error-label', text: label });
             el.createSpan({ cls: 'ex-export-error-value', text: value, title: title ?? value });
           });
-        fact(lang.exportError.template, setting.name);
-        fact(lang.exportError.file, variables.outputFileFullName, variables.outputPath);
+        fact(t.ERROR_TEMPLATE, setting.name);
+        fact(t.ERROR_FILE, variables.outputFileFullName, variables.outputPath);
         root.createDiv({ cls: 'ex-export-error-detail', text: detail });
         if (recommendation) {
           root.createDiv({ cls: 'ex-export-error-hint', text: recommendation });

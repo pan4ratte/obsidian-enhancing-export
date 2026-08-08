@@ -1,50 +1,44 @@
 import { App, Menu, Plugin, PluginManifest, TFile, Notice, debounce } from 'obsidian';
-import { UniversalExportPluginSettings, ExportSetting, DEFAULT_SETTINGS, DEFAULT_ENV } from './settings';
+import { PandocGuiSettings, ExportSetting, DEFAULT_SETTINGS, DEFAULT_ENV } from './settings';
 import { ExportSettingTab, ExportDialog } from './ui';
-import { exportToOo } from './exporto0o';
+import { exportNote } from './export';
 import { getPlatformValue, PlatformKey } from './utils';
-import lang, { Lang } from './lang';
+import { t } from './lang/helpers';
 import path from 'path';
 import resources, { BUNDLED_LUA_FILES } from './resources';
-// `styles.css` is not imported: Obsidian loads the plugin folder's stylesheet
-// itself, and keeping it out of the bundle means it can be edited live.
+// `styles.css` is not imported: Obsidian loads the plugin folder's stylesheet itself.
 
-export default class UniversalExportPlugin extends Plugin {
-  settings: UniversalExportPluginSettings;
-  lang: Lang;
+export default class PandocGuiPlugin extends Plugin {
+  settings: PandocGuiSettings;
 
   constructor(app: App, manifest: PluginManifest) {
     super(app, manifest);
-    this.lang = lang.current;
     this.saveSettings = debounce(this.saveSettings.bind(this), 1000, true) as unknown as typeof this.saveSettings;
   }
 
   async onload() {
     await this.releaseResources();
-
     await this.loadSettings();
-    const { lang } = this;
 
     this.addSettingTab(new ExportSettingTab(this));
 
     this.addCommand({
-      // Obsidian prefixes command ids with the plugin's own, so naming it here
-      // too produced `pandoc-gui:pandoc-gui:export`.
+      // Obsidian prefixes command ids with the plugin's own.
       id: 'export',
-      name: lang.exportToOo,
+      name: t.CMD_EXPORT,
       icon: 'document',
       callback: () => {
         const file = this.app.workspace.getActiveFile();
         if (file) {
           ExportDialog.show(this, file);
         } else {
-          new Notice(lang.pleaseOpenFile, 2000);
+          new Notice(t.NOTICE_NO_FILE, 2000);
         }
       },
     });
     this.addCommand({
       id: 'export-with-previous',
-      name: lang.exportWithPrevious,
+      name: t.CMD_EXPORT_WITH_PREVIOUS,
       icon: 'document',
       callback: async () => {
         const file = this.app.workspace.getActiveFile();
@@ -52,13 +46,13 @@ export default class UniversalExportPlugin extends Plugin {
           if (this.settings.lastExportType && this.settings.lastExportDirectory) {
             const setting = this.settings.items.find(s => s.name === this.settings.lastExportType);
             if (setting) {
-              await exportToOo(this, file, getPlatformValue(this.settings.lastExportDirectory), undefined, setting);
+              await exportNote(this, file, getPlatformValue(this.settings.lastExportDirectory), undefined, setting);
               return;
             }
           }
           ExportDialog.show(this, file);
         } else {
-          new Notice(lang.pleaseOpenFile, 2000);
+          new Notice(t.NOTICE_NO_FILE, 2000);
         }
       },
     });
@@ -69,7 +63,7 @@ export default class UniversalExportPlugin extends Plugin {
           menu
             .addItem(item => {
               item
-                .setTitle(lang.exportToOo)
+                .setTitle(t.CMD_EXPORT)
                 .setIcon('document')
                 .onClick((): void => {
                   ExportDialog.show(this, file);
@@ -93,21 +87,15 @@ export default class UniversalExportPlugin extends Plugin {
   }
 
   public async loadSettings(): Promise<void> {
-    const settings: UniversalExportPluginSettings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const settings: PandocGuiSettings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     settings.items.forEach(v => {
       Object.assign(v, Object.assign({}, DEFAULT_SETTINGS.items.find(o => o.name === v.name) ?? {}, v));
     });
-    // A template that came with the plugin is written to `data.json` as no more
-    // than what it does not share with its default — often nothing but a name.
-    // A default no longer seeded therefore leaves a husk: a name with nothing to
-    // run, which the merge above could not fill in. Those go, rather than stand
-    // in the export dropdown as templates that cannot export. Anything the user
-    // made carries its own fields and stays.
+    // A bundled template is stored as only its diff from the default, so one no longer
+    // seeded leaves a husk with nothing to run. User-made templates carry their own fields.
     settings.items = settings.items.filter(v => v.type);
-    // A filter that used to come from the store and now comes with the plugin.
-    // The file is written on load either way and every template still names it,
-    // so nothing about an export changes; what goes is the claim that the user
-    // installed it, which would list it as theirs to uninstall.
+    // A filter that used to come from the store and now ships with the plugin: drop the
+    // claim that the user installed it, which would list it as theirs to uninstall.
     if (settings.installedLuaFilters?.some(f => BUNDLED_LUA_FILES.includes(f.fileName))) {
       settings.installedLuaFilters = settings.installedLuaFilters.filter(f => !BUNDLED_LUA_FILES.includes(f.fileName));
     }
@@ -116,10 +104,7 @@ export default class UniversalExportPlugin extends Plugin {
         settings.items.push(item);
       }
     }
-    // The template last exported with is remembered by name, and a version
-    // before this one could leave that name behind when the template it named
-    // was deleted. The export dialog opens on it, so a name nothing answers to
-    // is let go of here rather than carried into the UI.
+    // The last-exported template is remembered by name; drop a name nothing answers to.
     if (settings.lastExportType && settings.items.every(o => o.name !== settings.lastExportType)) {
       delete settings.lastExportType;
     }
@@ -127,7 +112,7 @@ export default class UniversalExportPlugin extends Plugin {
   }
 
   public async saveSettings(): Promise<void> {
-    const settings: UniversalExportPluginSettings = JSON.parse(JSON.stringify(this.settings)) as UniversalExportPluginSettings;
+    const settings: PandocGuiSettings = JSON.parse(JSON.stringify(this.settings)) as PandocGuiSettings;
     settings.items.forEach(v => {
       const def = DEFAULT_SETTINGS.items.find(o => o.name === v.name);
       if (def) {

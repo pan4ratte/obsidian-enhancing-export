@@ -1,5 +1,5 @@
 import { App, Modal } from 'obsidian';
-import lang, { Lang } from '../lang';
+import { t } from '../lang/helpers';
 
 export interface MessageBoxOptions {
   /** The whole body of the box, where one run of text is the whole of it. */
@@ -30,7 +30,6 @@ export interface MessageBoxOptions {
 
 export class MessageBox extends Modal {
   readonly options: MessageBoxOptions;
-  readonly lang: Lang;
 
   constructor(app: App, message: string);
   constructor(app: App, message: string, title?: string);
@@ -38,13 +37,11 @@ export class MessageBox extends Modal {
   constructor(app: App, options: MessageBoxOptions | string, title?: string) {
     super(app);
     this.options = typeof options === 'string' ? { message: options, buttons: 'Ok', title } : options;
-    this.lang = lang.current;
   }
   onOpen(): void {
     const {
       titleEl,
       contentEl,
-      lang,
       options: { message, render, title, buttons, callback, buttonsLabel: label, buttonsClass },
     } = this;
     if (title) {
@@ -59,7 +56,7 @@ export class MessageBox extends Modal {
       case 'Yes':
         contentEl.createDiv({ cls: ['modal-button-container'], parent: contentEl }, el => {
           el.createEl('button', {
-            text: label?.yes ?? lang.messageBox.yes,
+            text: label?.yes ?? t.BUTTON_YES,
             cls: ['mod-cta', buttonsClass?.yes],
             parent: el,
           }).onclick = () => this.call(callback?.yes);
@@ -68,12 +65,12 @@ export class MessageBox extends Modal {
       case 'YesNo':
         contentEl.createDiv({ cls: ['modal-button-container'], parent: contentEl }, el => {
           el.createEl('button', {
-            text: label?.yes ?? lang.messageBox.yes,
+            text: label?.yes ?? t.BUTTON_YES,
             cls: ['mod-cta', buttonsClass?.yes],
             parent: el,
           }).onclick = () => this.call(callback?.yes);
           el.createEl('button', {
-            text: label?.no ?? lang.messageBox.no,
+            text: label?.no ?? t.BUTTON_NO,
             cls: ['mod-cta', buttonsClass?.no],
             parent: el,
           }).onclick = () => this.call(callback?.no);
@@ -82,7 +79,7 @@ export class MessageBox extends Modal {
       case 'Ok':
         contentEl.createDiv({ cls: ['modal-button-container'], parent: contentEl }, el => {
           el.createEl('button', {
-            text: label?.ok ?? lang.messageBox.ok,
+            text: label?.ok ?? t.BUTTON_OK,
             cls: ['mod-cta', buttonsClass?.no],
             parent: el,
           }).onclick = () => this.call(callback?.ok);
@@ -91,12 +88,12 @@ export class MessageBox extends Modal {
       case 'OkCancel':
         contentEl.createDiv({ cls: ['modal-button-container'], parent: contentEl }, el => {
           el.createEl('button', {
-            text: label?.ok ?? lang.messageBox.ok,
+            text: label?.ok ?? t.BUTTON_OK,
             cls: ['mod-cta', buttonsClass?.ok],
             parent: el,
           }).onclick = () => this.call(callback?.ok);
           el.createEl('button', {
-            text: label?.cancel ?? lang.messageBox.cancel,
+            text: label?.cancel ?? t.BUTTON_CANCEL,
             cls: ['mod-cta', buttonsClass?.cancel],
             parent: el,
           }).onclick = () => this.call(callback?.cancel);

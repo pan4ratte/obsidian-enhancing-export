@@ -1,16 +1,11 @@
 import { For, createMemo } from 'solid-js';
-import type { Lang } from '../lang';
+import { t } from '../lang/helpers';
 import { extractDefaultExtension, type ExportSetting } from '../settings';
 import Icon from './components/Icon';
 
-/** The columns worth ordering by, which are also the ones carrying a value. */
 type Column = 'name' | 'output';
 
-/**
- * What each extension is called outside a file manager. Every format the
- * bundled templates write is here; anything else falls back to its own
- * extension, which is all that is known about it.
- */
+/** What each extension is called outside a file manager; anything else falls back to itself. */
 const OUTPUT_FORMATS: Record<string, string> = {
   '.bib': 'BibTeX',
   '.docx': 'Word',
@@ -38,25 +33,14 @@ const describeOutput = (extension?: string) => {
   return `${format} (${extension})`;
 };
 
-/**
- * Every export template in one table: what it is called, what it writes, and
- * the two things to do with it. Making a template is not one of the table's
- * jobs; that lives in the card above it.
- *
- * The order is the caller's to keep — it is written to the settings, so a table
- * ordered by output format is still ordered by output format the next time the
- * tab is opened. Name ascending is what it falls back to, which is the order a
- * table nobody has touched should be in.
- */
+/** Every export template in one table. The order is the caller's to keep, defaulting to name ascending. */
 export default (props: {
-  lang: Lang;
   templates: ExportSetting[];
   sort?: { column: Column; ascending: boolean };
   onSort?: (sort: { column: Column; ascending: boolean }) => void;
   onEdit?: (name: string) => void;
   onRemove?: (name: string) => void;
 }) => {
-  const { lang } = props;
   const column = () => props.sort?.column ?? 'name';
   const ascending = () => props.sort?.ascending ?? true;
 
@@ -69,9 +53,8 @@ export default (props: {
     const direction = ascending() ? 1 : -1;
     return (
       props.templates
-        .map(t => ({ name: t.name ?? '', output: describeOutput(extractDefaultExtension(t)) }))
-        // Name breaks a tie on output, so the order never falls back to where a
-        // template happens to sit in the settings file.
+        .map(item => ({ name: item.name ?? '', output: describeOutput(extractDefaultExtension(item)) }))
+        // Name breaks a tie on output, so the order never depends on settings-file position.
         .sort((a, b) => direction * (a[key].localeCompare(b[key]) || a.name.localeCompare(b.name)))
     );
   });
@@ -84,7 +67,7 @@ export default (props: {
     >
       <span class="ex-template-table-label">
         <span>{headingProps.label}</span>
-        {/* Always drawn, so turning the order around moves nothing but the arrow. */}
+        {/* Always drawn, so reversing the order moves nothing but the arrow. */}
         <Icon class="ex-template-table-sort" name={column() === headingProps.column && !ascending() ? 'arrow-down' : 'arrow-up'} />
       </span>
     </th>
@@ -94,10 +77,9 @@ export default (props: {
     <table class="ex-template-table">
       <thead>
         <tr>
-          <Heading column="name" label={lang.settingTab.name} />
-          <Heading column="output" label={lang.settingTab.templateOutput} />
-          {/* The row actions' column. It has no heading of its own — what the
-              icons do is said by the icons. */}
+          <Heading column="name" label={t.TEMPLATE_NAME} />
+          <Heading column="output" label={t.TEMPLATE_OUTPUT} />
+          {/* The row actions' column, unlabelled — the icons say what they do. */}
           <th class="ex-template-table-actions" />
         </tr>
       </thead>
@@ -106,7 +88,7 @@ export default (props: {
           each={rows()}
           fallback={
             <tr class="ex-template-table-empty">
-              <td colSpan={3}>{lang.settingTab.noTemplates}</td>
+              <td colSpan={3}>{t.TEMPLATES_EMPTY}</td>
             </tr>
           }
         >
@@ -116,8 +98,8 @@ export default (props: {
               <td class="ex-template-table-output">{row.output}</td>
               <td class="ex-template-table-actions">
                 <div class="ex-template-table-row-actions">
-                  <Icon name="pencil" title={lang.settingTab.edit} onClick={() => props.onEdit?.(row.name)} />
-                  <Icon name="trash" title={lang.settingTab.remove} onClick={() => props.onRemove?.(row.name)} />
+                  <Icon name="pencil" title={t.ACTION_EDIT} onClick={() => props.onEdit?.(row.name)} />
+                  <Icon name="trash" title={t.ACTION_REMOVE} onClick={() => props.onRemove?.(row.name)} />
                 </div>
               </td>
             </tr>

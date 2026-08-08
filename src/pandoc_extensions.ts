@@ -3,7 +3,7 @@
  *
  * An extension is not a flag of its own: it is written onto the format it
  * belongs to, as `--from=markdown+emoji`. The template's input format is
- * `${fromFormat}` — a variable `exporto0o` fills in with `markdown`, plus the
+ * `${fromFormat}` — a variable `export.ts` fills in with `markdown`, plus the
  * wikilink extension when the vault writes wikilinks — so what is stored is
  * that variable with the chosen extensions appended to it. The flag goes last
  * in the extra arguments, and pandoc takes the last `-f` it is given.

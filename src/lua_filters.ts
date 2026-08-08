@@ -1,6 +1,6 @@
 import { requestUrl } from 'obsidian';
 import path from 'path';
-import type UniversalExportPlugin from './main';
+import type PandocGuiPlugin from './main';
 
 /*
  * The lua-filter store.
@@ -84,7 +84,7 @@ export const DEFAULT_LUA_FILTER_REPO_URL = 'https://raw.githubusercontent.com/pa
 // ── The pandoc argument a filter is used through ──────────────────────────────
 
 /**
- * `${luaDir}` is a variable `exporto0o` fills in at export time, so what is
+ * `${luaDir}` is a variable `export.ts` fills in at export time, so what is
  * stored is the literal text — written without a template literal so the `$` is
  * plainly not this file's to interpolate.
  */
@@ -130,7 +130,7 @@ export class LuaFilterManager {
    * resolved it — this way the module is plain TypeScript and can be tested.
    */
   constructor(
-    private plugin: UniversalExportPlugin,
+    private plugin: PandocGuiPlugin,
     private bundled: readonly string[] = []
   ) {}
 

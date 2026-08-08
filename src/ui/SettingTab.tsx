@@ -3,14 +3,14 @@ import process from 'process';
 import { Notice, PluginSettingTab, moment } from 'obsidian';
 import type { SettingDefinitionItem } from 'obsidian';
 import type { SemVer } from 'semver';
-import type UniversalExportPlugin from '../main';
+import type PandocGuiPlugin from '../main';
 import { CustomExportSetting, ExportSetting, PandocExportSetting, createEnv, today, DEFAULT_ENV } from '../settings';
 import { setPlatformValue, getPlatformValue } from '../utils';
 
 import { createSignal, createRoot, onCleanup, createMemo, createEffect, For, Show, batch, Match, Switch, JSX } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { insert, Dynamic } from 'solid-js/web';
-import type { Lang } from '../lang';
+import { t } from '../lang/helpers';
 
 import pandoc from '../pandoc';
 import PandocDashboard from './PandocDashboard';
@@ -197,25 +197,13 @@ import FileInput from './components/FileInput';
 import export_templates from '../export_templates';
 import { BUNDLED_LUA_FILES } from '../resources';
 
-/**
- * Whether the template editor's advanced section stands open.
- *
- * Module scope, and so remembered for as long as the plugin is loaded: the
- * modal is built afresh on every open, and opening the same panel back up each
- * time would be a chore of its own. It is deliberately not written to
- * `data.json` — where someone is looking is not a setting.
- */
+// Whether the template editor's panels stand open. Module scope, so a modal rebuilt on
+// every open reopens where it was; not written to `data.json` — a scroll position is not a setting.
 const [advancedOpen, setAdvancedOpen] = createSignal(false);
-
-/** The same, for the command at the foot of it. Closed to begin with: it is a
-    thing to check, not a thing to fill in. */
 const [commandOpen, setCommandOpen] = createSignal(false);
 
-/*
- * What the file dialogs offer to open. Every one of them ends in everything,
- * since a path a template names is as often a file kept under a name of the
- * user's own as it is one of these.
- */
+// What the file dialogs offer. Each ends in everything: a path a template names is as
+// often a file under a name of the user's own.
 const ANY_FILE = { name: 'All files', extensions: ['*'] };
 const BIBLIOGRAPHY_FILES = [{ name: 'Bibliography', extensions: ['bib', 'bibtex', 'json', 'yaml', 'yml', 'ris', 'enl', 'xml'] }, ANY_FILE];
 const CSL_FILES = [{ name: 'Citation style', extensions: ['csl'] }, ANY_FILE];
@@ -224,25 +212,19 @@ const SYNTAX_FILES = [{ name: 'Syntax definition', extensions: ['xml'] }, ANY_FI
 const IMAGE_FILES = [{ name: 'Image', extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'] }, ANY_FILE];
 const FONT_FILES = [{ name: 'Font', extensions: ['otf', 'ttf', 'woff', 'woff2'] }, ANY_FILE];
 
-/**
- * The two curated variables with an answer short enough to be picked from a
- * list. The rest are typed: a font is whatever is installed, and a geometry is
- * a line of options to the LaTeX package that reads it.
- */
+/** The curated variables with an answer short enough to pick from a list; the rest are typed. */
 const VARIABLE_CHOICES: Partial<Record<CuratedVariable, readonly string[]>> = {
   papersize: PAPER_SIZES,
   fontsize: FONT_SIZES,
 };
 
-const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
-  const { plugin, lang } = props;
-  // Obsidian puts an app on `window`, but a plugin is meant to use the one it
-  // was handed — see the plugin guidelines. This is that one.
+const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
+  const { plugin } = props;
+  // The app the plugin was handed, not the one on `window` — see the plugin guidelines.
   const { app } = plugin;
   const [settings, setSettings0] = createStore(plugin.settings);
   const [pandocVersion, setPandocVersion] = createSignal<SemVer>();
-  // The variables are read far more often than they are written, so the field
-  // stays out of the way until it is asked for.
+  // Read far more often than written, so the field stays out of the way until asked for.
   const [editingEnvVars, setEditingEnvVars] = createSignal(false);
   const envVars = createMemo(() =>
     Object.entries(Object.assign({}, getPlatformValue(DEFAULT_ENV), getPlatformValue(settings.env) ?? {}))
@@ -297,13 +279,8 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     );
   };
 
-  /*
-   * Two settings remember a template by name rather than by the item itself:
-   * the row the editor reopens on, and the template the export dialog and
-   * "Export with previous" come back to. A name that no longer answers to
-   * anything left the dialog with nothing to open, so both follow a rename here
-   * and are let go of on delete.
-   */
+  // Two settings remember a template by name — the editor's row and the last export type.
+  // Both follow a rename and are let go of on delete, so neither points at nothing.
   const followTemplateRename = (previous: string | undefined, name: string) => {
     setSettings('lastEditName', name);
     if (settings.lastExportType === previous) {
@@ -352,10 +329,8 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     if (!preset || !template || currentOutput() === key) {
       return;
     }
-    // What the format decides comes from the preset; what the user decided
-    // about this template — its name, what happens once the file is written —
-    // is carried across. The rows' own arguments belong to the format that took
-    // them, but options typed by hand are the user's and are kept.
+    // The format's decisions come from the preset; the user's — name, post-export actions,
+    // hand-typed options — are carried across. Row-written arguments belong to the old format.
     const previous = currentOutput();
     const name = previous && isGeneratedName(template.name, previous) ? uniqueTemplateName(preset.name, template.name) : template.name;
     const carried = template.type === 'pandoc' && preset.type === 'pandoc' ? { userArguments: template.userArguments } : {};
@@ -403,19 +378,17 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     <>
       <Modal
         app={app}
-        title={lang.settingTab.editCommandTemplate}
+        title={t.TEMPLATE_EDITOR_TITLE}
         classList={{ 'ex-template-modal': true }}
         onClose={() => setModal(undefined)}
       >
-        {/* What a template is called and what it writes are the one answer, so
-            they share a row. The picker says what it picks on its own, since the
-            label beside it asks for the name. */}
-        <Setting name={lang.settingTab.name} class="ex-template-modal-name">
+        {/* Name and output format share a row: they are one answer. */}
+        <Setting name={t.TEMPLATE_NAME} class="ex-template-modal-name">
           <Text value={currentEditCommandTemplate()?.name ?? ''} onChange={renameCurrentCommandTemplate} />
           <DropDown
             options={outputOptions}
             selected={currentOutput()}
-            title={lang.settingTab.templateOutput}
+            title={t.TEMPLATE_OUTPUT}
             autofocus={false}
             onChange={setCurrentOutput}
           />
@@ -430,12 +403,10 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
           </Match>
         </Switch>
 
-        {/* Every row writes straight through, so there is nothing here left to
-            save — but the button is the way out of the modal, and "Save" is
-            what a form of this length is expected to end with. */}
+        {/* Nothing left to save — but the button is the way out, and a form this long expects one. */}
         <div class="modal-button-container">
           <Button cta={true} onClick={() => setModal(undefined)}>
-            {lang.settingTab.save}
+            {t.ACTION_SAVE}
           </Button>
         </div>
       </Modal>
@@ -449,8 +420,8 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
 
   const removeCommandTemplate = (name: string) => {
     new MessageBox(app, {
-      title: lang.settingTab.remove,
-      message: lang.settingTab.removeTemplateConfirmation(name),
+      title: t.ACTION_REMOVE,
+      message: t.TEMPLATE_REMOVE_CONFIRM(name),
       buttons: 'YesNo',
       callback: {
         yes: () =>
@@ -462,12 +433,8 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     }).open();
   };
 
-  /*
-   * Lua filters. The manager owns the files in `lua/`; what is installed is
-   * settings, so it is written here and handed back to the store as a prop —
-   * which is what keeps the store, the templates table and `data.json` telling
-   * the same story.
-   */
+  // The manager owns the files in `lua/`; what is installed is settings, written here and
+  // handed back to the store as a prop, so store, table and `data.json` agree.
   const luaFilters = new LuaFilterManager(plugin, BUNDLED_LUA_FILES);
 
   const setInstalledLuaFilters = (update: (prev: InstalledLuaFilter[]) => InstalledLuaFilter[]) => {
@@ -477,12 +444,8 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
   /** Add or replace a filter's record — an update reinstalls under the same id. */
   const recordLuaFilter = (filter: InstalledLuaFilter) => setInstalledLuaFilters(prev => [...prev.filter(f => f.id !== filter.id), filter]);
 
-  /**
-   * Run a filter in a template, or stop running it. The flag goes in the extra
-   * arguments rather than the arguments proper: those come from the output
-   * preset and are rewritten whole whenever it changes, which would take the
-   * filter with them.
-   */
+  /** Run a filter in a template, or stop. The flag goes in the extra arguments: the
+      preset's own are rewritten whole on every format change, which would take it with them. */
   const updateTemplateArguments = (templateName: string, update: (args?: string) => string) => {
     const idx = settings.items.findIndex(v => v.name === templateName);
     if (idx === -1) {
@@ -508,10 +471,7 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     updateTemplateArguments(template.name, args => (running ? addLuaFilterArg(args, fileName) : removeLuaFilterArg(args, fileName)));
   };
 
-  /**
-   * Forget an uninstalled filter, and stop every template running it — the file
-   * is gone, so a template still naming it would fail the whole export.
-   */
+  /** Forget an uninstalled filter and stop every template running it — the file is gone. */
   const forgetLuaFilter = (filter: InstalledLuaFilter) => {
     batch(() => {
       for (const template of settings.items) {
@@ -525,7 +485,6 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
 
   const LuaFilterStoreModal = () => (
     <LuaFilterStore
-      lang={lang}
       app={app}
       manager={luaFilters}
       installed={settings.installedLuaFilters ?? []}
@@ -535,40 +494,27 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     />
   );
 
-  // Both blocks read through `?.`: the output dropdown can turn a pandoc
-  // template into a custom one and back, so a block outlives its own type by
-  // however long the switch takes to swap it out.
+  // Both blocks read through `?.`: the output dropdown can swap a pandoc template for a
+  // custom one, so a block briefly outlives its own type.
   const PandocCommandTempateEditBlock = () => {
     const template = () => currentEditCommandTemplate('pandoc');
     const updateTemplate = (update: (prev: Partial<PandocExportSetting>) => void) => {
       updateCurrentEditCommandTemplate(prev => (prev.type === 'pandoc' ? update(prev) : undefined));
     };
-    /**
-     * What this template writes. Read from the arguments rather than the preset,
-     * so a hand-edited `-t` is what the rows below answer to — in the order
-     * pandoc will read them, the hand-written options last, since a `-t` there is
-     * the one that wins.
-     */
+    /** What this template writes, read from the arguments in pandoc's own order, so a
+        hand-edited `-t` is what the rows below answer to. */
     const format = createMemo(() => outputFormat(template()?.arguments, template()?.customArguments, template()?.userArguments));
 
-    /**
-     * The steps a table of contents can be taken to: none at all, then one
-     * heading level at a time down to the deepest pandoc reaches.
-     *
-     * Depth is a single number, and a slider is the control that says so. The
-     * boxes that stood here before could be ticked into states no depth can
-     * hold — level three without level two — and had to fill from the top to
-     * keep the lie off the screen.
-     */
-    const tocLabels = [lang.settingTab.tocNone, ...Array.from({ length: TOC_MAX_DEPTH }, (_, i) => String(i + 1))];
+    /** None, then one heading level at a time. Depth is a single number, hence a slider. */
+    const tocLabels = [t.TOC_NONE, ...Array.from({ length: TOC_MAX_DEPTH }, (_, i) => String(i + 1))];
 
     /** The reader extensions, ticked where the arguments switch them on. */
     const extensions = createMemo(() => {
       const on = enabledExtensions(template()?.customArguments);
       return PANDOC_EXTENSIONS.map(id => ({
         value: id,
-        label: lang.settingTab.extension[id],
-        // What the flag actually carries, as the filters' boxes do.
+        label: t.EXTENSION_LABELS[id],
+        // What the flag carries, as the filters' boxes do.
         title: id,
         checked: on.includes(id),
       }));
@@ -586,24 +532,20 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     /** Setting one is always the same move: that field, rewritten. */
     const writeArgs = (write: (args?: string) => string) => updateTemplate(v => (v.customArguments = write(v.customArguments)));
 
-    /**
-     * Numbering, and the two lists that keep a table of contents company: three
-     * flags with nothing to say for themselves, so they share one card — less
-     * whichever of them this writer would ignore.
-     */
+    /** Three flags with nothing to say for themselves, so they share a card. */
     const numbering = createMemo(() => {
       const items: { value: string; label: string; title: string; checked: boolean }[] = [];
       if (supportsNumberSections(format())) {
         items.push({
           value: 'sections',
-          label: lang.settingTab.numberSections,
+          label: t.NUMBER_SECTIONS,
           title: '--number-sections',
           checked: numberSections(args()),
         });
       }
       if (supportsSectionLists(format())) {
-        items.push({ value: 'figures', label: lang.settingTab.listOfFigures, title: '--list-of-figures', checked: listOfFigures(args()) });
-        items.push({ value: 'tables', label: lang.settingTab.listOfTables, title: '--list-of-tables', checked: listOfTables(args()) });
+        items.push({ value: 'figures', label: t.LIST_OF_FIGURES, title: '--list-of-figures', checked: listOfFigures(args()) });
+        items.push({ value: 'tables', label: t.LIST_OF_TABLES, title: '--list-of-tables', checked: listOfTables(args()) });
       }
       return items;
     });
@@ -613,39 +555,35 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
         value === 'sections' ? setNumberSections(a, on) : value === 'figures' ? setListOfFigures(a, on) : setListOfTables(a, on)
       );
 
-    /**
-     * A dropdown's options: pandoc's own answer first, which writes no flag at
-     * all, then the ones it names. When the arguments carry something else — a
-     * theme file, an engine of the user's own — that is a real answer too, and
-     * is added rather than dropped on the floor by a picker that cannot show it.
-     */
+    /** Pandoc's own answer first (no flag), then the ones it names. A hand-written value
+        already in the arguments is added rather than dropped by a picker that cannot show it. */
     const withCurrent = (options: { name: string; value: string }[], current?: string) =>
       current && !options.some(o => o.value === current) ? [...options, { name: current, value: current }] : options;
 
     const divisionOptions = [
-      { name: lang.settingTab.division.default, value: '' },
-      ...TOP_LEVEL_DIVISIONS.map(d => ({ name: lang.settingTab.division[d], value: d })),
+      { name: t.DIVISION_LABELS.default, value: '' },
+      ...TOP_LEVEL_DIVISIONS.map(d => ({ name: t.DIVISION_LABELS[d], value: d })),
     ];
 
     const highlightOptions = createMemo(() =>
       withCurrent(
         [
-          { name: lang.settingTab.highlightDefault, value: '' },
-          { name: lang.settingTab.highlightNone, value: HIGHLIGHT_NONE },
-          ...HIGHLIGHT_STYLES.map(s => ({ name: lang.settingTab.highlightStyle[s], value: s })),
+          { name: t.HIGHLIGHT_DEFAULT, value: '' },
+          { name: t.HIGHLIGHT_NONE, value: HIGHLIGHT_NONE },
+          ...HIGHLIGHT_STYLES.map(s => ({ name: t.HIGHLIGHT_STYLE_LABELS[s], value: s })),
         ],
         highlightStyle(args())
       )
     );
 
     const mathOptions = [
-      { name: lang.settingTab.mathDefault, value: '' },
-      ...MATH_METHODS.map(m => ({ name: lang.settingTab.mathMethod[m], value: m })),
+      { name: t.MATH_DEFAULT, value: '' },
+      ...MATH_METHODS.map(m => ({ name: t.MATH_METHOD_LABELS[m], value: m })),
     ];
 
     const engineOptions = createMemo(() =>
       withCurrent(
-        [{ name: lang.settingTab.pdfEngineDefault, value: '' }, ...PDF_ENGINES.map(e => ({ name: e, value: e }))],
+        [{ name: t.PDF_ENGINE_DEFAULT, value: '' }, ...PDF_ENGINES.map(e => ({ name: e, value: e }))],
         pdfEngine(args())
       )
     );
@@ -655,43 +593,34 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
 
     const variableOptions = (name: CuratedVariable) =>
       withCurrent(
-        [{ name: lang.settingTab.variableDefault, value: '' }, ...(VARIABLE_CHOICES[name] ?? []).map(value => ({ name: value, value }))],
+        [{ name: t.VARIABLE_DEFAULT, value: '' }, ...(VARIABLE_CHOICES[name] ?? []).map(value => ({ name: value, value }))],
         variable(args(), name)
       );
 
-    /**
-     * Everything the rows above do not ask for, as one `key=value` a line.
-     *
-     * What is on screen in a row of its own is left out of the list rather than
-     * shown twice — and put back in the moment the format changes to one with
-     * no row for it, so a variable can never go quietly missing.
-     */
+    /** Everything the rows above do not ask for, one `key=value` a line. A variable with a
+        row of its own is left out here, and put back when the format loses that row. */
     const otherVariables = createMemo(() =>
       textFromPairs(variables(args()).filter(v => !curatedVariables().includes(v.key as CuratedVariable)))
     );
 
-    /*
-     * The format-specific pickers. Each carries pandoc's own answer first, as
-     * the rows above do, and `withCurrent` keeps a hand-written one that none
-     * of them names — `--wrap=auto`, said out loud rather than left to pandoc.
-     */
+    // The format-specific pickers, pandoc's own answer first; `withCurrent` keeps a
+    // hand-written value none of them names, such as `--wrap=auto`.
     const wrapOptions = createMemo(() =>
       withCurrent(
         [
-          { name: lang.settingTab.wrapDefault, value: '' },
-          ...WRAP_MODES.map(mode => ({ name: lang.settingTab.wrapMode[mode], value: mode })),
+          { name: t.WRAP_DEFAULT, value: '' },
+          ...WRAP_MODES.map(mode => ({ name: t.WRAP_MODE_LABELS[mode], value: mode })),
         ],
         wrap(args())
       )
     );
 
-    // ATX is pandoc's own answer and is written as no option at all, the way
-    // the top-level division's default is — one less thing in the line.
+    // ATX is pandoc's own answer, written as no option at all.
     const headingStyleOptions = createMemo(() =>
       withCurrent(
         [
-          { name: lang.settingTab.markdownHeadingsDefault, value: '' },
-          { name: lang.settingTab.markdownHeadingSetext, value: 'setext' },
+          { name: t.MARKDOWN_HEADINGS_DEFAULT, value: '' },
+          { name: t.MARKDOWN_HEADINGS_SETEXT, value: 'setext' },
         ],
         markdownHeadings(args())
       )
@@ -700,9 +629,9 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     const referenceLocationOptions = createMemo(() =>
       withCurrent(
         [
-          { name: lang.settingTab.referenceLocationDefault, value: '' },
+          { name: t.REFERENCE_LOCATION_DEFAULT, value: '' },
           ...REFERENCE_LOCATIONS.filter(where => where !== 'block').map(where => ({
-            name: lang.settingTab.referenceLocationOption[where],
+            name: t.REFERENCE_LOCATION_LABELS[where],
             value: where,
           })),
         ],
@@ -710,14 +639,13 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
       )
     );
 
-    // Pandoc works the slide level out from the document unless it is told, so
-    // the default is no option at all; `0` is an answer of its own.
+    // Pandoc works the slide level out from the document unless told; `0` is its own answer.
     const slideLevelOptions = createMemo(() =>
       withCurrent(
         [
-          { name: lang.settingTab.slideLevelDefault, value: '' },
+          { name: t.SLIDE_LEVEL_DEFAULT, value: '' },
           ...SLIDE_LEVELS.map(level => ({
-            name: level === '0' ? lang.settingTab.slideLevelNone : lang.settingTab.tocLevel(Number(level)),
+            name: level === '0' ? t.SLIDE_LEVEL_NONE : t.TOC_LEVEL(Number(level)),
             value: level,
           })),
         ],
@@ -728,22 +656,20 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     const splitLevelOptions = createMemo(() =>
       withCurrent(
         [
-          { name: lang.settingTab.splitLevelDefault, value: '' },
-          ...SPLIT_LEVELS.map(level => ({ name: lang.settingTab.tocLevel(Number(level)), value: level })),
+          { name: t.SPLIT_LEVEL_DEFAULT, value: '' },
+          ...SPLIT_LEVELS.map(level => ({ name: t.TOC_LEVEL(Number(level)), value: level })),
         ],
         splitLevel(args())
       )
     );
 
-    /* Named by what they do rather than by the number they write: `-1` is a
-       promotion, and `--shift-heading-level-by=-1` is not what anyone means to
-       say. Pandoc reaches six either way; three is as far as a note goes. */
+    // Named by what they do, not the number they write: `-1` is a promotion.
     const shiftHeadingOptions = createMemo(() =>
       withCurrent(
         [
-          { name: lang.settingTab.shiftHeadingsNone, value: '' },
+          { name: t.SHIFT_HEADINGS_NONE, value: '' },
           ...SHIFT_HEADING_LEVELS.map(shift => ({
-            name: shift < 0 ? lang.settingTab.shiftHeadingsUp(-shift) : lang.settingTab.shiftHeadingsDown(shift),
+            name: shift < 0 ? t.SHIFT_HEADINGS_UP(-shift) : t.SHIFT_HEADINGS_DOWN(shift),
             value: String(shift),
           })),
         ],
@@ -751,18 +677,17 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
       )
     );
 
-    /* Each form is shown as today's date actually written in it, since the name
-       of a date format says far less than the date does. */
+    // Each form is shown as today's date written in it — clearer than the format's name.
     const todayOptions = createMemo(() => {
       const written = today(moment.locale());
-      return [{ name: lang.settingTab.todayNone, value: '' }, ...TODAY_FORMATS.map(format => ({ name: written[format], value: format }))];
+      return [{ name: t.TODAY_NONE, value: '' }, ...TODAY_FORMATS.map(format => ({ name: written[format], value: format }))];
     });
 
     const eolOptions = createMemo(() =>
       withCurrent(
         [
-          { name: lang.settingTab.lineEndingsDefault, value: '' },
-          ...EOL_MODES.map(mode => ({ name: lang.settingTab.lineEnding[mode], value: mode })),
+          { name: t.LINE_ENDINGS_DEFAULT, value: '' },
+          ...EOL_MODES.map(mode => ({ name: t.LINE_ENDING_LABELS[mode], value: mode })),
         ],
         eol(args())
       )
@@ -771,8 +696,8 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     const obfuscationOptions = createMemo(() =>
       withCurrent(
         [
-          { name: lang.settingTab.emailObfuscationDefault, value: '' },
-          ...EMAIL_OBFUSCATIONS.map(method => ({ name: lang.settingTab.emailObfuscationMethod[method], value: method })),
+          { name: t.EMAIL_OBFUSCATION_DEFAULT, value: '' },
+          ...EMAIL_OBFUSCATIONS.map(method => ({ name: t.EMAIL_OBFUSCATION_LABELS[method], value: method })),
         ],
         emailObfuscation(args())
       )
@@ -780,23 +705,12 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
 
     /** The document a docx, odt or pptx export takes its styles from. */
     const referenceDocFiles = createMemo(() => [
-      { name: lang.settingTab.referenceDoc, extensions: [format() === 'pptx' ? 'pptx' : format() === 'odt' ? 'odt' : 'docx'] },
+      { name: t.REFERENCE_DOC, extensions: [format() === 'pptx' ? 'pptx' : format() === 'odt' ? 'odt' : 'docx'] },
       ANY_FILE,
     ]);
 
-    /**
-     * The line pandoc is given, assembled the way `exportToOo` assembles it —
-     * the binary, the note, the preset's arguments, then the extra ones.
-     *
-     * The `${...}` are left standing. They are filled in at export time from the
-     * note being exported and the folder it is going to, neither of which exists
-     * while a template is being edited, and the PDF and Latex presets carry an
-     * expression that cannot be evaluated without the export dialog's options.
-     * Shown as they are, the line is the one worth pasting into a bug report.
-     *
-     * It is the whole of it, too: the export dialog no longer has a field of
-     * its own to append to this, so what is here is what pandoc is run with.
-     */
+    /** The line pandoc is given, assembled as `exportNote` assembles it. The `${...}` are
+        left standing: they are filled in at export from a note that does not exist yet. */
     const resultingCommand = createMemo(() =>
       [
         pandoc.normalizePath(getPlatformValue(settings.pandocPath)),
@@ -810,114 +724,92 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
         .join(' ')
     );
 
-    /**
-     * The same command, one option a line.
-     *
-     * Only for reading: a shell reads a newline as the end of a command, so it is
-     * the single line above that gets copied.
-     */
+    /** The same command, one option a line — for reading only; the single line gets copied. */
     const commandForReading = createMemo(() => commandLines(resultingCommand()).join('\n'));
 
     const copyCommand = async () => {
       try {
         await navigator.clipboard.writeText(resultingCommand());
-        new Notice(lang.settingTab.commandCopied, 1500);
+        new Notice(t.COMMAND_COPIED, 1500);
       } catch (e) {
         console.error(e);
-        new Notice(lang.settingTab.commandCopyFailed);
+        new Notice(t.COMMAND_COPY_FAILED);
       }
     };
 
-    /*
-     * The rows a template is usually opened for come first, under its name and
-     * in plain sight. Everything a format allows but few templates use is folded
-     * away into one panel below them — one fold, not five, so the modal is a
-     * short list rather than a stack of headings. The command line stays where
-     * it can be read at the foot of it.
-     */
+    // The rows a template is usually opened for come first; the rest folds into one panel.
     return (
       <>
-        {/* Directly under the name, where the template's own styles are read
-            from: the docx, odt or pptx a template is written to look like is
-            the first thing asked of it, not an advanced afterthought.
-
-            The two rows are one question asked two ways, and no writer is asked
-            both — a word processor is laid out by a document, everything else by
-            a template — so exactly one of them stands here. */}
+        {/* A word processor is laid out by a reference document, everything else by a
+            template — the same question two ways, so exactly one row stands here. */}
         <Show when={supportsReferenceDoc(format())}>
           <Setting
-            name={lang.settingTab.referenceDoc}
-            description={lang.settingTab.referenceDocDesc}
+            name={t.REFERENCE_DOC}
+            description={t.REFERENCE_DOC_DESC}
             class="ex-template-modal-reference-doc"
           >
             <FileInput
               value={referenceDoc(args())}
               filters={referenceDocFiles()}
-              tooltip={lang.settingTab.chooseFile}
+              tooltip={t.CHOOSE_FILE}
               onChange={value => writeArgs(a => setReferenceDoc(a, value.trim()))}
             />
           </Setting>
         </Show>
 
-        {/* Beside the reference document, because they are the same question:
-            every style named here is one that document has to hold. Each row
-            runs a filter the plugin ships with — pandoc has no option for any
-            of this, and a word processor that ignores the styles it was given
-            is the commonest thing to go wrong in an export from a vault. */}
+        {/* Every style named here has to exist in that document. Each row runs a bundled
+            filter — pandoc has no option for any of this. */}
         <Show when={supportsCustomStyle(format())}>
-          <Section name={lang.settingTab.wordStyles} description={lang.settingTab.wordStylesDesc}>
-            <Setting name={lang.settingTab.figureStyle} description={lang.settingTab.figureStyleDesc} class="mod-toggle">
+          <Section name={t.WORD_STYLES} description={t.WORD_STYLES_DESC}>
+            <Setting name={t.FIGURE_STYLE} description={t.FIGURE_STYLE_DESC} class="mod-toggle">
               <Toggle
                 checked={figureStyle(args()) !== undefined}
                 onChange={on => writeArgs(a => setFigureStyle(a, on ? FIGURE_DEFAULT_STYLE : undefined))}
               />
             </Setting>
             <Show when={figureStyle(args()) !== undefined}>
-              <Setting name={lang.settingTab.figureStyleName} description={lang.settingTab.styleNameDesc}>
+              <Setting name={t.FIGURE_STYLE_NAME} description={t.STYLE_NAME_DESC}>
                 <Text
                   value={figureStyle(args()) ?? FIGURE_DEFAULT_STYLE}
                   placeholder={FIGURE_DEFAULT_STYLE}
-                  // Emptied is the filter's own default rather than nothing at
-                  // all: the row above is what switches the styling off.
+                  // Emptied falls back to the filter's default; the row above switches it off.
                   onChange={value => writeArgs(a => setFigureStyle(a, value.trim() || FIGURE_DEFAULT_STYLE))}
                 />
               </Setting>
             </Show>
 
-            <Setting name={lang.settingTab.tableStyle} description={lang.settingTab.tableStyleDesc} class="mod-toggle">
+            <Setting name={t.TABLE_STYLE} description={t.TABLE_STYLE_DESC} class="mod-toggle">
               <Toggle
                 checked={tableStyle(args()) !== undefined}
                 onChange={on => writeArgs(a => setTableStyle(a, on ? TABLE_DEFAULT_STYLE : undefined))}
               />
             </Setting>
             <Show when={tableStyle(args()) !== undefined}>
-              <Setting name={lang.settingTab.tableStyleName} description={lang.settingTab.styleNameDesc}>
+              <Setting name={t.TABLE_STYLE_NAME} description={t.STYLE_NAME_DESC}>
                 <Text
                   value={tableStyle(args()) ?? TABLE_DEFAULT_STYLE}
                   placeholder={TABLE_DEFAULT_STYLE}
                   onChange={value => writeArgs(a => setTableStyle(a, value.trim() || TABLE_DEFAULT_STYLE))}
                 />
               </Setting>
-              {/* Empty is the filter's own behaviour: header cells take the
-                  same style as the rest. */}
-              <Setting name={lang.settingTab.tableHeadStyleName} description={lang.settingTab.tableHeadStyleDesc}>
+              {/* Empty is the filter's own behaviour: header cells match the rest. */}
+              <Setting name={t.TABLE_HEAD_STYLE_NAME} description={t.TABLE_HEAD_STYLE_DESC}>
                 <Text
                   value={tableHeadStyle(args()) ?? ''}
-                  placeholder={lang.settingTab.tableHeadStylePlaceholder}
+                  placeholder={t.TABLE_HEAD_STYLE_PLACEHOLDER}
                   onChange={value => writeArgs(a => setTableHeadStyle(a, value))}
                 />
               </Setting>
             </Show>
 
-            {/* Word's own List Bullet and List Number, which pandoc's numbering
-                otherwise paints over. docx only: the odt writer has no such
-                thing to override. */}
+            {/* Word's List Bullet and List Number, which pandoc's numbering paints over.
+                docx only — the odt writer has no such thing. */}
             <Show when={format() === 'docx'}>
-              <Setting name={lang.settingTab.listStyles} description={lang.settingTab.listStylesDesc} class="mod-toggle">
+              <Setting name={t.LIST_STYLES} description={t.LIST_STYLES_DESC} class="mod-toggle">
                 <Toggle checked={listStyles(args())} onChange={on => writeArgs(a => setListStyles(a, on))} />
               </Setting>
               <Show when={listStyles(args())}>
-                <Setting name={lang.settingTab.flattenOrdered} description={lang.settingTab.flattenOrderedDesc} class="mod-toggle">
+                <Setting name={t.FLATTEN_ORDERED} description={t.FLATTEN_ORDERED_DESC} class="mod-toggle">
                   <Toggle checked={flattenOrdered(args())} onChange={on => writeArgs(a => setFlattenOrdered(a, on))} />
                 </Setting>
               </Show>
@@ -927,39 +819,36 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
 
         <Show when={supportsTemplate(format())}>
           <Setting
-            name={lang.settingTab.outputTemplate}
-            description={lang.settingTab.outputTemplateDesc}
+            name={t.OUTPUT_TEMPLATE}
+            description={t.OUTPUT_TEMPLATE_DESC}
             class="ex-template-modal-output-template"
           >
             <FileInput
               value={templateFile(args())}
               filters={[ANY_FILE]}
-              tooltip={lang.settingTab.chooseFile}
+              tooltip={t.CHOOSE_FILE}
               onChange={value => writeArgs(a => setTemplateFile(a, value.trim()))}
             />
           </Setting>
         </Show>
 
-        {/* Only for the writers that would do something with it — asking man or
-            textile for a table of contents changes nothing at all. */}
+        {/* Only for the writers that would do something with it. */}
         <Show when={supportsToc(format())}>
-          <Setting name={lang.settingTab.tableOfContents} description={lang.settingTab.tableOfContentsDesc} class="ex-template-modal-toc">
+          <Setting name={t.TOC} description={t.TOC_DESC} class="ex-template-modal-toc">
             <StepSlider
               labels={tocLabels}
               min={TOC_NONE}
               value={tocDepth(template()?.customArguments)}
-              // The step is the depth, and `setTocDepth` takes the flags back
-              // out again at `TOC_NONE` — so sliding to the left end is "none".
+              // The step is the depth; `setTocDepth` removes the flags at `TOC_NONE`.
               onChange={depth => updateTemplate(v => (v.customArguments = setTocDepth(v.customArguments, depth)))}
             />
           </Setting>
         </Show>
 
-        {/* Writes the extra arguments: adding a filter appends its
-            `--lua-filter` flag to them. */}
-        <Setting name={lang.settingTab.luaFilters} class="ex-template-modal-filters">
+        {/* Adding a filter appends its `--lua-filter` flag to the extra arguments. */}
+        <Setting name={t.LUA_FILTERS} class="ex-template-modal-filters">
           <TemplateLuaFilters
-            lang={lang}
+           
             installed={settings.installedLuaFilters ?? []}
             format={format()}
             args={template()?.customArguments}
@@ -968,44 +857,37 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
           />
         </Setting>
 
-        {/* Writes that same field: ticking a box puts `-f
-            ${fromFormat}+extension` in it. Every extension offered is one pandoc
-            leaves off, so a cleared box is the reader's own behaviour. */}
-        <Setting name={lang.settingTab.extensions} description={lang.settingTab.extensionsDesc} class="ex-template-modal-extensions">
+        {/* Ticking a box writes the extension into `-f`. Every one offered is a
+            pandoc default-off, so a cleared box is the reader's own behaviour. */}
+        <Setting name={t.EXTENSIONS} description={t.EXTENSIONS_DESC} class="ex-template-modal-extensions">
           <CheckGrid items={extensions()} onToggle={toggleExtension} />
         </Setting>
 
-        {/* Not gated on the format the way the panel's rows once were: the
-            citations and the variables at the foot of it are asked of every
-            writer, so there is always something to open. */}
-        <Section name={lang.settingTab.advanced} class="ex-template-modal-advanced" open={advancedOpen()} onToggle={setAdvancedOpen}>
+        {/* Not gated on the format: citations and variables are asked of every writer. */}
+        <Section name={t.SECTION_ADVANCED} class="ex-template-modal-advanced" open={advancedOpen()} onToggle={setAdvancedOpen}>
           <Show when={numbering().length > 0}>
-            <Setting name={lang.settingTab.numbering} description={lang.settingTab.numberingDesc} class="ex-template-modal-numbering">
+            <Setting name={t.NUMBERING} description={t.NUMBERING_DESC} class="ex-template-modal-numbering">
               <CheckGrid items={numbering()} onToggle={toggleNumbering} />
             </Setting>
           </Show>
 
-          {/* Once there is numbering for it to offset, and only in the two
-              formats pandoc says it reaches. */}
+          {/* Only once there is numbering to offset, and only where pandoc reaches. */}
           <Collapsible when={supportsNumberOffset(format()) && numberSections(args())} class="ex-template-modal-offset-panel">
             <Setting
-              name={lang.settingTab.numberOffset}
-              description={lang.settingTab.numberOffsetDesc}
+              name={t.NUMBER_OFFSET}
+              description={t.NUMBER_OFFSET_DESC}
               class="ex-template-modal-number-offset"
             >
               <Text value={numberOffset(args()) ?? ''} placeholder="0" onChange={value => writeArgs(a => setNumberOffset(a, value))} />
             </Setting>
           </Collapsible>
 
-          {/* Read on the way in rather than written on the way out, which is why
-              none of these three is asked of a format: they are done to the note
-              before any writer sees it, so every writer answers to them. */}
+          {/* Done to the note on the way in, before any writer sees it — so no format gate. */}
           <div class="ex-card ex-template-modal-reading">
-            <Setting name={lang.settingTab.reading} description={lang.settingTab.readingDesc} heading={true} />
+            <Setting name={t.READING} description={t.READING_DESC} heading={true} />
 
-            {/* Demoting makes room for a title above the note's own headings;
-                promoting turns a single top heading into one. */}
-            <Setting name={lang.settingTab.shiftHeadings} description={lang.settingTab.shiftHeadingsDesc} class="ex-template-modal-shift">
+            {/* Demoting makes room for a title; promoting turns a lone top heading into one. */}
+            <Setting name={t.SHIFT_HEADINGS} description={t.SHIFT_HEADINGS_DESC} class="ex-template-modal-shift">
               <DropDown
                 options={shiftHeadingOptions()}
                 selected={shiftHeadingLevelBy(args()) ?? ''}
@@ -1014,26 +896,24 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
               />
             </Setting>
 
-            <Setting name={lang.settingTab.tabStop} description={lang.settingTab.tabStopDesc} class="ex-template-modal-tab-stop">
+            <Setting name={t.TAB_STOP} description={t.TAB_STOP_DESC} class="ex-template-modal-tab-stop">
               <Text value={tabStop(args()) ?? ''} placeholder="4" onChange={value => writeArgs(a => setTabStop(a, value))} />
             </Setting>
 
             <Setting
-              name={lang.settingTab.stripComments}
-              description={lang.settingTab.stripCommentsDesc}
+              name={t.STRIP_COMMENTS}
+              description={t.STRIP_COMMENTS_DESC}
               class="ex-template-modal-strip-comments"
             >
               <Toggle checked={stripComments(args())} onChange={checked => writeArgs(a => setStripComments(a, checked))} />
             </Setting>
 
-            {/* The three the plugin ships a filter for. They belong here rather
-                than beside a format's own options: each is done to the note on
-                the way in, so every writer answers to them. */}
-            <Setting name={lang.settingTab.embedNotes} description={lang.settingTab.embedNotesDesc} class="mod-toggle">
+            {/* The three the plugin ships a filter for, all applied on the way in. */}
+            <Setting name={t.EMBED_NOTES} description={t.EMBED_NOTES_DESC} class="mod-toggle">
               <Toggle checked={embedNotes(args())} onChange={on => writeArgs(a => setEmbedNotes(a, on))} />
             </Setting>
 
-            <Setting name={lang.settingTab.today} description={lang.settingTab.todayDesc}>
+            <Setting name={t.TODAY} description={t.TODAY_DESC}>
               <DropDown
                 options={todayOptions()}
                 selected={todayFormat(args()) ?? ''}
@@ -1042,14 +922,14 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
               />
             </Setting>
 
-            <Setting name={lang.settingTab.keywords} description={lang.settingTab.keywordsDesc} class="mod-toggle">
+            <Setting name={t.KEYWORDS} description={t.KEYWORDS_DESC} class="mod-toggle">
               <Toggle checked={keywords(args())} onChange={on => writeArgs(a => setKeywords(a, on))} />
             </Setting>
             <Show when={keywords(args())}>
-              <Setting name={lang.settingTab.keywordsTitle} description={lang.settingTab.keywordsTitleDesc}>
+              <Setting name={t.KEYWORDS_LABEL} description={t.KEYWORDS_LABEL_DESC}>
                 <Text
                   value={keywordsTitle(args()) ?? ''}
-                  placeholder={lang.settingTab.keywordsTitlePlaceholder}
+                  placeholder={t.KEYWORDS_LABEL_PLACEHOLDER}
                   onChange={value => writeArgs(a => setKeywordsTitle(a, value))}
                 />
               </Setting>
@@ -1058,8 +938,8 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
 
           <Show when={supportsTopLevelDivision(format())}>
             <Setting
-              name={lang.settingTab.topLevelDivision}
-              description={lang.settingTab.topLevelDivisionDesc}
+              name={t.TOP_LEVEL_DIVISION}
+              description={t.TOP_LEVEL_DIVISION_DESC}
               class="ex-template-modal-division"
             >
               <DropDown
@@ -1071,14 +951,12 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
             </Setting>
           </Show>
 
-          {/* The colours and the language definition are one subject, so they
-              share a card: a syntax file is only worth naming to a writer that
-              highlights, which is the same writer this row is offered to. */}
+          {/* Colours and language definition share a card: both need a writer that highlights. */}
           <Show when={supportsHighlighting(format())}>
             <div class="ex-card ex-template-modal-highlight">
               <Setting
-                name={lang.settingTab.syntaxHighlighting}
-                description={lang.settingTab.syntaxHighlightingDesc}
+                name={t.HIGHLIGHT}
+                description={t.HIGHLIGHT_DESC}
                 class="ex-template-modal-highlight-style"
               >
                 <DropDown
@@ -1089,26 +967,24 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
                 />
               </Setting>
               <Setting
-                name={lang.settingTab.syntaxDefinition}
-                description={lang.settingTab.syntaxDefinitionDesc}
+                name={t.SYNTAX_DEFINITION}
+                description={t.SYNTAX_DEFINITION_DESC}
                 class="ex-template-modal-syntax-definition"
               >
                 <FileInput
                   value={syntaxDefinition(args())}
                   filters={SYNTAX_FILES}
-                  tooltip={lang.settingTab.chooseFile}
+                  tooltip={t.CHOOSE_FILE}
                   onChange={value => writeArgs(a => setSyntaxDefinition(a, value.trim()))}
                 />
               </Setting>
             </div>
           </Show>
 
-          {/* The method and the build it loads are one answer, so they share a
-              card: the URL is only a question once something has been chosen that
-              would fetch one, and `--mathml` fetches nothing. */}
+          {/* Method and the build it loads share a card; `--mathml` fetches nothing. */}
           <Show when={supportsMathMethod(format())}>
             <div class="ex-card ex-template-modal-math">
-              <Setting name={lang.settingTab.math} description={lang.settingTab.mathDesc} class="ex-template-modal-math-method">
+              <Setting name={t.MATH} description={t.MATH_DESC} class="ex-template-modal-math-method">
                 <DropDown
                   options={mathOptions}
                   selected={mathMethod(args()) ?? ''}
@@ -1117,10 +993,10 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
                 />
               </Setting>
               <Collapsible when={takesMathUrl(mathMethod(args()))} class="ex-template-modal-math-url-panel">
-                <Setting name={lang.settingTab.mathUrl} description={lang.settingTab.mathUrlDesc} class="ex-template-modal-math-url">
+                <Setting name={t.MATH_URL} description={t.MATH_URL_DESC} class="ex-template-modal-math-url">
                   <Text
                     value={mathUrl(args()) ?? ''}
-                    placeholder={lang.settingTab.mathUrlPlaceholder}
+                    placeholder={t.MATH_URL_PLACEHOLDER}
                     onChange={value => writeArgs(a => setMathUrl(a, value))}
                   />
                 </Setting>
@@ -1129,7 +1005,7 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
           </Show>
 
           <Show when={isPdfOutput(format())}>
-            <Setting name={lang.settingTab.pdfEngine} description={lang.settingTab.pdfEngineDesc} class="ex-template-modal-pdf-engine">
+            <Setting name={t.PDF_ENGINE} description={t.PDF_ENGINE_DESC} class="ex-template-modal-pdf-engine">
               <DropDown
                 options={engineOptions()}
                 selected={pdfEngine(args()) ?? ''}
@@ -1139,52 +1015,48 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
             </Setting>
           </Show>
 
-          {/* Citeproc reads the document rather than writing it, so this is
-              the one row here with no format to be gated on. The two files are
-              only ever read on its behalf, and are folded away with it. */}
+          {/* Citeproc reads the document rather than writing it, so no format gate. */}
           <div class="ex-card ex-template-modal-citations">
             <Setting
-              name={lang.settingTab.citations}
-              description={lang.settingTab.citationsDesc}
+              name={t.CITATIONS}
+              description={t.CITATIONS_DESC}
               class="ex-template-modal-citations-toggle"
             >
               <Toggle checked={citeproc(args())} onChange={checked => writeArgs(a => setCiteproc(a, checked))} />
             </Setting>
             <Collapsible when={citeproc(args())} class="ex-template-modal-citations-panel">
-              <Setting name={lang.settingTab.bibliography} description={lang.settingTab.bibliographyDesc}>
+              <Setting name={t.BIBLIOGRAPHY} description={t.BIBLIOGRAPHY_DESC}>
                 <FileInput
                   value={bibliography(args())}
                   filters={BIBLIOGRAPHY_FILES}
-                  tooltip={lang.settingTab.chooseFile}
+                  tooltip={t.CHOOSE_FILE}
                   onChange={value => writeArgs(a => setBibliography(a, value.trim()))}
                 />
               </Setting>
-              <Setting name={lang.settingTab.csl} description={lang.settingTab.cslDesc}>
+              <Setting name={t.CSL} description={t.CSL_DESC}>
                 <FileInput
                   value={csl(args())}
                   filters={CSL_FILES}
-                  tooltip={lang.settingTab.chooseFile}
+                  tooltip={t.CHOOSE_FILE}
                   onChange={value => writeArgs(a => setCsl(a, value.trim()))}
                 />
               </Setting>
             </Collapsible>
           </div>
 
-          {/* The page itself, told to the writer as template variables. Each
-              row is shown only where that writer was measured to read it, so
-              the card is as long as the format has answers for. */}
+          {/* The page as template variables, each row shown only where the writer reads it. */}
           <Show when={curatedVariables().length > 0}>
             <div class="ex-card ex-template-modal-page-setup">
-              <Setting name={lang.settingTab.pageSetup} description={lang.settingTab.pageSetupDesc} heading={true} />
+              <Setting name={t.PAGE_SETUP} description={t.PAGE_SETUP_DESC} heading={true} />
               <For each={curatedVariables()}>
                 {name => (
-                  <Setting name={lang.settingTab.variableName[name]} class={`ex-template-modal-variable ex-template-modal-${name}`}>
+                  <Setting name={t.VARIABLE_LABELS[name]} class={`ex-template-modal-variable ex-template-modal-${name}`}>
                     <Show
                       when={VARIABLE_CHOICES[name]}
                       fallback={
                         <Text
                           value={variable(args(), name) ?? ''}
-                          placeholder={lang.settingTab.variablePlaceholder[name]}
+                          placeholder={t.VARIABLE_PLACEHOLDERS[name]}
                           onChange={value => writeArgs(a => setVariable(a, name, value.trim()))}
                         />
                       }
@@ -1203,60 +1075,55 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
           </Show>
 
           <Show when={supportsCss(format())}>
-            <Setting name={lang.settingTab.stylesheet} description={lang.settingTab.stylesheetDesc} class="ex-template-modal-css">
+            <Setting name={t.STYLESHEET} description={t.STYLESHEET_DESC} class="ex-template-modal-css">
               <FileInput
                 value={css(args())}
                 filters={CSS_FILES}
-                tooltip={lang.settingTab.chooseFile}
+                tooltip={t.CHOOSE_FILE}
                 onChange={value => writeArgs(a => setCss(a, value.trim()))}
               />
             </Setting>
           </Show>
 
-          {/* Three files around the one document, so they share a card. The
-              header is left out of the writers that have a body to put a file
-              around but no header to put one into. */}
+          {/* Three files around one document. Writers with no header lose that row. */}
           <Show when={supportsIncludes(format())}>
             <div class="ex-card ex-template-modal-includes">
-              <Setting name={lang.settingTab.includes} description={lang.settingTab.includesDesc} heading={true} />
+              <Setting name={t.INCLUDES} description={t.INCLUDES_DESC} heading={true} />
               <Show when={supportsHeaderInclude(format())}>
-                <Setting name={lang.settingTab.includeInHeader}>
+                <Setting name={t.INCLUDE_IN_HEADER}>
                   <FileInput
                     value={includeInHeader(args())}
                     filters={[ANY_FILE]}
-                    tooltip={lang.settingTab.chooseFile}
+                    tooltip={t.CHOOSE_FILE}
                     onChange={value => writeArgs(a => setIncludeInHeader(a, value.trim()))}
                   />
                 </Setting>
               </Show>
-              <Setting name={lang.settingTab.includeBeforeBody}>
+              <Setting name={t.INCLUDE_BEFORE_BODY}>
                 <FileInput
                   value={includeBeforeBody(args())}
                   filters={[ANY_FILE]}
-                  tooltip={lang.settingTab.chooseFile}
+                  tooltip={t.CHOOSE_FILE}
                   onChange={value => writeArgs(a => setIncludeBeforeBody(a, value.trim()))}
                 />
               </Setting>
-              <Setting name={lang.settingTab.includeAfterBody}>
+              <Setting name={t.INCLUDE_AFTER_BODY}>
                 <FileInput
                   value={includeAfterBody(args())}
                   filters={[ANY_FILE]}
-                  tooltip={lang.settingTab.chooseFile}
+                  tooltip={t.CHOOSE_FILE}
                   onChange={value => writeArgs(a => setIncludeAfterBody(a, value.trim()))}
                 />
               </Setting>
             </div>
           </Show>
 
-          {/* What the file itself looks like, for the writers that produce
-              text a person reads. The heading style and the reference links
-              are markdown's alone, so the card is as long as the writer has
-              answers for. */}
+          {/* How the file itself is laid out, for writers producing text a person reads. */}
           <Show when={supportsWrap(format())}>
             <div class="ex-card ex-template-modal-source">
-              <Setting name={lang.settingTab.writtenSource} description={lang.settingTab.writtenSourceDesc} heading={true} />
+              <Setting name={t.WRITTEN_SOURCE} description={t.WRITTEN_SOURCE_DESC} heading={true} />
 
-              <Setting name={lang.settingTab.wrap} class="ex-template-modal-wrap">
+              <Setting name={t.WRAP} class="ex-template-modal-wrap">
                 <DropDown
                   options={wrapOptions()}
                   selected={wrap(args()) ?? ''}
@@ -1267,13 +1134,13 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
 
               {/* A column to wrap at is only a question while something wraps. */}
               <Collapsible when={wrap(args()) !== 'none'} class="ex-template-modal-columns-panel">
-                <Setting name={lang.settingTab.columns} class="ex-template-modal-columns">
+                <Setting name={t.COLUMNS} class="ex-template-modal-columns">
                   <Text value={columns(args()) ?? ''} placeholder="72" onChange={value => writeArgs(a => setColumns(a, value))} />
                 </Setting>
               </Collapsible>
 
               <Show when={supportsMarkdownHeadings(format())}>
-                <Setting name={lang.settingTab.markdownHeadings} class="ex-template-modal-headings">
+                <Setting name={t.MARKDOWN_HEADINGS} class="ex-template-modal-headings">
                   <DropDown
                     options={headingStyleOptions()}
                     selected={markdownHeadings(args()) ?? ''}
@@ -1284,18 +1151,16 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
               </Show>
 
               <Show when={supportsReferenceLinks(format())}>
-                <Setting name={lang.settingTab.referenceLinks} class="ex-template-modal-reference-links">
+                <Setting name={t.REFERENCE_LINKS} class="ex-template-modal-reference-links">
                   <Toggle checked={referenceLinks(args())} onChange={checked => writeArgs(a => setReferenceLinks(a, checked))} />
                 </Setting>
               </Show>
             </div>
           </Show>
 
-          {/* The bytes rather than the layout, and each on its own gate: a PDF
-              has no line endings to choose, and only some of the writers that
-              have them can escape what is not ASCII. */}
+          {/* The bytes rather than the layout, each on its own gate. */}
           <Show when={supportsEol(format())}>
-            <Setting name={lang.settingTab.lineEndings} class="ex-template-modal-eol">
+            <Setting name={t.LINE_ENDINGS} class="ex-template-modal-eol">
               <DropDown
                 options={eolOptions()}
                 selected={eol(args()) ?? ''}
@@ -1306,17 +1171,16 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
           </Show>
 
           <Show when={supportsAscii(format())}>
-            <Setting name={lang.settingTab.asciiOnly} description={lang.settingTab.asciiOnlyDesc} class="ex-template-modal-ascii">
+            <Setting name={t.ASCII_ONLY} description={t.ASCII_ONLY_DESC} class="ex-template-modal-ascii">
               <Toggle checked={ascii(args())} onChange={checked => writeArgs(a => setAscii(a, checked))} />
             </Setting>
           </Show>
 
-          {/* Its own row rather than part of the card above: an EPUB collects
-              footnotes as well, and writes no source anybody reads. */}
+          {/* Its own row: an EPUB collects footnotes but writes no source anybody reads. */}
           <Show when={supportsReferenceLocation(format())}>
             <Setting
-              name={lang.settingTab.referenceLocation}
-              description={lang.settingTab.referenceLocationDesc}
+              name={t.REFERENCE_LOCATION}
+              description={t.REFERENCE_LOCATION_DESC}
               class="ex-template-modal-reference-location"
             >
               <DropDown
@@ -1330,11 +1194,11 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
 
           <Show when={isSlideOutput(format())}>
             <div class="ex-card ex-template-modal-slides">
-              <Setting name={lang.settingTab.slides} description={lang.settingTab.slidesDesc} heading={true} />
-              <Setting name={lang.settingTab.incremental} class="ex-template-modal-incremental">
+              <Setting name={t.SLIDES} description={t.SLIDES_DESC} heading={true} />
+              <Setting name={t.INCREMENTAL} class="ex-template-modal-incremental">
                 <Toggle checked={incremental(args())} onChange={checked => writeArgs(a => setIncremental(a, checked))} />
               </Setting>
-              <Setting name={lang.settingTab.slideLevel} class="ex-template-modal-slide-level">
+              <Setting name={t.SLIDE_LEVEL} class="ex-template-modal-slide-level">
                 <DropDown
                   options={slideLevelOptions()}
                   selected={slideLevel(args()) ?? ''}
@@ -1347,27 +1211,27 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
 
           <Show when={isEpubOutput(format())}>
             <div class="ex-card ex-template-modal-epub">
-              <Setting name={lang.settingTab.epub} description={lang.settingTab.epubDesc} heading={true} />
-              <Setting name={lang.settingTab.epubCoverImage}>
+              <Setting name={t.EPUB} description={t.EPUB_DESC} heading={true} />
+              <Setting name={t.EPUB_COVER_IMAGE}>
                 <FileInput
                   value={epubCoverImage(args())}
                   filters={IMAGE_FILES}
-                  tooltip={lang.settingTab.chooseFile}
+                  tooltip={t.CHOOSE_FILE}
                   onChange={value => writeArgs(a => setEpubCoverImage(a, value.trim()))}
                 />
               </Setting>
-              <Setting name={lang.settingTab.epubEmbedFont}>
+              <Setting name={t.EPUB_EMBED_FONT}>
                 <FileInput
                   value={epubEmbedFont(args())}
                   filters={FONT_FILES}
-                  tooltip={lang.settingTab.chooseFile}
+                  tooltip={t.CHOOSE_FILE}
                   onChange={value => writeArgs(a => setEpubEmbedFont(a, value.trim()))}
                 />
               </Setting>
-              <Setting name={lang.settingTab.epubTitlePage}>
+              <Setting name={t.EPUB_TITLE_PAGE}>
                 <Toggle checked={epubTitlePage(args())} onChange={checked => writeArgs(a => setEpubTitlePage(a, checked))} />
               </Setting>
-              <Setting name={lang.settingTab.epubSubdirectory} description={lang.settingTab.epubSubdirectoryDesc}>
+              <Setting name={t.EPUB_SUBDIRECTORY} description={t.EPUB_SUBDIRECTORY_DESC}>
                 <Text
                   value={epubSubdirectory(args()) ?? ''}
                   placeholder="EPUB"
@@ -1377,11 +1241,9 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
             </div>
           </Show>
 
-          {/* Outside the card above, because chunked HTML splits on the same
-              option and takes nothing else an EPUB does — under a heading
-              naming EPUB it would be answering a question nobody asked it. */}
+          {/* Outside the EPUB card: chunked HTML splits on the same option. */}
           <Show when={supportsSplitLevel(format())}>
-            <Setting name={lang.settingTab.splitLevel} description={lang.settingTab.splitLevelDesc} class="ex-template-modal-split-level">
+            <Setting name={t.SPLIT_LEVEL} description={t.SPLIT_LEVEL_DESC} class="ex-template-modal-split-level">
               <DropDown
                 options={splitLevelOptions()}
                 selected={splitLevel(args()) ?? ''}
@@ -1393,13 +1255,11 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
 
           <Show when={supportsHtmlOptions(format())}>
             <div class="ex-card ex-template-modal-page">
-              <Setting name={lang.settingTab.htmlPage} description={lang.settingTab.htmlPageDesc} heading={true} />
+              <Setting name={t.HTML_PAGE} description={t.HTML_PAGE_DESC} heading={true} />
 
-              {/* Read across both lines: the shipped Html template asks for
-                  this in the arguments proper, and what is written here only
-                  has to differ from what those already say. */}
+              {/* The shipped HTML template already asks for this, so only a difference is written. */}
               <Show when={supportsEmbedResources(format())}>
-                <Setting name={lang.settingTab.embedResources} class="ex-template-modal-embed">
+                <Setting name={t.EMBED_RESOURCES} class="ex-template-modal-embed">
                   <Toggle
                     checked={embedResources(template()?.arguments, args())}
                     onChange={checked => writeArgs(a => setEmbedResources(a, checked, embedResources(template()?.arguments)))}
@@ -1407,11 +1267,11 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
                 </Setting>
               </Show>
 
-              <Setting name={lang.settingTab.sectionDivs} class="ex-template-modal-section-divs">
+              <Setting name={t.SECTION_DIVS} class="ex-template-modal-section-divs">
                 <Toggle checked={sectionDivs(args())} onChange={checked => writeArgs(a => setSectionDivs(a, checked))} />
               </Setting>
 
-              <Setting name={lang.settingTab.emailObfuscation} class="ex-template-modal-obfuscation">
+              <Setting name={t.EMAIL_OBFUSCATION} class="ex-template-modal-obfuscation">
                 <DropDown
                   options={obfuscationOptions()}
                   selected={emailObfuscation(args()) ?? ''}
@@ -1420,39 +1280,33 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
                 />
               </Setting>
 
-              <Setting name={lang.settingTab.idPrefix} class="ex-template-modal-id-prefix">
+              <Setting name={t.ID_PREFIX} class="ex-template-modal-id-prefix">
                 <Text value={idPrefix(args()) ?? ''} onChange={value => writeArgs(a => setIdPrefix(a, value.trim()))} />
               </Setting>
             </div>
           </Show>
 
-          {/* Extracting the media is asked of every writer — it writes the
-              files out whatever comes of the document — while the resolution
-              only matters where the writer puts a real size on an image. */}
+          {/* Extraction is asked of every writer; the resolution only where sizes are written. */}
           <div class="ex-card ex-template-modal-media">
-            <Setting name={lang.settingTab.media} description={lang.settingTab.mediaDesc} heading={true} />
-            <Setting name={lang.settingTab.extractMedia} class="ex-template-modal-extract-media">
+            <Setting name={t.MEDIA} description={t.MEDIA_DESC} heading={true} />
+            <Setting name={t.EXTRACT_MEDIA} class="ex-template-modal-extract-media">
               <FileInput
                 value={extractMedia(template()?.arguments, args())}
                 folder={true}
-                tooltip={lang.settingTab.chooseFolder}
+                tooltip={t.CHOOSE_FOLDER}
                 onChange={value => writeArgs(a => setExtractMedia(a, value.trim()))}
               />
             </Setting>
             <Show when={supportsDpi(format())}>
-              <Setting name={lang.settingTab.dpi} class="ex-template-modal-dpi">
+              <Setting name={t.DPI} class="ex-template-modal-dpi">
                 <Text value={dpi(args()) ?? ''} placeholder="96" onChange={value => writeArgs(a => setDpi(a, value))} />
               </Setting>
             </Show>
           </div>
 
-          {/* The list everything else is said in. There is no metadata field
-              beside it: the fields of the document itself — title, author,
-              date — are read from the exported note's own frontmatter.
-              `visible` is the panel it sits in rather than the field: a
-              textarea that has never been on screen has no height to measure
-              itself against. */}
-          <Setting name={lang.settingTab.variables} description={lang.settingTab.variablesDesc} class="ex-template-modal-variables">
+          {/* Everything else. Title, author and date come from the note's frontmatter, so they
+              get no field. `visible` is the panel: an unrendered textarea has no height. */}
+          <Setting name={t.OTHER_VARIABLES} description={t.OTHER_VARIABLES_DESC} class="ex-template-modal-variables">
             <TextArea
               class="ex-template-modal-pairs"
               autoSize={true}
@@ -1464,35 +1318,20 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
           </Setting>
         </Section>
 
-        {/*
-         * The foot of the modal: what every row above it amounts to, and the only
-         * place the whole line can be read.
-         *
-         * The command itself is shown rather than typed into: the rows above write
-         * one part of it and the preset wrote another, and an edit here could not
-         * be told apart from either.
-         *
-         * The field below it is a third part, kept in `userArguments` where no row
-         * can reach it — anything pandoc takes that has no row above, written last
-         * so it has the final word. It appears at the end of the command, which is
-         * exactly where pandoc will read it.
-         */}
+        {/* The command is shown, not typed into: an edit here could not be told apart from
+            what the rows and the preset wrote. `userArguments` below is the field no row
+            can reach, written last so it has the final word. */}
         <Section
-          name={lang.settingTab.resultingCommand}
-          description={lang.settingTab.resultingCommandDesc}
+          name={t.COMMAND_RESULT}
+          description={t.COMMAND_RESULT_DESC}
           class="ex-template-modal-command-section"
           open={commandOpen()}
           onToggle={setCommandOpen}
         >
-          {/* The two rows share a card, as a group inside the advanced panel
-              does: what the command comes to and the one field that adds to it
-              are the one subject, and the line between them is all it takes to
-              say they are two answers rather than one. */}
+          {/* The command and the one field that adds to it share a card. */}
           <div class="ex-card ex-template-modal-command-card">
             <Setting class="ex-template-modal-resulting-command ex-template-modal-nameless">
-              {/* The copy sits over the field's own top right corner rather than
-                  up in the heading: what it copies is what is on screen, so it
-                  belongs to the field and not to the panel around it. */}
+              {/* Copy sits over the field, not the heading: it copies what is on screen. */}
               <div class="ex-template-modal-command-preview">
                 <TextArea
                   class="ex-template-modal-command-line"
@@ -1501,13 +1340,13 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
                   readOnly={true}
                   value={commandForReading()}
                 />
-                <ExtraButton icon="copy" tooltip={lang.settingTab.copyCommand} onClick={() => void copyCommand()} />
+                <ExtraButton icon="copy" tooltip={t.COMMAND_COPY} onClick={() => void copyCommand()} />
               </div>
             </Setting>
 
             <Setting
-              name={lang.settingTab.userArguments}
-              description={lang.settingTab.userArgumentsDesc}
+              name={t.USER_ARGS}
+              description={t.USER_ARGS_DESC}
               class="ex-template-modal-user-arguments"
             >
               <Text
@@ -1531,16 +1370,15 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     };
     return (
       <>
-        <Setting name={lang.settingTab.command} class="ex-template-modal-custom-command">
+        <Setting name={t.TEMPLATE_COMMAND} class="ex-template-modal-custom-command">
           <Text style="width: 100%" value={template()?.command ?? ''} onChange={value => updateTemplate(v => (v.command = value))} />
         </Setting>
-        <Setting name={lang.settingTab.targetFileExtensions} class="ex-template-modal-target-extensions">
+        <Setting name={t.TEMPLATE_TARGET_EXTENSIONS} class="ex-template-modal-target-extensions">
           <Text value={template()?.targetFileExtensions ?? ''} onChange={value => updateTemplate(v => (v.targetFileExtensions = value))} />
         </Setting>
 
-        {/* The counterpart of the pandoc block's run-command toggle: a custom
-          template is a command, and this is the only word it says back. */}
-        <Setting name={lang.settingTab.showCommandOutput} class="ex-template-modal-show-output">
+        {/* A custom template is a command, and this is the only word it says back. */}
+        <Setting name={t.TEMPLATE_SHOW_OUTPUT} class="ex-template-modal-show-output">
           <Toggle
             checked={template()?.showCommandOutput ?? false}
             onChange={checked => updateTemplate(v => (v.showCommandOutput = checked))}
@@ -1572,9 +1410,8 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     }
   };
 
-  // Asked on every open, answered from the session's cache after the first one
-  // that succeeded — see `getCachedPandocVersion`. Still an effect, so changing
-  // the path or the environment goes and asks the binary it now points at.
+  // Asked on every open, answered from the session cache after the first success. Still an
+  // effect, so a changed path or environment re-asks the binary it now points at.
   createEffect(async () => {
     try {
       const env = createEnv(getPlatformValue(settings.env) ?? {});
@@ -1587,7 +1424,7 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
   return (
     <>
       <PandocDashboard
-        lang={lang}
+       
         version={pandocVersion()}
         markdownLinks={app.vault.config.useMarkdownLinks}
         path={getPlatformValue(settings.pandocPath) ?? ''}
@@ -1595,14 +1432,14 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
         onChoosePath={choosePandocPath}
       />
 
-      <Setting name={lang.settingTab.defaults} heading={true} />
+      <Setting name={t.SECTION_DEFAULTS} heading={true} />
 
       <div class="ex-settings-card">
-        <Setting name={lang.settingTab.defaultFolderForExportedFile}>
+        <Setting name={t.SETTING_EXPORT_DESTINATION}>
           <DropDown
             options={[
-              { name: lang.settingTab.sameFolderWithCurrentFile, value: 'Same' },
-              { name: lang.settingTab.customLocation, value: 'Custom' },
+              { name: t.EXPORT_DESTINATION_SAME, value: 'Same' },
+              { name: t.EXPORT_DESTINATION_CUSTOM, value: 'Custom' },
             ]}
             selected={settings.defaultExportDirectoryMode}
             onChange={(v: 'Same' | 'Custom') => setSettings('defaultExportDirectoryMode', v)}
@@ -1616,17 +1453,16 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
           </Setting>
         </Collapsible>
 
-        <Setting name={lang.settingTab.openExportedFileLocation}>
+        <Setting name={t.SETTING_OPEN_LOCATION}>
           <Toggle checked={settings.openExportedFileLocation} onChange={v => setSettings('openExportedFileLocation', v)} />
         </Setting>
 
-        <Setting name={lang.settingTab.openExportedFile}>
+        <Setting name={t.SETTING_OPEN_FILE}>
           <Toggle checked={settings.openExportedFile} onChange={v => setSettings('openExportedFile', v)} />
         </Setting>
 
-        {/* TODO:// optimize UI as https://www.jetbrains.com/help/idea/absolute-path-variables.html */}
-        <Setting name={lang.settingTab.environmentVariables}>
-          <ExtraButton icon="pencil" tooltip={lang.settingTab.edit} onClick={() => setEditingEnvVars(v => !v)} />
+        <Setting name={t.SETTING_ENV_VARS}>
+          <ExtraButton icon="pencil" tooltip={t.ACTION_EDIT} onClick={() => setEditingEnvVars(v => !v)} />
         </Setting>
 
         <Collapsible when={editingEnvVars()}>
@@ -1636,12 +1472,12 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
         </Collapsible>
       </div>
 
-      <Setting name={lang.settingTab.exportTemplates} heading={true} />
+      <Setting name={t.SECTION_TEMPLATES} heading={true} />
 
-      <TemplateActions lang={lang} onAdd={addCommandTemplate} onBrowseLuaFilters={() => setModal(() => LuaFilterStoreModal)} />
+      <TemplateActions onAdd={addCommandTemplate} onBrowseLuaFilters={() => setModal(() => LuaFilterStoreModal)} />
 
       <TemplateTable
-        lang={lang}
+       
         templates={settings.items}
         sort={settings.lastTemplateSort}
         onSort={sort => setSettings('lastTemplateSort', sort)}
@@ -1664,96 +1500,90 @@ const ANCHOR_CLASS = 'ex-settings-anchor';
 const ROOT_CLASS = 'ex-settings-root';
 
 export default class extends PluginSettingTab {
-  plugin: UniversalExportPlugin;
+  plugin: PandocGuiPlugin;
   #dispose?: () => void;
   #root?: HTMLElement;
 
-  public get lang() {
-    return this.plugin.lang;
-  }
-
-  constructor(plugin: UniversalExportPlugin) {
+  constructor(plugin: PandocGuiPlugin) {
     super(plugin.app, plugin);
     this.plugin = plugin;
-    this.name = this.plugin.lang.settingTab.title;
+    // The sidebar entry is the plugin's own name, so the manifest is the one place it is set.
+    this.name = plugin.manifest.name;
   }
 
   getSettingDefinitions(): SettingDefinitionItem[] {
-    const { settingTab } = this.lang;
     return [
       {
         type: 'group',
         cls: GROUP_CLASS,
         items: [
           {
-            // The whole tab is one custom-rendered row: the name, description and
-            // aliases exist so the settings search can find and scroll to it, the
-            // visible labels are drawn by the solid-js tree below.
-            name: settingTab.title,
+            // The whole tab is one custom-rendered row: name, description and aliases exist
+            // so the settings search can find it; the visible labels are drawn by solid-js.
+            name: this.plugin.manifest.name,
             desc: this.plugin.manifest.description,
             aliases: [
-              settingTab.pandocDashboard,
-              settingTab.pandocPath,
-              settingTab.defaults,
-              settingTab.defaultFolderForExportedFile,
-              settingTab.openExportedFileLocation,
-              settingTab.openExportedFile,
-              settingTab.exportTemplates,
-              settingTab.newTemplate,
-              settingTab.browseLuaFilters,
-              settingTab.luaFilters,
-              this.lang.luaFilterStore.title,
-              settingTab.editCommandTemplate,
-              settingTab.command,
-              settingTab.resultingCommand,
-              settingTab.extensions,
-              settingTab.tableOfContents,
-              settingTab.reading,
-              settingTab.shiftHeadings,
-              settingTab.tabStop,
-              settingTab.stripComments,
-              settingTab.embedNotes,
-              settingTab.today,
-              settingTab.keywords,
-              settingTab.wordStyles,
-              settingTab.figureStyle,
-              settingTab.tableStyle,
-              settingTab.listStyles,
-              settingTab.math,
-              settingTab.mathUrl,
-              settingTab.syntaxDefinition,
-              settingTab.lineEndings,
-              settingTab.asciiOnly,
-              settingTab.citations,
-              settingTab.bibliography,
-              settingTab.csl,
-              settingTab.referenceDoc,
-              settingTab.outputTemplate,
-              settingTab.stylesheet,
-              settingTab.includes,
-              settingTab.pageSetup,
-              settingTab.writtenSource,
-              settingTab.wrap,
-              settingTab.referenceLocation,
-              settingTab.slides,
-              settingTab.epub,
-              settingTab.htmlPage,
-              settingTab.embedResources,
-              settingTab.media,
-              settingTab.extractMedia,
-              settingTab.variables,
-              settingTab.userArguments,
-              settingTab.targetFileExtensions,
-              settingTab.showCommandOutput,
-              settingTab.templateOutput,
-              settingTab.environmentVariables,
+              t.PANDOC_DASHBOARD,
+              t.PANDOC_PATH,
+              t.SECTION_DEFAULTS,
+              t.SETTING_EXPORT_DESTINATION,
+              t.SETTING_OPEN_LOCATION,
+              t.SETTING_OPEN_FILE,
+              t.SECTION_TEMPLATES,
+              t.ACTION_NEW_TEMPLATE,
+              t.ACTION_BROWSE_FILTERS,
+              t.LUA_FILTERS,
+              t.STORE_TITLE,
+              t.TEMPLATE_EDITOR_TITLE,
+              t.TEMPLATE_COMMAND,
+              t.COMMAND_RESULT,
+              t.EXTENSIONS,
+              t.TOC,
+              t.READING,
+              t.SHIFT_HEADINGS,
+              t.TAB_STOP,
+              t.STRIP_COMMENTS,
+              t.EMBED_NOTES,
+              t.TODAY,
+              t.KEYWORDS,
+              t.WORD_STYLES,
+              t.FIGURE_STYLE,
+              t.TABLE_STYLE,
+              t.LIST_STYLES,
+              t.MATH,
+              t.MATH_URL,
+              t.SYNTAX_DEFINITION,
+              t.LINE_ENDINGS,
+              t.ASCII_ONLY,
+              t.CITATIONS,
+              t.BIBLIOGRAPHY,
+              t.CSL,
+              t.REFERENCE_DOC,
+              t.OUTPUT_TEMPLATE,
+              t.STYLESHEET,
+              t.INCLUDES,
+              t.PAGE_SETUP,
+              t.WRITTEN_SOURCE,
+              t.WRAP,
+              t.REFERENCE_LOCATION,
+              t.SLIDES,
+              t.EPUB,
+              t.HTML_PAGE,
+              t.EMBED_RESOURCES,
+              t.MEDIA,
+              t.EXTRACT_MEDIA,
+              t.OTHER_VARIABLES,
+              t.USER_ARGS,
+              t.TEMPLATE_TARGET_EXTENSIONS,
+              t.TEMPLATE_SHOW_OUTPUT,
+              t.TEMPLATE_OUTPUT,
+              t.SETTING_ENV_VARS,
               'pandoc',
             ],
             render: setting => {
               setting.settingEl.addClass(ANCHOR_CLASS);
-              // Must be built into settingEl: anything appended to the group's listEl
-              // is pruned by the reconciler at the end of the render pass. Reuse the
-              // existing root so a re-render cannot append a second copy of the UI.
+              // Must be built into settingEl — the reconciler prunes anything appended to the
+              // group's listEl. Reuse the existing root so a re-render cannot duplicate the UI.
               const root =
                 setting.settingEl.querySelector<HTMLElement>(`:scope > .${ROOT_CLASS}`) ?? setting.settingEl.createDiv(ROOT_CLASS);
               this.#mount(root);
@@ -1776,7 +1606,7 @@ export default class extends PluginSettingTab {
     this.#unmount();
     this.#root = root;
     this.#dispose = createRoot(dispose => {
-      insert(root, <SettingTab plugin={this.plugin} lang={this.lang} />);
+      insert(root, <SettingTab plugin={this.plugin} />);
       onCleanup(() => {
         root.empty();
       });

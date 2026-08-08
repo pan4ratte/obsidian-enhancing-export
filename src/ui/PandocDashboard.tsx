@@ -1,7 +1,7 @@
 import * as ct from 'electron';
 import { Show, createMemo, createResource } from 'solid-js';
 import type { SemVer } from 'semver';
-import type { Lang } from '../lang';
+import { t } from '../lang/helpers';
 import pandoc, { type PandocRelease } from '../pandoc';
 import Button from './components/Button';
 import Icon from './components/Icon';
@@ -23,12 +23,8 @@ const fetchLatestRelease = async (): Promise<PandocRelease | undefined> => {
   }
 };
 
-/**
- * Installed Pandoc at a glance: version, whether it is the newest release, and
- * the two links worth having close by.
- */
+/** Installed Pandoc at a glance: version, whether it is the newest release, and the links worth having close by. */
 export default (props: {
-  lang: Lang;
   version?: SemVer;
   path?: string;
   /** Whether the vault writes Markdown links rather than wikilinks. */
@@ -36,8 +32,6 @@ export default (props: {
   onPathChange?: (path: string) => void;
   onChoosePath?: () => void;
 }) => {
-  const { lang } = props;
-
   const [latest] = createResource(fetchLatestRelease);
 
   const updateAvailable = createMemo(() => {
@@ -56,25 +50,25 @@ export default (props: {
     return updateAvailable() ? 'outdated' : 'ok';
   });
 
-  const versionText = createMemo(() => (props.version ? lang.settingTab.pandocVersion(props.version) : lang.settingTab.pandocNotInstalled));
+  const versionText = createMemo(() => (props.version ? t.PANDOC_VERSION(props.version.version) : t.PANDOC_NOT_INSTALLED));
 
   const statusText = createMemo(() => {
     switch (status()) {
       case 'missing':
-        return lang.settingTab.pandocNotFound;
+        return t.PANDOC_NOT_FOUND;
       case 'checking':
-        return lang.settingTab.pandocCheckingForUpdates;
+        return t.PANDOC_CHECKING;
       case 'outdated':
-        return lang.settingTab.pandocUpdateAvailable(latest().version);
+        return t.PANDOC_UPDATE_AVAILABLE(latest().version.version);
       default:
-        return latest() ? lang.settingTab.pandocUpToDate : lang.settingTab.pandocUpdateCheckFailed;
+        return latest() ? t.PANDOC_UP_TO_DATE : t.PANDOC_UPDATE_CHECK_FAILED;
     }
   });
 
   // Pandoc below the required version cannot resolve this vault's link style.
   const warning = createMemo(() =>
     props.version && props.markdownLinks && props.version.compare(pandoc.requiredVersion) === -1
-      ? lang.settingTab.pandocUpgradeRequired(pandoc.requiredVersion)
+      ? t.PANDOC_UPGRADE_REQUIRED(pandoc.requiredVersion)
       : undefined
   );
 
@@ -100,19 +94,19 @@ export default (props: {
           onClick={() => openExternal(latest()?.url ?? pandoc.latestReleaseUrl)}
         >
           <Icon name={updateAvailable() ? 'download' : 'scroll-text'} />
-          {updateAvailable() ? lang.settingTab.pandocUpdate : lang.settingTab.pandocChangelog}
+          {updateAvailable() ? t.PANDOC_UPDATE : t.PANDOC_CHANGELOG}
         </Button>
         <Button class="ex-pandoc-dashboard-button" onClick={() => openExternal(pandoc.manualUrl)}>
           <Icon name="book-open" />
-          {lang.settingTab.pandocOpenManual}
+          {t.PANDOC_OPEN_MANUAL}
         </Button>
-        <Button class="ex-pandoc-dashboard-button" title={props.path || lang.settingTab.pandocPathPlaceholder} onClick={props.onChoosePath}>
+        <Button class="ex-pandoc-dashboard-button" title={props.path || t.PANDOC_PATH_PLACEHOLDER} onClick={props.onChoosePath}>
           <Icon name="folder" />
-          {lang.settingTab.pandocFolder}
+          {t.PANDOC_FOLDER}
         </Button>
         {/* The dialog cannot pick "nothing", so clearing needs its own control. */}
         <Show when={props.path}>
-          <ExtraButton icon="rotate-ccw" tooltip={lang.settingTab.pandocPathReset} onClick={() => props.onPathChange?.('')} />
+          <ExtraButton icon="rotate-ccw" tooltip={t.PANDOC_PATH_RESET} onClick={() => props.onPathChange?.('')} />
         </Show>
       </div>
     </div>

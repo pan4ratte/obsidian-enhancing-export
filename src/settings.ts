@@ -62,7 +62,7 @@ export function today(locale: string, now = new Date()): Record<TodayFormat, str
   };
 }
 
-export interface UniversalExportPluginSettings {
+export interface PandocGuiSettings {
   pandocPath?: PlatformValue<string>;
   showOverwriteConfirmation?: boolean;
   defaultExportDirectoryMode: 'Same' | 'Custom';
@@ -216,7 +216,7 @@ export const DEFAULT_TEMPLATE_PRESETS: readonly string[] = [
   'PowerPoint (.pptx)',
 ];
 
-export const DEFAULT_SETTINGS: UniversalExportPluginSettings = {
+export const DEFAULT_SETTINGS: PandocGuiSettings = {
   // Each default is an instance of the preset it is named for, so it carries the
   // key it came from. Taking that from the key rather than the name matters:
   // `Bibliography (.bib)` holds a template called `Bibliography`, and the two

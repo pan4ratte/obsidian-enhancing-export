@@ -1,22 +1,17 @@
 import { describeExportFailure } from '../src/export_error';
-import lang from '../src/lang';
+import { t } from '../src/lang/helpers';
 
-/*
- * A failed export is read by someone who wants to know what to do next, not by
- * someone who wants to read the command back. Two things are tested here: that
- * the command line never reaches the box, and that the errors people actually
- * hit are recognised as themselves.
- */
+// Two things are tested: that the command line never reaches the box, and that the
+// errors people actually hit are recognised as themselves.
 
-const en = lang.current;
-const hint = en.exportError.hint;
+const hint = t.ERROR_HINTS;
 
 const CMD = 'pandoc "/vault/Note.md" -s -o "/out/Note.pdf" --pdf-engine=xelatex --lua-filter="/plugin/lua/wordcount.lua"';
 
 /** What `child_process.exec` rejects with: the command line, then the output. */
 const execError = (stderr: string) => Object.assign(new Error(`Command failed: ${CMD}\n${stderr}`), { code: 1 });
 
-const describe_ = (err: unknown) => describeExportFailure(err, CMD, en);
+const describe_ = (err: unknown) => describeExportFailure(err, CMD);
 
 describe('what the box is given to show', () => {
   test('the command line is left out, however it came back', () => {
@@ -42,8 +37,8 @@ describe('what the box is given to show', () => {
   });
 
   test('a failure with nothing to say still says something', () => {
-    expect(describe_(execError('')).detail).toBe(en.exportError.noOutput);
-    expect(describe_(undefined).detail).toBe(en.exportError.noOutput);
+    expect(describe_(execError('')).detail).toBe(t.ERROR_NO_OUTPUT);
+    expect(describe_(undefined).detail).toBe(t.ERROR_NO_OUTPUT);
   });
 
   test('a thrown string, or something that is neither, is still readable', () => {
