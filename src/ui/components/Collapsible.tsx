@@ -1,4 +1,4 @@
-import { createEffect, on, JSX } from 'solid-js';
+import { createEffect, createMemo, on, JSX } from 'solid-js';
 
 /**
  * Panel that grows in and out over 180ms of height and opacity, borrowed from
@@ -45,9 +45,23 @@ export default (props: { when?: boolean; class?: string; children?: JSX.Element 
     };
   };
 
+  /*
+   * Whether the panel stands open, and nothing else.
+   *
+   * Through a memo rather than read straight off the prop: what the caller
+   * hands in is worked out from something larger — a template's whole argument
+   * line, say — and every rewrite of that reaches here, whether or not the
+   * answer changed. The effect below would then run on a panel that was
+   * already closed, and closing a closed panel means showing it first so its
+   * height can be measured. Toggling any option in the template editor made
+   * "Start numbering at" flash open and shut. A memo only tells its observers
+   * when the value it holds is genuinely different.
+   */
+  const shown = createMemo(() => !!props.when);
+
   // Deferred: the first state is the one drawn by the ref below, which has
   // nothing to animate from.
-  createEffect(on(() => !!props.when, toggle, { defer: true }));
+  createEffect(on(shown, toggle, { defer: true }));
 
   return (
     <div

@@ -61,7 +61,7 @@ export default {
     noTemplates: 'No export templates yet.',
     removeTemplateConfirmation: strTpl`Delete the export template "${0}"? This cannot be undone.`,
     edit: 'Edit',
-    done: 'Done',
+    save: 'Save',
     editCommandTemplate: 'Edit template',
     customLocation: 'Custom location',
     template: 'Template',
@@ -115,10 +115,13 @@ export default {
        but few templates change. */
     advanced: 'Advanced',
 
-    /* Writes `--toc --toc-depth=N` into the template's extra arguments. */
+    /* Writes `--toc --toc-depth=N` into the template's extra arguments. Depth is
+       one number rather than a set of levels, so it is asked for as one: a
+       track from no contents at all down to the deepest heading pandoc reaches. */
     tableOfContents: 'Table of contents',
-    tableOfContentsDesc: 'Headings down to the deepest level ticked. Tick nothing for no contents.',
+    tableOfContentsDesc: 'Headings down to the level chosen, and every level above it.',
     tocLevel: strTpl`Level ${0}`,
+    tocNone: 'None',
 
     /* The rest of the writer options, written into the same field. Every row
        here is shown only for the formats that would do something with it, so a

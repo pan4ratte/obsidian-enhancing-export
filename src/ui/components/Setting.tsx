@@ -1,4 +1,4 @@
-import { For, JSX, createContext, createEffect, on, onCleanup, onMount, useContext } from 'solid-js';
+import { Index, JSX, createContext, createEffect, on, onCleanup, onMount, useContext } from 'solid-js';
 import * as Ob from 'obsidian';
 
 type SettingContext = {
@@ -176,21 +176,50 @@ export const DropDown = (props: {
   autofocus?: boolean;
   onChange?: (value: string, index: number) => void;
 }) => {
+  let el!: HTMLSelectElement;
+
+  // Which option is standing, said to the element rather than left to the
+  // `selected` attributes below. That attribute only sets an option's *default*
+  // selectedness: once a select has been picked from, writing it again moves
+  // nothing, and a dropdown rewritten from the settings — a preset changed, an
+  // option cleared — would go on showing the answer it used to have. This runs
+  // after the options themselves have been updated, so there is always
+  // something for the value to land on.
+  createEffect(() => {
+    // The options are read along with the value: which of them the value lands
+    // on is half of what decides whether the element is showing the right
+    // answer. `-1` — nothing matched — deselects, which is the honest thing to
+    // show for a value none of the options carries.
+    const index = props.options.findIndex(o => o.value === (props.selected ?? ''));
+    if (el.selectedIndex !== index) {
+      el.selectedIndex = index;
+    }
+  });
+
   return (
     <>
       <select
+        ref={el}
         class="dropdown"
         title={props.title}
         onChange={e => props.onChange?.(e.target.value, e.target.selectedIndex)}
         autofocus={props.autofocus ?? true}
       >
-        <For each={props.options}>
+        {/* `Index`, not `For`. The lists handed in here are worked out afresh
+            whenever the template's arguments change — every option a new object,
+            though almost always the same words in the same order — and `For`
+            keys on identity, so it would throw away every `<option>` and build
+            it again. The select visibly flinched each time: touching a lua
+            filter rewrites the arguments, and the dropdowns beside it blinked.
+            `Index` keys on position and writes the new value into the option
+            already there. */}
+        <Index each={props.options}>
           {item => (
-            <option value={item.value} selected={item.value === props.selected}>
-              {item.name ?? item.value}
+            <option value={item().value} selected={item().value === props.selected}>
+              {item().name ?? item().value}
             </option>
           )}
-        </For>
+        </Index>
       </select>
     </>
   );

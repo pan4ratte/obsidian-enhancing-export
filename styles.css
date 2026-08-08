@@ -483,25 +483,99 @@
 }
 
 /*
+ * The one button at the foot of the modal, given its whole width: it is the end
+ * of the form rather than one more control in it, and a form this long deserves
+ * to end in something that plainly is the end.
+ */
+.ex-template-modal.ex-template-modal .modal-button-container {
+  display: flex;
+  margin-top: var(--size-4-3);
+}
+
+.ex-template-modal.ex-template-modal .modal-button-container > button {
+  flex: 1 1 auto;
+  width: 100%;
+  margin: 0;
+}
+
+/*
  * Cards, not rules.
  *
  * Every option is a bordered box holding its own label, description and
  * control, and a group of options is one box around several. Nothing in the
  * modal is separated by a line: the boxes do the separating, and a stack of
  * them reads as a list of answers rather than as a page chopped into stripes.
+ *
+ * A row keeps its box wherever it stands, folded away in a section as much as
+ * out in the open — the modal is one kind of thing throughout, and an option
+ * does not stop being an option for being an advanced one.
  */
-.ex-template-modal.ex-template-modal .setting-item,
-.ex-template-modal.ex-template-modal .ex-card {
-  margin-bottom: var(--size-4-2);
-  padding: var(--size-4-3);
+.ex-template-modal.ex-template-modal .setting-item:not(.setting-item-heading) {
+  margin-bottom: var(--size-4-3);
+  padding: var(--setting-items-padding-x);
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--setting-items-radius);
   background: var(--setting-items-background);
 }
 
 /*
- * What a card holds is spaced rather than boxed again — one box around the
- * group, plain rows inside it.
+ * The same three properties again, said where nothing can take them back.
+ *
+ * Obsidian reads the rows of a modal as one form and rounds the ends of it off:
+ * `.modal:not(.mod-settings) …:first-child` drops the line above the first row
+ * and the padding over it, and `…:last-child` drops the padding under the last.
+ * Sound enough for a run of rows divided by lines — here every row is a box,
+ * and one drawn without its top or its floor is simply a broken box. It bit
+ * every row that happened to come first or last inside its own card: the first
+ * row of a group, the field a collapsible panel holds on its own, the last row
+ * before a card's edge.
+ *
+ * Those two rules weigh five classes — `:where()` is free but the `.modal` and
+ * the `:not(.mod-settings)` in front of it are not — which is one more than the
+ * doubled class above carries. Hence the chain: the container, the modal, the
+ * content, the row. It is written out rather than won on load order, which is
+ * not something a plugin gets to decide.
+ */
+.ex-template-modal.ex-template-modal .modal .modal-content .setting-item:not(.setting-item-heading) {
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: var(--setting-items-padding-x);
+  padding-bottom: var(--setting-items-padding-x);
+}
+
+/*
+ * A folding section is not a box at all — only a fold.
+ *
+ * It was a card around cards, and that reads as mud however carefully the two
+ * are spaced: a box inside a box says the inner thing is a lesser kind of
+ * thing, which an advanced option is not. So the heading is a row like any
+ * other, and what it opens are rows like any other, at the width and the inset
+ * of everything above them. The only thing the section still does is open and
+ * shut, which is the only thing it was ever for.
+ */
+.ex-template-modal.ex-template-modal .modal-content > .ex-card {
+  margin-bottom: var(--size-4-3);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+}
+
+/* The heading that folds it, drawn as the row it now is — and the whole of the
+   section while it stands closed. Both margins are pinned: Obsidian gives a
+   heading room above and below to set a new part of a form apart, and this one
+   is not starting a part, it is standing in the list. */
+.ex-template-modal.ex-template-modal .ex-card > .setting-item.ex-section-header {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: var(--setting-items-padding-x);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--setting-items-radius);
+  background: var(--setting-items-background);
+}
+
+/*
+ * The rows a group holds are spaced off each other rather than off the group,
+ * which has no edge of its own for them to stand away from any more.
  *
  * The spacing goes on the rows and not as a `gap` on what holds them:
  * `Collapsible` hides a panel with a `display` that a `display: flex` set here
@@ -509,15 +583,11 @@
  */
 .ex-template-modal.ex-template-modal .ex-card .setting-item {
   margin: 0;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: none;
 }
 
 .ex-template-modal.ex-template-modal .ex-card .setting-item + .setting-item,
 .ex-template-modal.ex-template-modal .ex-card .ex-collapsible > .setting-item {
-  margin-top: var(--size-4-3);
+  margin-top: var(--size-4-2);
 }
 
 /*
@@ -544,21 +614,31 @@
  * Every field sits under the label that asks for it and takes the width of the
  * modal — a pandoc command line does not fit the sliver at the end of a row.
  * Toggles are left alone: an answer of that size belongs beside its question.
- */
-.ex-template-modal.ex-template-modal .setting-item:not(.mod-toggle):not(.setting-item-heading) {
-    flex-direction: column;
-    align-items: stretch;
-    padding: var(--setting-items-padding-x);
-    margin-bottom: 12px;
-    background: var(--setting-items-background);
-    border-radius: var(--setting-items-radius);
-}
-
-/*
+ *
+ * Layout only. What the row is drawn as — box or plain — is settled above by
+ * where it stands, so this one rule can reach every row in the modal without
+ * boxing the ones already inside a box.
+ *
  * Headings are left alone along with the toggles: a section's name and the
  * chevron that opens it share a line, and a control given the full width would
  * leave the name a sliver to be cut short in.
  */
+.ex-template-modal.ex-template-modal .setting-item:not(.mod-toggle):not(.setting-item-heading) {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/*
+ * The one that does share its row sits in the middle of it. Obsidian starts a
+ * row's control at the top, which is right where the control is as tall as the
+ * text beside it — and wrong here: a description running to a second line left
+ * the switch floating up beside the first, reading as though it answered that
+ * line rather than the row.
+ */
+.ex-template-modal.ex-template-modal .setting-item.mod-toggle {
+  align-items: center;
+}
+
 .ex-template-modal.ex-template-modal .setting-item:not(.mod-toggle):not(.setting-item-heading) > .setting-item-info {
   margin-right: 0;
 }
@@ -637,10 +717,65 @@
 }
 
 /*
- * The grid keeps its columns and loses its box wherever the row it sits in is a
- * card of its own — one box drawn inside another is a border for nothing. In a
- * card, where the rows are plain, it keeps the box: a set of ten checkboxes
- * needs something holding it together.
+ * A track of named steps — the depth a table of contents is taken to.
+ *
+ * The labels are placed rather than laid out in columns: a range input keeps
+ * its thumb half a thumb's width inside either end of the track, so a label
+ * evenly spaced across the whole width would sit further and further from the
+ * step it names the closer it got to an edge. The width the thumb travels is
+ * named here and the positions are worked out against it in the script.
+ */
+.ex-step-slider {
+  --ex-step-slider-thumb: var(--slider-thumb-width, 18px);
+  width: 100%;
+  min-width: 0;
+  /* More air than a field takes under its label: a thumb stands proud of its
+     track, and sitting where a text box would sit it crowds the line above. */
+  margin-top: var(--size-4-4);
+}
+
+.ex-step-slider > input[type='range'] {
+  display: block;
+  width: 100%;
+  margin: 0;
+}
+
+/* Absolutely placed children, so the row has no height of its own to take. */
+.ex-step-slider-ticks {
+  position: relative;
+  height: 1.4em;
+  margin-top: var(--size-4-1);
+}
+
+.ex-step-slider-tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+  margin-top: 8px;
+  font-weight: var(--font-medium);
+}
+
+.ex-step-slider-tick:first-child {
+  transform: none;
+}
+
+.ex-step-slider-tick:last-child {
+  transform: translateX(-100%);
+}
+
+/* The one being asked for, said in words as well as by where the thumb is. */
+.ex-step-slider-tick.is-current {
+  color: var(--text-accent);
+  font-weight: var(--font-medium);
+}
+
+/*
+ * The grid keeps its columns and loses its box throughout the template modal:
+ * there every row it can sit in is a box of its own, and one box drawn inside
+ * another is a border for nothing.
  */
 .ex-template-modal.ex-template-modal .ex-check-grid {
   padding: 0;
@@ -648,27 +783,112 @@
   background: none;
 }
 
-.ex-template-modal.ex-template-modal .ex-card .ex-check-grid {
-  padding: var(--size-4-3);
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-secondary);
-}
-
-/* A field the row above asks the question for: it closes up against it rather
-   than keeping the space between rows. */
-.ex-template-modal.ex-template-modal .ex-card .ex-collapsible > .setting-item.ex-template-modal-nameless {
-  margin-top: var(--size-4-2);
-}
-
+/* A field whose question is asked by the heading over it, so it carries no
+   label of its own. The space above it belongs to the card it sits in. */
 .ex-template-modal.ex-template-modal .ex-template-modal-nameless > .setting-item-info {
   display: none;
 }
 
 /*
- * The advanced panel is a card like any other group: the heading that opens it
- * and everything it opens are in the one box, so a closed section is a single
- * band and an open one is plainly one thing rather than a run of loose rows.
+ * The advanced panel: a heading that folds, and under it a run of rows no
+ * different from the ones above it. What it opens is not held in anything —
+ * the fold is the only thing that says these rows belong to that heading.
  */
+
+/*
+ * Spaced by the same gap that stands between two rows outside the panel, so
+ * opening one adds to the list rather than starting a second one. The first
+ * row is included, so an open panel starts a gap below its heading rather than
+ * against it; the panel's own `overflow` is what keeps that first margin
+ * inside it, where the opening animation can measure it.
+ *
+ * A collapsible panel of its own is passed over: it may be closed, and the
+ * space belongs to the row inside it, which the card rules above already give.
+ */
+.ex-template-modal.ex-template-modal .ex-section > .ex-collapsible > *:not(.ex-collapsible) {
+  margin-top: var(--size-4-3);
+}
+
+/*
+ * A group inside the panel is a card — one card, not a stack of them. The
+ * border goes round the whole run of rows the heading names, and the rows
+ * inside are divided by a line rather than boxed each: a box per row inside a
+ * box around all of them is what read as mud.
+ *
+ * No side padding, so the lines between the rows run the width of the card;
+ * the rows carry the inset themselves.
+ */
+.ex-template-modal.ex-template-modal .ex-section .ex-card {
+  margin: 0;
+  border: 1px solid var(--setting-items-border-color);
+  border-radius: var(--setting-items-radius);
+  background: var(--setting-items-background);
+}
+
+/*
+ * The rows it holds, stripped of the box every other row in the modal wears.
+ * The group's class is written twice: the rule that draws a row as a box
+ * carries six classes to outweigh Obsidian's own — see the padding fix above —
+ * and this has to outweigh that in turn.
+ */
+.ex-template-modal.ex-template-modal .ex-section .ex-card.ex-card .setting-item:not(.setting-item-heading) {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+}
+
+/*
+ * One line between two rows, and nowhere else: not under the heading, which has
+ * its own space below it, and not above the first row or below the last, where
+ * the card's own border already stands.
+ *
+ * A collapsible panel is looked through rather than divided from: the line
+ * belongs to the row inside it, so a panel that is shut takes its line with it
+ * and the row after it still has one of its own.
+ */
+.ex-template-modal.ex-template-modal .ex-section .ex-card.ex-card .setting-item:not(.setting-item-heading) + .setting-item,
+.ex-template-modal.ex-template-modal .ex-section .ex-card.ex-card .ex-collapsible > .setting-item:not(.setting-item-heading),
+.ex-template-modal.ex-template-modal .ex-section .ex-card.ex-card .ex-collapsible + .setting-item:not(.setting-item-heading) {
+  border-top: 1px solid var(--setting-items-border-color);
+}
+
+/*
+ * The resulting command is one card with its heading inside it.
+ *
+ * The advanced panel cannot be: it holds a dozen groups, and a card around all
+ * of them is the box around boxes that read as mud. This panel holds one group,
+ * so the fold and the card are the same boundary, and drawing them as two said
+ * the same thing twice.
+ *
+ * The card is the section itself. The `.ex-card` within keeps what it is for —
+ * marking its rows as a divided list rather than a stack of boxes — and gives
+ * up its own chrome to the one now drawn around it.
+ */
+.ex-template-modal.ex-template-modal .modal-content > .ex-card.ex-template-modal-command-section {
+  padding: 0;
+  border: 1px solid var(--setting-items-border-color);
+  border-radius: var(--setting-items-radius);
+  background: var(--setting-items-background);
+}
+
+/* The heading is a row of the card now, not a card of its own. */
+.ex-template-modal.ex-template-modal .ex-card.ex-template-modal-command-section > .setting-item.ex-section-header {
+  border: none;
+  border-radius: 0;
+  background: none;
+}
+
+/* And what it opens sits straight under it: the heading's own padding and the
+   first row's are the gap between them, as a group's heading and its first row
+   are spaced everywhere else. */
+.ex-template-modal.ex-template-modal .ex-card.ex-template-modal-command-section > .ex-collapsible > .ex-card {
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+}
 
 /* The whole heading is the button, not the chevron at its end. */
 .ex-template-modal.ex-template-modal .ex-section-header {
@@ -736,12 +956,19 @@
  * from the script a line at a time, as the environment variables' is, so there
  * is nothing to scroll and nothing worth dragging: a drag would only hold until
  * the next keystroke measured the lines again.
+ *
+ * No floor under that height. `3em` was one: three of the font's own ems, which
+ * is not three lines of anything — a line is an em times the line height, and
+ * the field's padding is on top of that again. It came to a line and a sliver,
+ * so an empty list stood a few pixels taller than the one line it holds and the
+ * text sat off centre in it. The measured height is the right height; the `rows`
+ * the field is given carries it until there is something on screen to measure.
  */
 .ex-template-modal.ex-template-modal .ex-template-modal-pairs {
   width: 100%;
   resize: none;
   overflow-y: hidden;
-  min-height: 3em;
+  line-height: var(--line-height-tight);
 }
 
 /*
@@ -755,6 +982,9 @@
  * typing — the row below it is the one that does.
  */
 .ex-template-modal.ex-template-modal .ex-template-modal-command-line {
+  /* Block, not the inline-block a textarea is by default: inline leaves a
+     descender's worth of space under the field, inside the wrapper below. */
+  display: block;
   width: 100%;
   resize: none;
   overflow-y: hidden;
@@ -766,6 +996,39 @@
   background: var(--background-secondary);
   color: var(--text-normal);
   cursor: text;
+  /* Room at the top right for the copy sitting over it, so a first line long
+     enough to reach the corner is not read out from under the button. */
+  padding-inline-end: var(--size-4-8);
+}
+
+/*
+ * The copy, in the field's own top right corner. The wrapper is what the button
+ * is placed against, and takes the width the field would otherwise be given by
+ * the control around it.
+ */
+.ex-template-modal.ex-template-modal .ex-template-modal-command-preview {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.ex-template-modal.ex-template-modal .ex-template-modal-command-preview > .setting-editor-extra-setting-button {
+  position: absolute;
+  top: var(--size-4-1);
+  inset-inline-end: var(--size-4-1);
+  margin: 0;
+  padding: var(--size-4-1);
+  border-radius: var(--radius-s);
+  color: var(--text-muted);
+  /* Over the field rather than in it: the fill is what keeps the glyph legible
+     against whatever line of the command happens to run under it. */
+  background: var(--background-secondary);
+}
+
+.ex-template-modal.ex-template-modal .ex-template-modal-command-preview > .setting-editor-extra-setting-button:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
 }
 
 /* Nothing to focus into, so nothing to draw a focus ring for. */
@@ -774,15 +1037,24 @@
 }
 
 /*
- * A group's own heading, inside the card the group is drawn as — the include
- * files, and the page the writer is told about. It names the rows under it and
- * has no control of its own, so it keeps the plain look every row in a card
- * has rather than being drawn as a card inside a card.
+ * A group's own heading — the include files, and the page the writer is told
+ * about. It names the rows under it and has no control of its own, so it is
+ * never drawn as a box; it is only indented to where their labels start, so
+ * the heading and what it heads read down one line rather than two.
  */
-.ex-template-modal.ex-template-modal .ex-card > .setting-item.setting-item-heading {
-  padding: 0;
-  border: none;
-  background: none;
+.ex-template-modal.ex-template-modal .ex-card > .setting-item.setting-item-heading:not(.ex-section-header) {
+    /* Pinned, because Obsidian adds room above a heading that follows a row and
+       not above one that follows anything else — which fell to some of these
+       groups and not others, and now that a group is only its spacing, an
+       inconsistent gap is the group itself changing size. */
+    margin-top: 16px;
+    /* The card it heads has no side padding, so the inset is the heading's own
+       to take — the same one its rows take, or the name would stand a few
+       pixels to the left of everything it names. Obsidian's default here is
+       `--size-4-4`, which is close enough to look like a mistake. */
+    padding-inline: var(--setting-items-padding-x);
+    border: none;
+    background: none;
 }
 
 /*

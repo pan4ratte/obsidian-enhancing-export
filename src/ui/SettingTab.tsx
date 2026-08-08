@@ -20,7 +20,8 @@ import LuaFilterStore from './LuaFilterStore';
 import { LuaFilterManager, addLuaFilterArg, hasLuaFilterArg, removeLuaFilterArg, type InstalledLuaFilter } from '../lua_filters';
 import TemplateLuaFilters from './TemplateLuaFilters';
 import CheckGrid from './components/CheckGrid';
-import { TOC_MAX_DEPTH, setTocDepth, tocDepth } from '../toc_args';
+import StepSlider from './components/StepSlider';
+import { TOC_MAX_DEPTH, TOC_NONE, setTocDepth, tocDepth } from '../toc_args';
 import { PANDOC_EXTENSIONS, enabledExtensions, setExtensions } from '../pandoc_extensions';
 import {
   CURATED_VARIABLES,
@@ -380,9 +381,12 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
           </Match>
         </Switch>
 
+        {/* Every row writes straight through, so there is nothing here left to
+            save — but the button is the way out of the modal, and "Save" is
+            what a form of this length is expected to end with. */}
         <div class="modal-button-container">
           <Button cta={true} onClick={() => setModal(undefined)}>
-            {lang.settingTab.done}
+            {lang.settingTab.save}
           </Button>
         </div>
       </Modal>
@@ -501,18 +505,15 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     const format = createMemo(() => outputFormat(template()?.arguments, template()?.customArguments, template()?.userArguments));
 
     /**
-     * One box per heading level a table of contents can reach, ticked down to
-     * the depth the arguments ask for — depth is one number, so the boxes fill
-     * from the top rather than being picked out one at a time.
+     * The steps a table of contents can be taken to: none at all, then one
+     * heading level at a time down to the deepest pandoc reaches.
+     *
+     * Depth is a single number, and a slider is the control that says so. The
+     * boxes that stood here before could be ticked into states no depth can
+     * hold — level three without level two — and had to fill from the top to
+     * keep the lie off the screen.
      */
-    const tocLevels = createMemo(() => {
-      const depth = tocDepth(template()?.customArguments);
-      return Array.from({ length: TOC_MAX_DEPTH }, (_, i) => ({
-        value: String(i + 1),
-        label: lang.settingTab.tocLevel(i + 1),
-        checked: depth >= i + 1,
-      }));
-    });
+    const tocLabels = [lang.settingTab.tocNone, ...Array.from({ length: TOC_MAX_DEPTH }, (_, i) => String(i + 1))];
 
     /** The reader extensions, ticked where the arguments switch them on. */
     const extensions = createMemo(() => {
@@ -823,13 +824,13 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
             textile for a table of contents changes nothing at all. */}
         <Show when={supportsToc(format())}>
           <Setting name={lang.settingTab.tableOfContents} description={lang.settingTab.tableOfContentsDesc} class="ex-template-modal-toc">
-            <CheckGrid
-              items={tocLevels()}
-              onToggle={(value, checked) =>
-                // Ticking a level takes the contents down to it; clearing one
-                // stops them at the level above, so unticking the first is "none".
-                updateTemplate(v => (v.customArguments = setTocDepth(v.customArguments, Number(value) - (checked ? 0 : 1))))
-              }
+            <StepSlider
+              labels={tocLabels}
+              min={TOC_NONE}
+              value={tocDepth(template()?.customArguments)}
+              // The step is the depth, and `setTocDepth` takes the flags back
+              // out again at `TOC_NONE` — so sliding to the left end is "none".
+              onChange={depth => updateTemplate(v => (v.customArguments = setTocDepth(v.customArguments, depth)))}
             />
           </Setting>
         </Show>
@@ -1333,31 +1334,42 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
           class="ex-template-modal-command-section"
           open={commandOpen()}
           onToggle={setCommandOpen}
-          actions={<ExtraButton icon="copy" tooltip={lang.settingTab.copyCommand} onClick={() => void copyCommand()} />}
         >
-          <Setting class="ex-template-modal-resulting-command ex-template-modal-nameless">
-            <TextArea
-              class="ex-template-modal-command-line"
-              autoSize={true}
-              visible={commandOpen()}
-              readOnly={true}
-              value={commandForReading()}
-            />
-          </Setting>
+          {/* The two rows share a card, as a group inside the advanced panel
+              does: what the command comes to and the one field that adds to it
+              are the one subject, and the line between them is all it takes to
+              say they are two answers rather than one. */}
+          <div class="ex-card ex-template-modal-command-card">
+            <Setting class="ex-template-modal-resulting-command ex-template-modal-nameless">
+              {/* The copy sits over the field's own top right corner rather than
+                  up in the heading: what it copies is what is on screen, so it
+                  belongs to the field and not to the panel around it. */}
+              <div class="ex-template-modal-command-preview">
+                <TextArea
+                  class="ex-template-modal-command-line"
+                  autoSize={true}
+                  visible={commandOpen()}
+                  readOnly={true}
+                  value={commandForReading()}
+                />
+                <ExtraButton icon="copy" tooltip={lang.settingTab.copyCommand} onClick={() => void copyCommand()} />
+              </div>
+            </Setting>
 
-          <Setting
-            name={lang.settingTab.userArguments}
-            description={lang.settingTab.userArgumentsDesc}
-            class="ex-template-modal-user-arguments"
-          >
-            <Text
-              style="width: 100%"
-              value={template()?.userArguments ?? ''}
-              title={template()?.userArguments}
-              placeholder="--defaults=my.yaml"
-              onChange={value => updateTemplate(v => (v.userArguments = value.trim() || undefined))}
-            />
-          </Setting>
+            <Setting
+              name={lang.settingTab.userArguments}
+              description={lang.settingTab.userArgumentsDesc}
+              class="ex-template-modal-user-arguments"
+            >
+              <Text
+                style="width: 100%"
+                value={template()?.userArguments ?? ''}
+                title={template()?.userArguments}
+                placeholder="--defaults=my.yaml"
+                onChange={value => updateTemplate(v => (v.userArguments = value.trim() || undefined))}
+              />
+            </Setting>
+          </div>
         </Section>
       </>
     );
