@@ -719,7 +719,7 @@
 }
 
 /*
- * The variables and the metadata, one `key=value` a line. The height is set
+ * The other variables, one `key=value` a line. The height is set
  * from the script a line at a time, as the environment variables' is, so there
  * is nothing to scroll and nothing worth dragging: a drag would only hold until
  * the next keystroke measured the lines again.

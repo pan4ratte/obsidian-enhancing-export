@@ -259,11 +259,11 @@ export default {
     chooseFolder: 'Choose folder',
     dpi: 'Pixels per inch',
 
-    /* Everything else, typed rather than picked. */
+    /* Everything else, typed rather than picked. The document's own fields —
+       title, author, date — are not asked for here: they are read from the
+       exported note's frontmatter. */
     variables: 'Other variables',
     variablesDesc: 'One key=value a line, passed as -V. Read by the output template.',
-    metadata: 'Metadata',
-    metadataDesc: 'One key=value a line, passed as -M. Fields of the document itself — title, author, date.',
 
     chooseFile: 'Choose file',
 

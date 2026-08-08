@@ -58,7 +58,6 @@ import {
   listOfTables,
   markdownHeadings,
   mathMethod,
-  metadata,
   numberOffset,
   numberSections,
   pairsFromText,
@@ -89,7 +88,6 @@ import {
   setListOfTables,
   setMarkdownHeadings,
   setMathMethod,
-  setMetadata,
   setNumberOffset,
   setNumberSections,
   setPdfEngine,
@@ -682,6 +680,24 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
      */
     return (
       <>
+        {/* Directly under the name, where the template's own styles are read
+            from: the docx, odt or pptx a template is written to look like is
+            the first thing asked of it, not an advanced afterthought. */}
+        <Show when={supportsReferenceDoc(format())}>
+          <Setting
+            name={lang.settingTab.referenceDoc}
+            description={lang.settingTab.referenceDocDesc}
+            class="ex-template-modal-reference-doc"
+          >
+            <FileInput
+              value={referenceDoc(args())}
+              filters={referenceDocFiles()}
+              tooltip={lang.settingTab.chooseFile}
+              onChange={value => writeArgs(a => setReferenceDoc(a, value.trim()))}
+            />
+          </Setting>
+        </Show>
+
         {/* Only for the writers that would do something with it — asking man or
             textile for a table of contents changes nothing at all. */}
         <Show when={supportsToc(format())}>
@@ -718,8 +734,8 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
         </Setting>
 
         {/* Not gated on the format the way the panel's rows once were: the
-            citations, the variables and the metadata at the foot of it are
-            asked of every writer, so there is always something to open. */}
+            citations and the variables at the foot of it are asked of every
+            writer, so there is always something to open. */}
         <Section name={lang.settingTab.advanced} class="ex-template-modal-advanced" open={advancedOpen()} onToggle={setAdvancedOpen}>
           <Show when={numbering().length > 0}>
             <Setting name={lang.settingTab.numbering} description={lang.settingTab.numberingDesc} class="ex-template-modal-numbering">
@@ -861,21 +877,6 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
                 filters={CSS_FILES}
                 tooltip={lang.settingTab.chooseFile}
                 onChange={value => writeArgs(a => setCss(a, value.trim()))}
-              />
-            </Setting>
-          </Show>
-
-          <Show when={supportsReferenceDoc(format())}>
-            <Setting
-              name={lang.settingTab.referenceDoc}
-              description={lang.settingTab.referenceDocDesc}
-              class="ex-template-modal-reference-doc"
-            >
-              <FileInput
-                value={referenceDoc(args())}
-                filters={referenceDocFiles()}
-                tooltip={lang.settingTab.chooseFile}
-                onChange={value => writeArgs(a => setReferenceDoc(a, value.trim()))}
               />
             </Setting>
           </Show>
@@ -1086,9 +1087,12 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
             </Show>
           </div>
 
-          {/* The two lists everything else is said in. `visible` is the panel
-              they sit in rather than the field: a textarea that has never been
-              on screen has no height to measure itself against. */}
+          {/* The list everything else is said in. There is no metadata field
+              beside it: the fields of the document itself — title, author,
+              date — are read from the exported note's own frontmatter.
+              `visible` is the panel it sits in rather than the field: a
+              textarea that has never been on screen has no height to measure
+              itself against. */}
           <Setting name={lang.settingTab.variables} description={lang.settingTab.variablesDesc} class="ex-template-modal-variables">
             <TextArea
               class="ex-template-modal-pairs"
@@ -1097,17 +1101,6 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
               value={otherVariables()}
               placeholder="fontfamily=libertinus"
               onChange={text => writeArgs(a => setVariables(a, pairsFromText(text), curatedVariables()))}
-            />
-          </Setting>
-
-          <Setting name={lang.settingTab.metadata} description={lang.settingTab.metadataDesc} class="ex-template-modal-metadata">
-            <TextArea
-              class="ex-template-modal-pairs"
-              autoSize={true}
-              visible={advancedOpen()}
-              value={textFromPairs(metadata(args()))}
-              placeholder="author=Ada Lovelace"
-              onChange={text => writeArgs(a => setMetadata(a, pairsFromText(text)))}
             />
           </Setting>
         </Section>
@@ -1340,7 +1333,6 @@ export default class extends PluginSettingTab {
               settingTab.media,
               settingTab.extractMedia,
               settingTab.variables,
-              settingTab.metadata,
               settingTab.targetFileExtensions,
               settingTab.showCommandOutput,
               settingTab.runCommand,
