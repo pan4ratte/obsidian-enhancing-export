@@ -9,3 +9,12 @@ overrides:
 # version that package.json already asks for.
 minimumReleaseAgeExclude:
   - vite@8.2.1
+
+# pnpm 11 fails an install that silently skipped a dependency's build script,
+# and the workflow installs whatever pnpm is current — so the one script this
+# project pulls in is answered for here rather than left to a prompt no CI can
+# answer. unrs-resolver is jest's own module resolver: the script picks the
+# native binding for the platform, which every resolve then runs through. npm
+# runs it as a matter of course, so this is the two installs agreeing.
+allowBuilds:
+  unrs-resolver: true
