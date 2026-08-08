@@ -467,18 +467,24 @@
 .ex-template-modal.ex-template-modal .setting-item-heading,
 .ex-template-modal.ex-template-modal .ex-collapsible,
 .ex-template-modal.ex-template-modal .modal-content,
-.ex-template-modal.ex-template-modal .modal-button-container {
+.ex-template-modal.ex-template-modal .modal-button-container,
+.ex-export-modal.ex-export-modal .setting-item,
+.ex-export-modal.ex-export-modal .modal-content,
+.ex-export-modal.ex-export-modal .modal-button-container {
   border: none;
 }
 
 .ex-template-modal.ex-template-modal .setting-item::before,
-.ex-template-modal.ex-template-modal .modal-button-container::before {
+.ex-template-modal.ex-template-modal .modal-button-container::before,
+.ex-export-modal.ex-export-modal .setting-item::before,
+.ex-export-modal.ex-export-modal .modal-button-container::before {
   content: none;
 }
 
 /* Obsidian's close button sits over the modal's top right corner rather than in
    the title row, so the row has to leave it the space. */
-.ex-template-modal.ex-template-modal .modal-title {
+.ex-template-modal.ex-template-modal .modal-title,
+.ex-export-modal.ex-export-modal .modal-title {
   padding-inline-end: var(--size-4-8);
 }
 
@@ -509,8 +515,14 @@
  * A row keeps its box wherever it stands, folded away in a section as much as
  * out in the open — the modal is one kind of thing throughout, and an option
  * does not stop being an option for being an advanced one.
+ *
+ * The export dialog is asked the same way. It is a shorter list — what to
+ * write, what to call it, where to put it — but they are the same kind of
+ * question, and there is no reason for them to be drawn as another kind of
+ * thing on the way out of the plugin.
  */
-.ex-template-modal.ex-template-modal .setting-item:not(.setting-item-heading) {
+.ex-template-modal.ex-template-modal .setting-item:not(.setting-item-heading),
+.ex-export-modal.ex-export-modal .setting-item:not(.setting-item-heading) {
   margin-bottom: var(--size-4-3);
   padding: var(--setting-items-padding-x);
   border: 1px solid var(--background-modifier-border);
@@ -536,7 +548,8 @@
  * content, the row. It is written out rather than won on load order, which is
  * not something a plugin gets to decide.
  */
-.ex-template-modal.ex-template-modal .modal .modal-content .setting-item:not(.setting-item-heading) {
+.ex-template-modal.ex-template-modal .modal .modal-content .setting-item:not(.setting-item-heading),
+.ex-export-modal.ex-export-modal .modal .modal-content .setting-item:not(.setting-item-heading) {
   border-top: 1px solid var(--background-modifier-border);
   padding-top: var(--setting-items-padding-x);
   padding-bottom: var(--setting-items-padding-x);
@@ -653,6 +666,63 @@
 .ex-template-modal.ex-template-modal .setting-item:not(.mod-toggle) > .setting-item-control > textarea {
   flex: 1;
   width: 100%;
+  min-width: 0;
+}
+
+/*
+ * The export dialog keeps its answers beside its questions.
+ *
+ * The template editor drops them under instead, and has to: a pandoc command
+ * line, a path with `${currentDir}` in it, a list of variables — none of those
+ * fit the sliver at the end of a row. Nothing here is that long. A format
+ * picked from a list, a name, a switch: each is short enough to sit next to
+ * what it answers, and the dialog is shorter for it, which is worth something
+ * in the one window that stands between a note and the file.
+ *
+ * Centred rather than aligned to the top, so a control stays level with a label
+ * that has run to a second line. Obsidian stacks the two itself once the modal
+ * is under 400px wide.
+ */
+.ex-export-modal.ex-export-modal .setting-item {
+  align-items: center;
+}
+
+/*
+ * The label takes what it needs and the field takes the rest of the row.
+ *
+ * Half each was still half each: the labels here are two or three words, so
+ * the field began at the middle of the card whatever stood to its left, and
+ * the space between the two belonged to nothing. The label is sized to itself
+ * instead — it never grows — and everything left over goes to the control.
+ *
+ * The cap is there for the description under a label, which is the part that
+ * can run long: past half the row it would be eating the field rather than
+ * explaining it, and it wraps instead.
+ *
+ * Toggles are left out: a switch is the size it is, and stretching the block
+ * around it would only move it away from the label it answers.
+ */
+.ex-export-modal.ex-export-modal .setting-item:not(.mod-toggle) > .setting-item-info {
+  flex: 0 1 auto;
+  max-width: 50%;
+}
+
+.ex-export-modal.ex-export-modal .setting-item:not(.mod-toggle) > .setting-item-control {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/*
+ * And the field fills it, rather than standing at whatever width a text box
+ * happens to come to.
+ *
+ * Text fields only. A dropdown is left at the width its own names give it: it
+ * is picked from rather than typed into, so there is nothing in it that a wider
+ * box would show more of, and it sits at the end of its row as the switch below
+ * it does.
+ */
+.ex-export-modal.ex-export-modal .setting-item:not(.mod-toggle) > .setting-item-control > input[type='text'] {
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -945,7 +1015,8 @@
  * field stays writable — a path is as often written with `${currentDir}` as it
  * is picked off a disk — so the button sits beside it rather than replacing it.
  */
-.ex-template-modal.ex-template-modal .setting-item-control > .setting-editor-extra-setting-button {
+.ex-template-modal.ex-template-modal .setting-item-control > .setting-editor-extra-setting-button,
+.ex-export-modal.ex-export-modal .setting-item-control > .setting-editor-extra-setting-button {
   flex: 0 0 auto;
   align-self: center;
   margin-inline-start: var(--size-4-2);

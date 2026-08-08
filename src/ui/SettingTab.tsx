@@ -740,8 +740,8 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
      * expression that cannot be evaluated without the export dialog's options.
      * Shown as they are, the line is the one worth pasting into a bug report.
      *
-     * The export dialog's own extra arguments are not here: they belong to a
-     * single export rather than to the template, and are appended after these.
+     * It is the whole of it, too: the export dialog no longer has a field of
+     * its own to append to this, so what is here is what pandoc is run with.
      */
     const resultingCommand = createMemo(() =>
       [

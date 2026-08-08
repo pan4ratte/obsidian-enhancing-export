@@ -21,7 +21,6 @@ const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onCl
   const [showOverwriteConfirmation, setShowOverwriteConfirmation] = createSignal(globalSetting.showOverwriteConfirmation);
   const [exportType, setExportType] = createSignal(globalSetting.lastExportType ?? globalSetting.items.first()?.name);
   const [options, setOptions] = createSignal({});
-  const [extraArguments, setExtraArguments] = createSignal('');
   const setting = createMemo(() => globalSetting.items.find(o => o.name === exportType()));
   const extension = createMemo(() => extractExtension(setting()));
   const title = createMemo(() => lang.exportDialog.title(setting().name));
@@ -30,17 +29,21 @@ const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onCl
   const [candidateOutputDirectory, setCandidateOutputDirectory] = createSignal(
     `${getPlatformValue(globalSetting.lastExportDirectory) ?? ct.remote.app.getPath('documents')}`
   );
-  const [candidateOutputFileName, setCandidateOutputFileName] = createSignal(`${currentFile.basename}${extension()}`);
+  /*
+   * The name only. What it is written as is the template's business — the
+   * format picker above is where that is chosen, and an extension typed into a
+   * name that the picker then changed was a contradiction the dialog had to
+   * keep quietly rewriting. It is put back on at export, where the exporter
+   * expects a full file name.
+   */
+  const [candidateOutputFileName, setCandidateOutputFileName] = createSignal(currentFile.basename);
+
+  /** The name as it will be written, extension and all. */
+  const outputFileFullName = () => `${candidateOutputFileName().trim() || currentFile.basename}${extension()}`;
 
   createEffect(() => {
     const meta = optionsMeta();
     setOptions(meta ? createDefaultObject(meta) : {});
-  });
-
-  createEffect(() => {
-    let fileName = untrack(candidateOutputFileName);
-    fileName = fileName.includes('.') ? fileName.substring(0, fileName.lastIndexOf('.')) : fileName;
-    setCandidateOutputFileName(`${fileName}${extension()}`);
   });
 
   const exportTypes = globalSetting.items.map(o => ({ name: o.name, value: o.name })).sort((a, b) => a.name.localeCompare(b.name));
@@ -70,11 +73,10 @@ const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onCl
       plugin,
       currentFile,
       untrack(candidateOutputDirectory),
-      untrack(candidateOutputFileName),
+      untrack(outputFileFullName),
       untrack(setting),
       untrack(showOverwriteConfirmation),
       options(),
-      untrack(extraArguments),
       async () => {
         globalSetting.showOverwriteConfirmation = untrack(showOverwriteConfirmation);
         globalSetting.lastExportDirectory = setPlatformValue(globalSetting.lastExportDirectory, untrack(candidateOutputDirectory));
@@ -91,13 +93,13 @@ const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onCl
 
   return (
     <>
-      <Modal app={app} title={title()} hidden={hidden()} onClose={props.onClose}>
+      <Modal app={app} title={title()} hidden={hidden()} classList={{ 'ex-export-modal': true }} onClose={props.onClose}>
         <Setting name={lang.exportDialog.type}>
           <DropDown options={exportTypes} onChange={typ => setExportType(typ)} selected={exportType()} />
         </Setting>
 
-        <Setting name={lang.exportDialog.fileName}>
-          <Text title={candidateOutputFileName()} value={candidateOutputFileName()} onChange={value => setCandidateOutputFileName(value)} />
+        <Setting name={lang.exportDialog.fileName} description={lang.exportDialog.fileNameDesc(extension())}>
+          <Text title={outputFileFullName()} value={candidateOutputFileName()} onChange={value => setCandidateOutputFileName(value)} />
         </Setting>
 
         <Show when={optionsMeta()}>
@@ -108,12 +110,6 @@ const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onCl
           <Text title={candidateOutputDirectory()} value={candidateOutputDirectory()} disabled />
           <ExtraButton icon="folder" onClick={chooseFolder} />
         </Setting>
-
-        <Show when={setting()?.type === 'pandoc'}>
-          <Setting name={lang.exportDialog.extraArguments}>
-            <Text style="width: 100%" value={extraArguments()} onChange={value => setExtraArguments(value)} />
-          </Setting>
-        </Show>
 
         <Setting name={lang.exportDialog.overwriteConfirmation} class="mod-toggle">
           <Toggle checked={showOverwriteConfirmation()} onChange={setShowOverwriteConfirmation} />

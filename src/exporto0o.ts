@@ -19,7 +19,6 @@ export async function exportToOo(
   setting: ExportSetting,
   showOverwriteConfirmation?: boolean,
   options?: unknown,
-  extraArguments?: string,
   onSuccess?: () => void,
   onFailure?: () => void,
   beforeExport?: () => void
@@ -182,11 +181,11 @@ export async function exportToOo(
   }
 
   // Later options win, so the order is least specific first: the preset's
-  // plumbing, the template editor's rows, what the template's author typed by
-  // hand, and last of all whatever this one export was asked for.
+  // plumbing, the template editor's rows, and last what the template's author
+  // typed by hand.
   const cmdTpl =
     setting.type === 'pandoc'
-      ? [pandocPath, '"${currentPath}"', setting.arguments, setting.customArguments, setting.userArguments, extraArguments]
+      ? [pandocPath, '"${currentPath}"', setting.arguments, setting.customArguments, setting.userArguments]
           .map(part => part?.trim())
           .filter(Boolean)
           .join(' ')

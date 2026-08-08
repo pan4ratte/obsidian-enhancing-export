@@ -9,14 +9,16 @@ export default {
   pleaseOpenFile: 'Please open a file first.',
   preparing: strTpl`generating "${0}"...`,
   exportDialog: {
-    exportTo: 'Export to',
-    fileName: 'File Name',
-    title: strTpl`Export to ${0}`,
+    exportTo: 'Export location',
+    /* The name only. What it is written as is the template's, so the extension
+       is said beside the field rather than typed into it. */
+    fileName: 'Enter the file name',
+    fileNameDesc: strTpl`Will be written as ${0}`,
+    title: strTpl`Pandoc GUI export`,
     export: 'Export',
     selectExportFolder: 'Please select an export folder.',
     overwriteConfirmation: 'Overwrite confirmation',
-    type: 'Type',
-    extraArguments: 'Extra arguments',
+    type: 'Select export template',
   },
   messageBox: {
     yes: 'Yes',
