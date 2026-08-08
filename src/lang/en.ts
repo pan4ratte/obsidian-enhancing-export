@@ -374,7 +374,7 @@ export default {
   STORE_NONE_INSTALLED: 'No filters installed yet.',
   STORE_BY_AUTHOR: (author: string) => `by ${author}`,
   STORE_BY_AUTHOR_LICENSE: (author: string, license: string) => `by ${author} · ${license}`,
-  STORE_REQUIRES: (requires: string) => `Needs: ${requires}`,
+  STORE_REQUIREMENTS: 'Requirements',
   STORE_README: 'Open readme',
   STORE_INSTALL: 'Install',
   STORE_INSTALLING: 'Installing…',
@@ -384,5 +384,4 @@ export default {
   STORE_INSTALL_FAILED: (reason: string) => `Install failed: ${reason}`,
   STORE_UNINSTALLED_NOTICE: (name: string) => `Uninstalled “${name}”.`,
   STORE_UNINSTALL_FAILED: (reason: string) => `Uninstall failed: ${reason}`,
-  STORE_INSTALLED_HINT: 'Installed. Add it to a template to run it.',
 };

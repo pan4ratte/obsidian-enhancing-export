@@ -226,6 +226,13 @@ export default (props: {
     // An orphan has nothing left to fetch, so it can only be removed.
     const installable = () => !!entry().url || !!entry().path;
     const credit = () => (entry().license ? t.STORE_BY_AUTHOR_LICENSE(entry().author, entry().license) : t.STORE_BY_AUTHOR(entry().author));
+    /** What the filter needs, a bullet each. The catalogue writes them as one field, so the ways a list is written
+        into it are what they are split on. */
+    const requirements = () =>
+      (entry().requires ?? '')
+        .split(/[\n;]+/)
+        .map(item => item.trim())
+        .filter(item => item);
 
     return (
       <div class="ex-lua-card" classList={{ 'is-installed': !!filter() }}>
@@ -243,12 +250,12 @@ export default (props: {
 
           {/* Said before installing, not discovered in a failed export. */}
           <Show when={entry().requires}>
-            <p class="ex-lua-requires">{t.STORE_REQUIRES(entry().requires)}</p>
-          </Show>
-
-          {/* Installing only puts it on disk, so say where it gets switched on. */}
-          <Show when={filter()}>
-            <p class="ex-lua-installed-hint">{t.STORE_INSTALLED_HINT}</p>
+            <div class="ex-lua-requires">
+              <span class="ex-lua-requires-label">{t.STORE_REQUIREMENTS}</span>
+              <ul class="ex-lua-requires-list">
+                <For each={requirements()}>{item => <li>{item}</li>}</For>
+              </ul>
+            </div>
           </Show>
         </div>
 

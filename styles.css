@@ -1494,18 +1494,29 @@
 }
 
 /* What the filter needs to be given before it can work — said while the
-   Install button is still the next thing to press. */
+   Install button is still the next thing to press. In the card's own secondary
+   colour: it is something to read before installing, not something wrong. */
 .ex-lua-requires {
-  margin: var(--size-4-2) 0 0;
+  margin-top: 8px;
   font-size: var(--font-ui-smaller);
-  color: var(--text-warning);
+  color: var(--text-muted);
+  border-top: 1px solid var(--setting-items-border-color);
+  padding-top: 8px;
 }
 
-/* Installing puts a filter on disk; a template still has to ask for it. */
-.ex-lua-installed-hint {
-  margin: var(--size-4-2) 0 0;
-  font-size: var(--font-ui-smaller);
-  color: var(--text-accent);
+.ex-lua-requires-label {
+  font-weight: var(--font-medium);
+}
+
+/* Bullets inside the card's inset rather than hanging off its edge. */
+.ex-lua-requires-list {
+  margin: var(--size-4-1) 0 0;
+  padding-inline-start: var(--size-4-4);
+  list-style: disc;
+}
+
+.ex-lua-requires-list li {
+  margin: 0;
 }
 
 /* Neutral buttons that take a colour only under the pointer, at the end of the
