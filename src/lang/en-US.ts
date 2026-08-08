@@ -202,6 +202,63 @@ export default {
     },
     variableDefault: 'Default',
 
+    /* The format-specific groups, each shown only when the writer matches. */
+    writtenSource: 'Written source',
+    writtenSourceDesc: 'How the file itself is laid out, as against how it reads once rendered.',
+    wrap: 'Line wrapping',
+    wrapDefault: 'Default (wrap at a column)',
+    wrapMode: {
+      none: 'None — a paragraph a line',
+      preserve: 'As written in the note',
+    },
+    columns: 'Wrap at column',
+    markdownHeadings: 'Heading style',
+    markdownHeadingsDefault: 'Default (ATX, # Heading)',
+    markdownHeadingSetext: 'Setext (underlined)',
+    referenceLinks: 'Reference-style links',
+    referenceLocation: 'Footnotes',
+    referenceLocationDesc: 'Where footnotes are collected in the written document.',
+    referenceLocationDefault: 'Default (after the block)',
+    referenceLocationOption: {
+      section: 'End of each section',
+      document: 'End of the document',
+    },
+
+    slides: 'Slides',
+    slidesDesc: 'How the document is cut into slides, and what a slide shows at first.',
+    incremental: 'Reveal lists one item at a time',
+    slideLevel: 'New slide at level',
+    slideLevelDefault: 'Default (worked out from the document)',
+    slideLevelNone: 'Never — only a rule starts a slide',
+
+    epub: 'EPUB',
+    epubDesc: 'The parts of an EPUB that are not part of the document.',
+    epubCoverImage: 'Cover image',
+    epubEmbedFont: 'Embedded font',
+    epubTitlePage: 'Title page',
+    splitLevel: 'New file at level',
+    splitLevelDesc: 'The heading level that starts a new chapter file.',
+    splitLevelDefault: 'Default (level 1)',
+
+    htmlPage: 'Page',
+    htmlPageDesc: 'What the written page carries, and what it says about itself.',
+    embedResources: 'Embed images, styles and scripts',
+    sectionDivs: 'Wrap each section in a div',
+    emailObfuscation: 'Email addresses',
+    emailObfuscationDefault: 'Default (as written)',
+    emailObfuscationMethod: {
+      none: 'As written',
+      javascript: 'Hidden behind a script',
+      references: 'Hidden as character references',
+    },
+    idPrefix: 'Identifier prefix',
+
+    media: 'Media',
+    mediaDesc: 'The images the note carries, and what the writer makes of them.',
+    extractMedia: 'Extract images to',
+    chooseFolder: 'Choose folder',
+    dpi: 'Pixels per inch',
+
     /* Everything else, typed rather than picked. */
     variables: 'Other variables',
     variablesDesc: 'One key=value a line, passed as -V. Read by the output template.',

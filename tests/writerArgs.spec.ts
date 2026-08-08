@@ -2,9 +2,20 @@ import {
   HIGHLIGHT_NONE,
   bibliography,
   citeproc,
+  columns,
   csl,
   css,
+  dpi,
+  emailObfuscation,
+  embedResources,
+  epubCoverImage,
+  epubEmbedFont,
+  epubTitlePage,
+  extractMedia,
   highlightStyle,
+  idPrefix,
+  incremental,
+  markdownHeadings,
   includeAfterBody,
   includeBeforeBody,
   includeInHeader,
@@ -17,11 +28,23 @@ import {
   pairsFromText,
   pdfEngine,
   referenceDoc,
+  referenceLinks,
+  referenceLocation,
+  sectionDivs,
   setBibliography,
   setCiteproc,
+  setColumns,
   setCsl,
   setCss,
+  setDpi,
+  setEmailObfuscation,
+  setEmbedResources,
+  setEpubCoverImage,
+  setEpubTitlePage,
   setHighlightStyle,
+  setIdPrefix,
+  setIncremental,
+  setMarkdownHeadings,
   setIncludeAfterBody,
   setIncludeBeforeBody,
   setIncludeInHeader,
@@ -33,13 +56,21 @@ import {
   setNumberSections,
   setPdfEngine,
   setReferenceDoc,
+  setReferenceLinks,
+  setReferenceLocation,
+  setSectionDivs,
+  setSlideLevel,
+  setSplitLevel,
   setTopLevelDivision,
   setVariable,
   setVariables,
+  slideLevel,
+  splitLevel,
   textFromPairs,
   topLevelDivision,
   variable,
   variables,
+  wrap,
 } from '../src/writer_args';
 
 /*
@@ -344,6 +375,132 @@ describe('variables and metadata', () => {
 
   test('emptying the list takes every variable out but the kept ones', () => {
     expect(setVariables(`${FILTER} -V fontsize=12pt -V lang=fr`, [], ['lang'])).toBe(`${FILTER} -V lang=fr`);
+  });
+});
+
+describe('the written source', () => {
+  test('a wrapping mode is read as it stands, pandoc’s own included', () => {
+    expect(wrap('--wrap=none')).toBe('none');
+    expect(wrap('--wrap preserve')).toBe('preserve');
+    // `auto` is what pandoc does anyway; said out loud, it is still an answer.
+    expect(wrap('--wrap=auto')).toBe('auto');
+    expect(wrap(FILTER)).toBeUndefined();
+  });
+
+  test('a column count is digits or nothing at all', () => {
+    expect(setColumns('', '80')).toBe('--columns=80');
+    expect(setColumns('', 'eighty')).toBe('');
+    expect(setColumns('--columns=80', '')).toBe('');
+    expect(columns('--columns 100')).toBe('100');
+  });
+
+  test('a heading style pandoc does not know is not written', () => {
+    expect(setMarkdownHeadings('', 'setext')).toBe('--markdown-headings=setext');
+    expect(setMarkdownHeadings('', 'underlined')).toBe('');
+    expect(markdownHeadings('--markdown-headings=atx')).toBe('atx');
+  });
+
+  test('reference links are a switch, in all three spellings pandoc takes', () => {
+    expect(referenceLinks('--reference-links')).toBe(true);
+    expect(referenceLinks('--reference-links=true')).toBe(true);
+    // The spelling that undoes an option given earlier in the same line.
+    expect(referenceLinks('--reference-links=false')).toBe(false);
+    expect(referenceLinks(FILTER)).toBe(false);
+    expect(setReferenceLinks('--reference-links=false', true)).toBe('--reference-links');
+    expect(setReferenceLinks('--reference-links', false)).toBe('');
+  });
+
+  test('a footnote location pandoc names is written, and no other', () => {
+    expect(setReferenceLocation('', 'section')).toBe('--reference-location=section');
+    expect(setReferenceLocation('--reference-location=section', 'end')).toBe('');
+    expect(referenceLocation('--reference-location document')).toBe('document');
+  });
+});
+
+describe('slides', () => {
+  test('the short form pandoc also takes is understood', () => {
+    expect(incremental('-i')).toBe(true);
+    expect(incremental('--incremental')).toBe(true);
+    expect(incremental('--incremental=false')).toBe(false);
+    // The long form is what gets written.
+    expect(setIncremental('-i', true)).toBe('--incremental');
+  });
+
+  test('a slide level is a digit, and zero is an answer of its own', () => {
+    expect(setSlideLevel('', '2')).toBe('--slide-level=2');
+    expect(setSlideLevel('', '0')).toBe('--slide-level=0');
+    expect(setSlideLevel('--slide-level=2', '')).toBe('');
+    expect(slideLevel('--slide-level 3')).toBe('3');
+  });
+});
+
+describe('epub', () => {
+  test('the cover and the font are read and replaced like any other file', () => {
+    expect(epubCoverImage('--epub-cover-image=cover.png')).toBe('cover.png');
+    expect(epubEmbedFont('--epub-embed-font="C:/My Fonts/serif.otf"')).toBe('C:/My Fonts/serif.otf');
+    expect(setEpubCoverImage('--epub-cover-image=cover.png', 'other.png')).toBe('--epub-cover-image=other.png');
+  });
+
+  test('a title page is what pandoc writes unless it is told otherwise', () => {
+    // So the switch is off that is written, and on that is written as nothing.
+    expect(epubTitlePage(FILTER)).toBe(true);
+    expect(setEpubTitlePage(FILTER, true)).toBe(FILTER);
+    expect(setEpubTitlePage(FILTER, false)).toBe(`${FILTER} --epub-title-page=false`);
+    expect(epubTitlePage('--epub-title-page=false')).toBe(false);
+    expect(setEpubTitlePage('--epub-title-page=false', true)).toBe('');
+  });
+
+  test('the level a new file starts at is read under the older name as well', () => {
+    expect(splitLevel('--split-level=2')).toBe('2');
+    expect(splitLevel('--epub-chapter-level=2')).toBe('2');
+    // Whichever was there, the name pandoc uses now is what gets written.
+    expect(setSplitLevel('--epub-chapter-level=2', '3')).toBe('--split-level=3');
+  });
+});
+
+describe('the written page', () => {
+  test('embedding is read across both lines, since the preset asks for it', () => {
+    const preset = '-f ${fromFormat} --embed-resources --standalone -t html';
+    expect(embedResources(preset, undefined)).toBe(true);
+    expect(embedResources(preset, '--embed-resources=false')).toBe(false);
+    expect(embedResources(undefined, FILTER)).toBe(false);
+  });
+
+  test('what is written is only what differs from the preset', () => {
+    // The preset already embeds, so agreeing with it writes nothing at all…
+    expect(setEmbedResources(FILTER, true, true)).toBe(FILTER);
+    // …and disagreeing is said the way pandoc undoes an earlier option.
+    expect(setEmbedResources(FILTER, false, true)).toBe(`${FILTER} --embed-resources=false`);
+    // Where the preset says nothing, it is the other way round.
+    expect(setEmbedResources('', true, false)).toBe('--embed-resources');
+    expect(setEmbedResources('--embed-resources', false, false)).toBe('');
+  });
+
+  test('section divs, obfuscation and the identifier prefix', () => {
+    expect(sectionDivs('--section-divs')).toBe(true);
+    expect(setSectionDivs('', true)).toBe('--section-divs');
+    expect(setEmailObfuscation('', 'references')).toBe('--email-obfuscation=references');
+    expect(setEmailObfuscation('--email-obfuscation=references', 'rot13')).toBe('');
+    expect(emailObfuscation('--email-obfuscation javascript')).toBe('javascript');
+    expect(idPrefix('--id-prefix=intro-')).toBe('intro-');
+    expect(setIdPrefix('--id-prefix=intro-', '')).toBe('');
+  });
+});
+
+describe('media', () => {
+  test('the folder is read across both lines, as the Latex preset writes it there', () => {
+    const preset = '-f ${fromFormat} --extract-media="${outputDir}" -s -o "${outputPath}" -t latex';
+    expect(extractMedia(preset, undefined)).toBe('${outputDir}');
+    // The extra arguments come last, so what they say is what pandoc does.
+    expect(extractMedia(preset, '--extract-media=media')).toBe('media');
+    expect(extractMedia(undefined, FILTER)).toBeUndefined();
+  });
+
+  test('a resolution is digits or nothing at all', () => {
+    expect(setDpi('', '300')).toBe('--dpi=300');
+    expect(setDpi('', '300dpi')).toBe('--dpi=300');
+    expect(setDpi('--dpi=300', '')).toBe('');
+    expect(dpi('--dpi 150')).toBe('150');
   });
 });
 

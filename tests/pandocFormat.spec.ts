@@ -1,20 +1,30 @@
 import {
   familiesOf,
+  isEpubOutput,
   isPdfOutput,
+  isSlideOutput,
   outputFormat,
   runsInFormat,
   supportsCss,
+  supportsDpi,
+  supportsEmbedResources,
   supportsHeaderInclude,
   supportsHighlighting,
+  supportsHtmlOptions,
   supportsIncludes,
+  supportsMarkdownHeadings,
   supportsMathMethod,
   supportsNumberOffset,
   supportsNumberSections,
   supportsReferenceDoc,
+  supportsReferenceLinks,
+  supportsReferenceLocation,
   supportsSectionLists,
+  supportsSplitLevel,
   supportsToc,
   supportsTopLevelDivision,
   supportsVariable,
+  supportsWrap,
 } from '../src/pandoc_format';
 import { CURATED_VARIABLES } from '../src/writer_args';
 
@@ -182,6 +192,79 @@ describe('which rows a writer is offered', () => {
     for (const writer of ['docx', 'docbook5', 'mediawiki', 'textile', 'tei']) {
       expect(supportsIncludes(writer)).toBe(true);
       expect(supportsHeaderInclude(writer)).toBe(false);
+    }
+  });
+
+  test('wrapping, in the writers that lay out what they write', () => {
+    for (const writer of ['markdown', 'commonmark_x', 'html', 'latex', 'rst', 'org', 'typst', 'chunkedhtml']) {
+      expect(supportsWrap(writer)).toBe(true);
+    }
+    // EPUB writes XHTML but lays it out itself; the rest are not text at all.
+    for (const writer of ['epub3', 'docx', 'odt', 'pptx', 'rtf', 'json', undefined]) {
+      expect(supportsWrap(writer)).toBe(false);
+    }
+  });
+
+  test('the two rows that are markdown’s alone', () => {
+    for (const writer of ['markdown', 'commonmark_x', 'gfm', 'markua']) {
+      expect(supportsMarkdownHeadings(writer)).toBe(true);
+      expect(supportsReferenceLinks(writer)).toBe(true);
+    }
+    // rst has reference links of its own, but only one way to write a heading.
+    expect(supportsReferenceLinks('rst')).toBe(true);
+    expect(supportsMarkdownHeadings('rst')).toBe(false);
+    expect(supportsMarkdownHeadings('html')).toBe(false);
+    expect(supportsReferenceLinks('html')).toBe(false);
+  });
+
+  test('where the footnotes can be moved, which reaches past markdown', () => {
+    for (const writer of ['markdown', 'html', 'epub3', 'revealjs', 'chunkedhtml', 'muse']) {
+      expect(supportsReferenceLocation(writer)).toBe(true);
+    }
+    for (const writer of ['latex', 'docx', 'typst', 'rst', undefined]) {
+      expect(supportsReferenceLocation(writer)).toBe(false);
+    }
+  });
+
+  test('slides, in every writer that makes them — beamer and PowerPoint too', () => {
+    for (const writer of ['revealjs', 'slidy', 'slideous', 'dzslides', 's5', 'beamer', 'pptx']) {
+      expect(isSlideOutput(writer)).toBe(true);
+    }
+    for (const writer of ['html', 'latex', 'pdf', undefined]) {
+      expect(isSlideOutput(writer)).toBe(false);
+    }
+  });
+
+  test('the EPUB rows, and the split level chunked HTML shares', () => {
+    for (const writer of ['epub', 'epub2', 'epub3']) {
+      expect(isEpubOutput(writer)).toBe(true);
+      expect(supportsSplitLevel(writer)).toBe(true);
+    }
+    expect(isEpubOutput('chunkedhtml')).toBe(false);
+    expect(supportsSplitLevel('chunkedhtml')).toBe(true);
+    expect(supportsSplitLevel('html')).toBe(false);
+  });
+
+  test('the page rows, and the embedding that chunked HTML cannot do', () => {
+    for (const writer of ['html', 'html4', 'html5', 'revealjs', 's5']) {
+      expect(supportsHtmlOptions(writer)).toBe(true);
+      expect(supportsEmbedResources(writer)).toBe(true);
+    }
+    // Chunked HTML is a folder of files, so there is nothing to embed into.
+    expect(supportsHtmlOptions('chunkedhtml')).toBe(true);
+    expect(supportsEmbedResources('chunkedhtml')).toBe(false);
+    // EPUB carries its own resources already, and takes neither row.
+    expect(supportsHtmlOptions('epub3')).toBe(false);
+    expect(supportsEmbedResources('epub3')).toBe(false);
+  });
+
+  test('a resolution, where the writer has to put a real size on an image', () => {
+    for (const writer of ['latex', 'pdf', 'docx', 'odt', 'context', 'typst', 'ms', 'rtf', 'icml']) {
+      expect(supportsDpi(writer)).toBe(true);
+    }
+    // These keep the pixels they were given.
+    for (const writer of ['html', 'markdown', 'epub3', 'revealjs', undefined]) {
+      expect(supportsDpi(writer)).toBe(false);
     }
   });
 

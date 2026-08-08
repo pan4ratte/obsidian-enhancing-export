@@ -86,6 +86,37 @@ const setPresence = (args: string | undefined, names: Names, on: boolean): strin
   return on ? append(stripped, written(names)) : stripped;
 };
 
+/**
+ * A switch in all three spellings pandoc 3 takes: `--section-divs`, and the
+ * `=true` and `=false` that let a later option undo an earlier one.
+ */
+const switchPattern = (names: Names) => String.raw`(?:^|\s)(?:${alternation(names)})(?:=(true|false))?(?=\s|$)`;
+
+/** What `args` says about a switch, or undefined where it says nothing. */
+const switchValue = (args: string | undefined, names: Names): boolean | undefined => {
+  const found = lastMatch(args, switchPattern(names));
+  return found ? found[1] !== 'false' : undefined;
+};
+
+/**
+ * `args` saying a switch is `on`, against a default of `byDefault`.
+ *
+ * Agreeing with the default is written as nothing at all: pandoc does that
+ * already, and a line says more when it holds only what was asked for. The
+ * default is not always pandoc's own — where the arguments proper already ask
+ * for the option, theirs is the default this one has to differ from.
+ */
+const setSwitch = (args: string | undefined, names: Names, on: boolean, byDefault = false): string => {
+  const stripped = without(args, switchPattern(names));
+  return on === byDefault ? stripped : append(stripped, on ? written(names) : `${written(names)}=false`);
+};
+
+/** Both lines as pandoc sees them, the extra arguments last, since they win. */
+const joined = (args: readonly (string | undefined)[]) => args.filter(Boolean).join(' ');
+
+/** A count, as a count: what a field meant for one is allowed to hold. */
+const digits = (value: string) => value.replace(/\D/g, '');
+
 /* -- Numbered headings ---------------------------------------------------- */
 
 /** `-N` is pandoc's short form; the long one is what gets written. */
@@ -423,3 +454,169 @@ export const PAPER_SIZES = ['a4', 'letter', 'a5', 'b5', 'legal', 'executive'] as
 
 /** What a LaTeX document class accepts; other writers take any CSS length. */
 export const FONT_SIZES = ['10pt', '11pt', '12pt'] as const;
+
+/* -- The written source --------------------------------------------------- */
+
+/**
+ * How the lines of the written file are broken.
+ *
+ * Pandoc's own answer is `auto`, written as no option at all. `none` puts each
+ * paragraph on one line, which is what a document kept under version control
+ * usually wants; `preserve` keeps the breaks the note itself had.
+ */
+export const WRAP_MODES = ['none', 'preserve'] as const;
+
+const WRAP = '--wrap';
+const COLUMNS = '--columns';
+
+/** Whatever the line asks for, `auto` and anything hand-written included. */
+export const wrap = (args?: string): string | undefined => valueOf(args, WRAP);
+
+export const setWrap = (args: string | undefined, mode: string): string => setValue(args, WRAP, mode || undefined);
+
+/** Where `--wrap=auto` breaks a line. Pandoc's own answer is 72. */
+export const columns = (args?: string): string | undefined => valueOf(args, COLUMNS);
+
+export const setColumns = (args: string | undefined, count: string): string => setValue(args, COLUMNS, digits(count) || undefined);
+
+/** How a heading is written in markdown. Pandoc's own answer is `atx`. */
+export const MARKDOWN_HEADINGS = ['atx', 'setext'] as const;
+
+const MARKDOWN_HEADING = '--markdown-headings';
+
+export const markdownHeadings = (args?: string): string | undefined => valueOf(args, MARKDOWN_HEADING);
+
+export const setMarkdownHeadings = (args: string | undefined, style: string): string =>
+  setValue(args, MARKDOWN_HEADING, MARKDOWN_HEADINGS.includes(style as (typeof MARKDOWN_HEADINGS)[number]) ? style : undefined);
+
+/** Links written as `[text][ref]` with the URLs collected below, not inline. */
+const REFERENCE_LINKS = '--reference-links';
+
+export const referenceLinks = (args?: string): boolean => switchValue(args, REFERENCE_LINKS) ?? false;
+
+export const setReferenceLinks = (args: string | undefined, on: boolean): string => setSwitch(args, REFERENCE_LINKS, on);
+
+/** Where the footnotes — and the link references, once they are collected — go. */
+export const REFERENCE_LOCATIONS = ['block', 'section', 'document'] as const;
+
+const REFERENCE_LOCATION = '--reference-location';
+
+export const referenceLocation = (args?: string): string | undefined => valueOf(args, REFERENCE_LOCATION);
+
+export const setReferenceLocation = (args: string | undefined, where: string): string =>
+  setValue(args, REFERENCE_LOCATION, REFERENCE_LOCATIONS.includes(where as (typeof REFERENCE_LOCATIONS)[number]) ? where : undefined);
+
+/* -- Slides --------------------------------------------------------------- */
+
+/** `-i` is pandoc's short form; the long one is what gets written. */
+const INCREMENTAL = ['--incremental', '-i'] as const;
+
+export const incremental = (args?: string): boolean => switchValue(args, INCREMENTAL) ?? false;
+
+export const setIncremental = (args: string | undefined, on: boolean): string => setSwitch(args, INCREMENTAL, on);
+
+/**
+ * The heading level that starts a new slide. Pandoc works one out from the
+ * document unless told, and `0` says that no heading starts one.
+ */
+export const SLIDE_LEVELS = ['0', '1', '2', '3'] as const;
+
+const SLIDE_LEVEL = '--slide-level';
+
+export const slideLevel = (args?: string): string | undefined => valueOf(args, SLIDE_LEVEL);
+
+export const setSlideLevel = (args: string | undefined, level: string): string => setValue(args, SLIDE_LEVEL, digits(level) || undefined);
+
+/* -- EPUB ----------------------------------------------------------------- */
+
+const EPUB_COVER_IMAGE = '--epub-cover-image';
+const EPUB_EMBED_FONT = '--epub-embed-font';
+const EPUB_TITLE_PAGE = '--epub-title-page';
+
+/** The heading level a new file is started at — a chapter, in an EPUB. */
+export const SPLIT_LEVELS = ['1', '2', '3'] as const;
+
+/** Pandoc calls this `--epub-chapter-level` as well, and still reads the older name. */
+const SPLIT_LEVEL = ['--split-level', '--epub-chapter-level'] as const;
+
+export const epubCoverImage = (args?: string): string | undefined => valueOf(args, EPUB_COVER_IMAGE);
+
+export const setEpubCoverImage = (args: string | undefined, file: string): string => setValue(args, EPUB_COVER_IMAGE, file || undefined);
+
+/** Repeatable, like the bibliography; the modal asks for the one font. */
+export const epubEmbedFont = (args?: string): string | undefined => valueOf(args, EPUB_EMBED_FONT);
+
+export const setEpubEmbedFont = (args: string | undefined, file: string): string => setValue(args, EPUB_EMBED_FONT, file || undefined);
+
+/** A title page is what pandoc writes unless it is told not to. */
+export const epubTitlePage = (args?: string): boolean => switchValue(args, EPUB_TITLE_PAGE) ?? true;
+
+export const setEpubTitlePage = (args: string | undefined, on: boolean): string => setSwitch(args, EPUB_TITLE_PAGE, on, true);
+
+export const splitLevel = (args?: string): string | undefined => valueOf(args, SPLIT_LEVEL);
+
+export const setSplitLevel = (args: string | undefined, level: string): string => setValue(args, SPLIT_LEVEL, digits(level) || undefined);
+
+/* -- The written page ----------------------------------------------------- */
+
+const EMBED_RESOURCES = '--embed-resources';
+const SECTION_DIVS = '--section-divs';
+const ID_PREFIX = '--id-prefix';
+
+/** What is done with an address so that it is not read straight off the page. */
+export const EMAIL_OBFUSCATIONS = ['none', 'javascript', 'references'] as const;
+
+const EMAIL_OBFUSCATION = '--email-obfuscation';
+
+/**
+ * Whether the page carries its own images, styles and scripts.
+ *
+ * Read across both lines rather than out of the extra arguments alone: the
+ * shipped Html template asks for this in the arguments proper, and a row that
+ * could not see it would report a self-contained page as a page of loose
+ * files. Writing is `setEmbedResources`, which is told the same thing.
+ */
+export const embedResources = (...args: (string | undefined)[]): boolean => switchValue(joined(args), EMBED_RESOURCES) ?? false;
+
+/**
+ * `inherited` is what the arguments proper already say, so a template whose
+ * preset embeds resources writes nothing to say so — and writes
+ * `--embed-resources=false` to say otherwise, which is how pandoc is told to
+ * undo an option given earlier in the same line.
+ */
+export const setEmbedResources = (args: string | undefined, on: boolean, inherited = false): string =>
+  setSwitch(args, EMBED_RESOURCES, on, inherited);
+
+/** Each section wrapped in a `<div>`, so a stylesheet can reach one. */
+export const sectionDivs = (args?: string): boolean => switchValue(args, SECTION_DIVS) ?? false;
+
+export const setSectionDivs = (args: string | undefined, on: boolean): string => setSwitch(args, SECTION_DIVS, on);
+
+export const emailObfuscation = (args?: string): string | undefined => valueOf(args, EMAIL_OBFUSCATION);
+
+export const setEmailObfuscation = (args: string | undefined, method: string): string =>
+  setValue(args, EMAIL_OBFUSCATION, EMAIL_OBFUSCATIONS.includes(method as (typeof EMAIL_OBFUSCATIONS)[number]) ? method : undefined);
+
+/** Put in front of every identifier, so a page can hold two of these documents. */
+export const idPrefix = (args?: string): string | undefined => valueOf(args, ID_PREFIX);
+
+export const setIdPrefix = (args: string | undefined, prefix: string): string => setValue(args, ID_PREFIX, prefix || undefined);
+
+/* -- Media ---------------------------------------------------------------- */
+
+const EXTRACT_MEDIA = '--extract-media';
+const DPI = '--dpi';
+
+/**
+ * The folder the images are written out to. Read across both lines, as
+ * `embedResources` is: the shipped Latex template extracts media in the
+ * arguments proper.
+ */
+export const extractMedia = (...args: (string | undefined)[]): string | undefined => valueOf(joined(args), EXTRACT_MEDIA);
+
+export const setExtractMedia = (args: string | undefined, dir: string): string => setValue(args, EXTRACT_MEDIA, dir || undefined);
+
+/** What a pixel is worth where the writer has to put a real size on an image. */
+export const dpi = (args?: string): string | undefined => valueOf(args, DPI);
+
+export const setDpi = (args: string | undefined, value: string): string => setValue(args, DPI, digits(value) || undefined);

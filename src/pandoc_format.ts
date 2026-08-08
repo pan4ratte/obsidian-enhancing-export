@@ -272,6 +272,142 @@ export const supportsVariable: Record<CuratedVariable, (writer?: string) => bool
 };
 
 /*
+ * The format-specific rows: a group each for the source a text writer produces,
+ * for slides, for EPUB, for a page, and for the media a document carries.
+ *
+ * Measured against pandoc 3.10 like the rest, and with the same care over the
+ * writers whose output is never reproducible — epub, docx, pptx and pdf stamp a
+ * fresh id or date into every build, so those were compared with the dates and
+ * uuids blanked rather than by digest.
+ */
+
+/** The slide shows, which are also a family a lua filter can be written for. */
+const SLIDE_WRITERS = ['revealjs', 'slidy', 'slideous', 'dzslides', 's5', 'beamer', 'pptx'] as const;
+
+/** A page, in the writers that produce one: HTML, its slide shows, chunked HTML. */
+const HTML_PAGE_WRITERS = ['html', 'html4', 'html5', 'chunkedhtml', 'revealjs', 'slidy', 'slideous', 'dzslides', 's5'] as const;
+
+/**
+ * The writers that wrap what they write. Listed by what does *not*, since
+ * nearly every writer that produces text of its own does — and a writer this
+ * list has never heard of is given the benefit of the doubt.
+ *
+ * EPUB is here on measurement rather than on principle: it writes XHTML, but
+ * its own writer lays that out and `--wrap` never reaches it.
+ */
+const WRAP_UNSUPPORTED = new Set([
+  'bbcode',
+  'bbcode_fluxbb',
+  'bbcode_hubzilla',
+  'bbcode_phpbb',
+  'bbcode_steam',
+  'bbcode_xenforo',
+  'csljson',
+  'docx',
+  'dokuwiki',
+  'epub',
+  'epub2',
+  'epub3',
+  'fb2',
+  'icml',
+  'ipynb',
+  'jira',
+  'json',
+  'native',
+  'odt',
+  'pptx',
+  'rtf',
+  't2t',
+  'vimdoc',
+  'xml',
+  'xwiki',
+  'zimwiki',
+]);
+
+/** `--wrap`, and the `--columns` it wraps at. */
+export const supportsWrap = (writer?: string): boolean => !!writer && !WRAP_UNSUPPORTED.has(writer);
+
+/** `--markdown-headings`: the writers with two ways of writing one. */
+export const supportsMarkdownHeadings = supportedBy([
+  'markdown',
+  'markdown_strict',
+  'markdown_mmd',
+  'markdown_phpextra',
+  'markdown_github',
+  'commonmark',
+  'commonmark_x',
+  'gfm',
+  'markua',
+]);
+
+/** `--reference-links`, in the writers with a reference link to write. */
+export const supportsReferenceLinks = supportedBy([
+  'markdown',
+  'markdown_strict',
+  'markdown_mmd',
+  'markdown_phpextra',
+  'markdown_github',
+  'commonmark',
+  'commonmark_x',
+  'gfm',
+  'markua',
+  'djot',
+  'plain',
+  'rst',
+]);
+
+/** `--reference-location`: where the footnotes are put, once there are some. */
+export const supportsReferenceLocation = supportedBy([
+  'markdown',
+  'markdown_strict',
+  'markdown_mmd',
+  'markdown_phpextra',
+  'markdown_github',
+  'commonmark',
+  'commonmark_x',
+  'gfm',
+  'markua',
+  'muse',
+  'plain',
+  'html',
+  'html4',
+  'html5',
+  'chunkedhtml',
+  'epub',
+  'epub2',
+  'epub3',
+  'revealjs',
+  'slidy',
+  'slideous',
+  'dzslides',
+  's5',
+]);
+
+/** Whether the document being written is a slide show. */
+export const isSlideOutput = supportedBy(SLIDE_WRITERS);
+
+/** Whether it is an EPUB, which has a cover, a font and a title page of its own. */
+export const isEpubOutput = supportedBy(['epub', 'epub2', 'epub3']);
+
+/** `--split-level`, which chunked HTML splits on as an EPUB splits chapters. */
+export const supportsSplitLevel = supportedBy(['epub', 'epub2', 'epub3', 'chunkedhtml']);
+
+/**
+ * `--section-divs`, `--email-obfuscation` and `--id-prefix`.
+ *
+ * The prefix reaches further than the page — pandoc puts it on DocBook ids and
+ * on markdown footnote numbers as well — but it is only worth asking for where
+ * a document is going into a page beside another, so it is asked for here.
+ */
+export const supportsHtmlOptions = supportedBy(HTML_PAGE_WRITERS);
+
+/** `--embed-resources`: "only works with HTML output formats", chunked aside. */
+export const supportsEmbedResources = supportedBy(HTML_PAGE_WRITERS.filter(w => w !== 'chunkedhtml'));
+
+/** `--dpi`: the writers that have to put a real size on an image in pixels. */
+export const supportsDpi = supportedBy(['latex', 'beamer', 'pdf', 'context', 'typst', 'docx', 'odt', 'icml', 'ms', 'rtf', 'texinfo']);
+
+/*
  * The families a filter can be written for. A filter that reaches for
  * `custom-style` is for the word processors whatever the exact writer is
  * called, and one that emits raw LaTeX is no use to any of them — so what a
@@ -288,7 +424,7 @@ const FAMILY_MEMBERS: Record<FormatFamily, readonly string[]> = {
   odt: ['odt', 'opendocument'],
   // EPUB is HTML in a wrapper, and a filter writing HTML works in both.
   html: ['html', 'html4', 'html5', 'chunkedhtml', 'epub', 'epub2', 'epub3'],
-  slides: ['revealjs', 'slidy', 'slideous', 'dzslides', 's5', 'beamer', 'pptx'],
+  slides: SLIDE_WRITERS,
   markdown: [
     'markdown',
     'markdown_strict',

@@ -24,23 +24,39 @@ import { TOC_MAX_DEPTH, setTocDepth, tocDepth } from '../toc_args';
 import { PANDOC_EXTENSIONS, enabledExtensions, setExtensions } from '../pandoc_extensions';
 import {
   CURATED_VARIABLES,
+  EMAIL_OBFUSCATIONS,
   FONT_SIZES,
   HIGHLIGHT_NONE,
   HIGHLIGHT_STYLES,
   MATH_METHODS,
   PAPER_SIZES,
   PDF_ENGINES,
+  REFERENCE_LOCATIONS,
+  SLIDE_LEVELS,
+  SPLIT_LEVELS,
   TOP_LEVEL_DIVISIONS,
+  WRAP_MODES,
   bibliography,
   citeproc,
+  columns,
   csl,
   css,
+  dpi,
+  emailObfuscation,
+  embedResources,
+  epubCoverImage,
+  epubEmbedFont,
+  epubTitlePage,
+  extractMedia,
   highlightStyle,
+  idPrefix,
   includeAfterBody,
   includeBeforeBody,
   includeInHeader,
+  incremental,
   listOfFigures,
   listOfTables,
+  markdownHeadings,
   mathMethod,
   metadata,
   numberOffset,
@@ -48,46 +64,79 @@ import {
   pairsFromText,
   pdfEngine,
   referenceDoc,
+  referenceLinks,
+  referenceLocation,
+  sectionDivs,
   setBibliography,
   setCiteproc,
+  setColumns,
   setCsl,
   setCss,
+  setDpi,
+  setEmailObfuscation,
+  setEmbedResources,
+  setEpubCoverImage,
+  setEpubEmbedFont,
+  setEpubTitlePage,
+  setExtractMedia,
   setHighlightStyle,
+  setIdPrefix,
   setIncludeAfterBody,
   setIncludeBeforeBody,
   setIncludeInHeader,
+  setIncremental,
   setListOfFigures,
   setListOfTables,
+  setMarkdownHeadings,
   setMathMethod,
   setMetadata,
   setNumberOffset,
   setNumberSections,
   setPdfEngine,
   setReferenceDoc,
+  setReferenceLinks,
+  setReferenceLocation,
+  setSectionDivs,
+  setSlideLevel,
+  setSplitLevel,
   setTopLevelDivision,
   setVariable,
   setVariables,
+  setWrap,
+  slideLevel,
+  splitLevel,
   textFromPairs,
   topLevelDivision,
   variable,
   variables,
+  wrap,
   type CuratedVariable,
 } from '../writer_args';
 import {
+  isEpubOutput,
   isPdfOutput,
+  isSlideOutput,
   outputFormat,
   supportsCss,
+  supportsDpi,
+  supportsEmbedResources,
   supportsHeaderInclude,
   supportsHighlighting,
+  supportsHtmlOptions,
   supportsIncludes,
+  supportsMarkdownHeadings,
   supportsMathMethod,
   supportsNumberOffset,
   supportsNumberSections,
   supportsReferenceDoc,
+  supportsReferenceLinks,
+  supportsReferenceLocation,
   supportsSectionLists,
+  supportsSplitLevel,
   supportsToc,
   supportsTopLevelDivision,
   supportsVariable,
+  supportsWrap,
 } from '../pandoc_format';
 import { MessageBox } from './message_box';
 import Modal from './components/Modal';
@@ -118,6 +167,8 @@ const ANY_FILE = { name: 'All files', extensions: ['*'] };
 const BIBLIOGRAPHY_FILES = [{ name: 'Bibliography', extensions: ['bib', 'bibtex', 'json', 'yaml', 'yml', 'ris', 'enl', 'xml'] }, ANY_FILE];
 const CSL_FILES = [{ name: 'Citation style', extensions: ['csl'] }, ANY_FILE];
 const CSS_FILES = [{ name: 'Stylesheet', extensions: ['css'] }, ANY_FILE];
+const IMAGE_FILES = [{ name: 'Image', extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'] }, ANY_FILE];
+const FONT_FILES = [{ name: 'Font', extensions: ['otf', 'ttf', 'woff', 'woff2'] }, ANY_FILE];
 
 /**
  * The two curated variables with an answer short enough to be picked from a
@@ -541,6 +592,81 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
       textFromPairs(variables(args()).filter(v => !curatedVariables().includes(v.key as CuratedVariable)))
     );
 
+    /*
+     * The format-specific pickers. Each carries pandoc's own answer first, as
+     * the rows above do, and `withCurrent` keeps a hand-written one that none
+     * of them names — `--wrap=auto`, said out loud rather than left to pandoc.
+     */
+    const wrapOptions = createMemo(() =>
+      withCurrent(
+        [
+          { name: lang.settingTab.wrapDefault, value: '' },
+          ...WRAP_MODES.map(mode => ({ name: lang.settingTab.wrapMode[mode], value: mode })),
+        ],
+        wrap(args())
+      )
+    );
+
+    // ATX is pandoc's own answer and is written as no option at all, the way
+    // the top-level division's default is — one less thing in the line.
+    const headingStyleOptions = createMemo(() =>
+      withCurrent(
+        [
+          { name: lang.settingTab.markdownHeadingsDefault, value: '' },
+          { name: lang.settingTab.markdownHeadingSetext, value: 'setext' },
+        ],
+        markdownHeadings(args())
+      )
+    );
+
+    const referenceLocationOptions = createMemo(() =>
+      withCurrent(
+        [
+          { name: lang.settingTab.referenceLocationDefault, value: '' },
+          ...REFERENCE_LOCATIONS.filter(where => where !== 'block').map(where => ({
+            name: lang.settingTab.referenceLocationOption[where],
+            value: where,
+          })),
+        ],
+        referenceLocation(args())
+      )
+    );
+
+    // Pandoc works the slide level out from the document unless it is told, so
+    // the default is no option at all; `0` is an answer of its own.
+    const slideLevelOptions = createMemo(() =>
+      withCurrent(
+        [
+          { name: lang.settingTab.slideLevelDefault, value: '' },
+          ...SLIDE_LEVELS.map(level => ({
+            name: level === '0' ? lang.settingTab.slideLevelNone : lang.settingTab.tocLevel(Number(level)),
+            value: level,
+          })),
+        ],
+        slideLevel(args())
+      )
+    );
+
+    const splitLevelOptions = createMemo(() =>
+      withCurrent(
+        [
+          { name: lang.settingTab.splitLevelDefault, value: '' },
+          ...SPLIT_LEVELS.map(level => ({ name: lang.settingTab.tocLevel(Number(level)), value: level })),
+        ],
+        splitLevel(args())
+      )
+    );
+
+    const obfuscationOptions = createMemo(() =>
+      withCurrent(
+        [
+          { name: lang.settingTab.emailObfuscationDefault, value: '' },
+          ...EMAIL_OBFUSCATIONS.map(method => ({ name: lang.settingTab.emailObfuscationMethod[method], value: method })),
+        ],
+        emailObfuscation(args())
+      )
+    );
+
     /** The document a docx, odt or pptx export takes its styles from. */
     const referenceDocFiles = createMemo(() => [
       { name: lang.settingTab.referenceDoc, extensions: [format() === 'pptx' ? 'pptx' : format() === 'odt' ? 'odt' : 'docx'] },
@@ -789,6 +915,177 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
             </div>
           </Show>
 
+          {/* What the file itself looks like, for the writers that produce
+              text a person reads. The heading style and the reference links
+              are markdown's alone, so the card is as long as the writer has
+              answers for. */}
+          <Show when={supportsWrap(format())}>
+            <div class="ex-card ex-template-modal-source">
+              <Setting name={lang.settingTab.writtenSource} description={lang.settingTab.writtenSourceDesc} heading={true} />
+
+              <Setting name={lang.settingTab.wrap} class="ex-template-modal-wrap">
+                <DropDown
+                  options={wrapOptions()}
+                  selected={wrap(args()) ?? ''}
+                  autofocus={false}
+                  onChange={value => writeArgs(a => setWrap(a, value))}
+                />
+              </Setting>
+
+              {/* A column to wrap at is only a question while something wraps. */}
+              <Collapsible when={wrap(args()) !== 'none'} class="ex-template-modal-columns-panel">
+                <Setting name={lang.settingTab.columns} class="ex-template-modal-columns">
+                  <Text value={columns(args()) ?? ''} placeholder="72" onChange={value => writeArgs(a => setColumns(a, value))} />
+                </Setting>
+              </Collapsible>
+
+              <Show when={supportsMarkdownHeadings(format())}>
+                <Setting name={lang.settingTab.markdownHeadings} class="ex-template-modal-headings">
+                  <DropDown
+                    options={headingStyleOptions()}
+                    selected={markdownHeadings(args()) ?? ''}
+                    autofocus={false}
+                    onChange={value => writeArgs(a => setMarkdownHeadings(a, value))}
+                  />
+                </Setting>
+              </Show>
+
+              <Show when={supportsReferenceLinks(format())}>
+                <Setting name={lang.settingTab.referenceLinks} class="ex-template-modal-reference-links">
+                  <Toggle checked={referenceLinks(args())} onChange={checked => writeArgs(a => setReferenceLinks(a, checked))} />
+                </Setting>
+              </Show>
+            </div>
+          </Show>
+
+          {/* Its own row rather than part of the card above: an EPUB collects
+              footnotes as well, and writes no source anybody reads. */}
+          <Show when={supportsReferenceLocation(format())}>
+            <Setting
+              name={lang.settingTab.referenceLocation}
+              description={lang.settingTab.referenceLocationDesc}
+              class="ex-template-modal-reference-location"
+            >
+              <DropDown
+                options={referenceLocationOptions()}
+                selected={referenceLocation(args()) ?? ''}
+                autofocus={false}
+                onChange={value => writeArgs(a => setReferenceLocation(a, value))}
+              />
+            </Setting>
+          </Show>
+
+          <Show when={isSlideOutput(format())}>
+            <div class="ex-card ex-template-modal-slides">
+              <Setting name={lang.settingTab.slides} description={lang.settingTab.slidesDesc} heading={true} />
+              <Setting name={lang.settingTab.incremental} class="ex-template-modal-incremental">
+                <Toggle checked={incremental(args())} onChange={checked => writeArgs(a => setIncremental(a, checked))} />
+              </Setting>
+              <Setting name={lang.settingTab.slideLevel} class="ex-template-modal-slide-level">
+                <DropDown
+                  options={slideLevelOptions()}
+                  selected={slideLevel(args()) ?? ''}
+                  autofocus={false}
+                  onChange={value => writeArgs(a => setSlideLevel(a, value))}
+                />
+              </Setting>
+            </div>
+          </Show>
+
+          <Show when={isEpubOutput(format())}>
+            <div class="ex-card ex-template-modal-epub">
+              <Setting name={lang.settingTab.epub} description={lang.settingTab.epubDesc} heading={true} />
+              <Setting name={lang.settingTab.epubCoverImage}>
+                <FileInput
+                  value={epubCoverImage(args())}
+                  filters={IMAGE_FILES}
+                  tooltip={lang.settingTab.chooseFile}
+                  onChange={value => writeArgs(a => setEpubCoverImage(a, value.trim()))}
+                />
+              </Setting>
+              <Setting name={lang.settingTab.epubEmbedFont}>
+                <FileInput
+                  value={epubEmbedFont(args())}
+                  filters={FONT_FILES}
+                  tooltip={lang.settingTab.chooseFile}
+                  onChange={value => writeArgs(a => setEpubEmbedFont(a, value.trim()))}
+                />
+              </Setting>
+              <Setting name={lang.settingTab.epubTitlePage}>
+                <Toggle checked={epubTitlePage(args())} onChange={checked => writeArgs(a => setEpubTitlePage(a, checked))} />
+              </Setting>
+            </div>
+          </Show>
+
+          {/* Outside the card above, because chunked HTML splits on the same
+              option and takes nothing else an EPUB does — under a heading
+              naming EPUB it would be answering a question nobody asked it. */}
+          <Show when={supportsSplitLevel(format())}>
+            <Setting name={lang.settingTab.splitLevel} description={lang.settingTab.splitLevelDesc} class="ex-template-modal-split-level">
+              <DropDown
+                options={splitLevelOptions()}
+                selected={splitLevel(args()) ?? ''}
+                autofocus={false}
+                onChange={value => writeArgs(a => setSplitLevel(a, value))}
+              />
+            </Setting>
+          </Show>
+
+          <Show when={supportsHtmlOptions(format())}>
+            <div class="ex-card ex-template-modal-page">
+              <Setting name={lang.settingTab.htmlPage} description={lang.settingTab.htmlPageDesc} heading={true} />
+
+              {/* Read across both lines: the shipped Html template asks for
+                  this in the arguments proper, and what is written here only
+                  has to differ from what those already say. */}
+              <Show when={supportsEmbedResources(format())}>
+                <Setting name={lang.settingTab.embedResources} class="ex-template-modal-embed">
+                  <Toggle
+                    checked={embedResources(template()?.arguments, args())}
+                    onChange={checked => writeArgs(a => setEmbedResources(a, checked, embedResources(template()?.arguments)))}
+                  />
+                </Setting>
+              </Show>
+
+              <Setting name={lang.settingTab.sectionDivs} class="ex-template-modal-section-divs">
+                <Toggle checked={sectionDivs(args())} onChange={checked => writeArgs(a => setSectionDivs(a, checked))} />
+              </Setting>
+
+              <Setting name={lang.settingTab.emailObfuscation} class="ex-template-modal-obfuscation">
+                <DropDown
+                  options={obfuscationOptions()}
+                  selected={emailObfuscation(args()) ?? ''}
+                  autofocus={false}
+                  onChange={value => writeArgs(a => setEmailObfuscation(a, value))}
+                />
+              </Setting>
+
+              <Setting name={lang.settingTab.idPrefix} class="ex-template-modal-id-prefix">
+                <Text value={idPrefix(args()) ?? ''} onChange={value => writeArgs(a => setIdPrefix(a, value.trim()))} />
+              </Setting>
+            </div>
+          </Show>
+
+          {/* Extracting the media is asked of every writer — it writes the
+              files out whatever comes of the document — while the resolution
+              only matters where the writer puts a real size on an image. */}
+          <div class="ex-card ex-template-modal-media">
+            <Setting name={lang.settingTab.media} description={lang.settingTab.mediaDesc} heading={true} />
+            <Setting name={lang.settingTab.extractMedia} class="ex-template-modal-extract-media">
+              <FileInput
+                value={extractMedia(template()?.arguments, args())}
+                folder={true}
+                tooltip={lang.settingTab.chooseFolder}
+                onChange={value => writeArgs(a => setExtractMedia(a, value.trim()))}
+              />
+            </Setting>
+            <Show when={supportsDpi(format())}>
+              <Setting name={lang.settingTab.dpi} class="ex-template-modal-dpi">
+                <Text value={dpi(args()) ?? ''} placeholder="96" onChange={value => writeArgs(a => setDpi(a, value))} />
+              </Setting>
+            </Show>
+          </div>
+
           {/* The two lists everything else is said in. `visible` is the panel
               they sit in rather than the field: a textarea that has never been
               on screen has no height to measure itself against. */}
@@ -1033,6 +1330,15 @@ export default class extends PluginSettingTab {
               settingTab.stylesheet,
               settingTab.includes,
               settingTab.pageSetup,
+              settingTab.writtenSource,
+              settingTab.wrap,
+              settingTab.referenceLocation,
+              settingTab.slides,
+              settingTab.epub,
+              settingTab.htmlPage,
+              settingTab.embedResources,
+              settingTab.media,
+              settingTab.extractMedia,
               settingTab.variables,
               settingTab.metadata,
               settingTab.targetFileExtensions,

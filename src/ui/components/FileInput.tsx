@@ -2,7 +2,7 @@ import { FileFilter, remote } from 'electron';
 import { Text, ExtraButton } from './Setting';
 
 /**
- * A path to a file, typed or chosen.
+ * A path, typed or chosen — to a file, or to a folder where `folder` says so.
  *
  * The field stays writable rather than being filled only by the dialog: a
  * template's paths are as often written with the plugin's own `${currentDir}`
@@ -12,19 +12,21 @@ import { Text, ExtraButton } from './Setting';
 export default (props: {
   value?: string;
   placeholder?: string;
-  /** What the dialog offers to open, most likely kind first. */
+  /** What the dialog offers to open, most likely kind first. Files only. */
   filters?: FileFilter[];
-  /** Said on the button, since the field's own label asks for the file. */
+  /** Ask for a folder rather than a file, and offer to make one. */
+  folder?: boolean;
+  /** Said on the button, since the field's own label asks for the path. */
   tooltip?: string;
   onChange: (value: string) => void;
 }) => {
-  const chooseFile = async () => {
+  const choosePath = async () => {
     const retval = await remote.dialog.showOpenDialog({
       // A path with `${...}` in it names nothing until an export resolves it,
       // so the dialog is left to open wherever it opened last.
       defaultPath: props.value && !props.value.includes('${') ? props.value : undefined,
-      properties: ['openFile'],
-      filters: props.filters,
+      properties: props.folder ? ['createDirectory', 'openDirectory'] : ['openFile'],
+      filters: props.folder ? undefined : props.filters,
     });
 
     if (!retval.canceled && retval.filePaths.length > 0) {
@@ -35,7 +37,7 @@ export default (props: {
   return (
     <>
       <Text style="width: 100%" value={props.value ?? ''} title={props.value} placeholder={props.placeholder} onChange={props.onChange} />
-      <ExtraButton icon="folder-open" tooltip={props.tooltip} onClick={chooseFile} />
+      <ExtraButton icon={props.folder ? 'folder' : 'folder-open'} tooltip={props.tooltip} onClick={choosePath} />
     </>
   );
 };
