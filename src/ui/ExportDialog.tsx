@@ -1,14 +1,13 @@
 import * as ct from 'electron';
 import { Notice, TFile } from 'obsidian';
-import { createSignal, createRoot, onCleanup, createMemo, untrack, createEffect, Show } from 'solid-js';
+import { createSignal, createRoot, onCleanup, createMemo, untrack } from 'solid-js';
 import { insert } from 'solid-js/web';
 import type UniversalExportPlugin from '../main';
-import { extractDefaultExtension as extractExtension, finalizeOptionsMeta } from '../settings';
+import { extractDefaultExtension as extractExtension } from '../settings';
 import { setPlatformValue, getPlatformValue } from '../utils';
 import { exportToOo } from '../exporto0o';
 import Modal from './components/Modal';
 import Button from './components/Button';
-import PropertyGrid, { createDefaultObject } from './components/PropertyGrid';
 import Setting, { Text, DropDown, ExtraButton, Toggle } from './components/Setting';
 
 const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onClose?: () => void }) => {
@@ -28,11 +27,9 @@ const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onCl
   const [exportType, setExportType] = createSignal(
     globalSetting.items.find(o => o.name === globalSetting.lastExportType)?.name ?? globalSetting.items.first()?.name
   );
-  const [options, setOptions] = createSignal({});
   const setting = createMemo(() => globalSetting.items.find(o => o.name === exportType()) ?? globalSetting.items.first());
   const extension = createMemo(() => (setting() ? extractExtension(setting()) : ''));
   const title = createMemo(() => lang.exportDialog.title(setting()?.name));
-  const optionsMeta = createMemo(() => finalizeOptionsMeta(setting()?.optionsMeta));
 
   const [candidateOutputDirectory, setCandidateOutputDirectory] = createSignal(
     `${getPlatformValue(globalSetting.lastExportDirectory) ?? ct.remote.app.getPath('documents')}`
@@ -48,11 +45,6 @@ const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onCl
 
   /** The name as it will be written, extension and all. */
   const outputFileFullName = () => `${candidateOutputFileName().trim() || currentFile.basename}${extension()}`;
-
-  createEffect(() => {
-    const meta = optionsMeta();
-    setOptions(meta ? createDefaultObject(meta) : {});
-  });
 
   const exportTypes = globalSetting.items.map(o => ({ name: o.name, value: o.name })).sort((a, b) => a.name.localeCompare(b.name));
 
@@ -89,7 +81,10 @@ const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onCl
       untrack(outputFileFullName),
       untrack(setting),
       untrack(showOverwriteConfirmation),
-      options(),
+      // The dialog asks for no options of its own. A template's `optionsMeta` is
+      // left where it is; nothing in the modal fills it in, so `${options.…}` in
+      // a template's arguments reads as unset.
+      {},
       async () => {
         globalSetting.showOverwriteConfirmation = untrack(showOverwriteConfirmation);
         globalSetting.lastExportDirectory = setPlatformValue(globalSetting.lastExportDirectory, untrack(candidateOutputDirectory));
@@ -114,10 +109,6 @@ const Dialog = (props: { plugin: UniversalExportPlugin; currentFile: TFile; onCl
         <Setting name={lang.exportDialog.fileName} description={lang.exportDialog.fileNameDesc(extension())}>
           <Text title={outputFileFullName()} value={candidateOutputFileName()} onChange={value => setCandidateOutputFileName(value)} />
         </Setting>
-
-        <Show when={optionsMeta()}>
-          <PropertyGrid meta={optionsMeta()} value={options()} onChange={o => setOptions(o)} />
-        </Show>
 
         <Setting name={lang.exportDialog.exportTo}>
           <Text title={candidateOutputDirectory()} value={candidateOutputDirectory()} disabled />

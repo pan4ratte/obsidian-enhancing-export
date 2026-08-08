@@ -121,7 +121,10 @@ export async function exportToOo(
     // now: new Date()
     metadata: frontMatter,
     embedDirs,
-    options,
+    // Always an object: a template asking for `${options.something}` is asking
+    // a question nothing puts to the user any more, and reading a field off
+    // nothing would throw while the command was still being built.
+    options: options ?? {},
     fromFormat: obsidianConfig.useMarkdownLinks ? 'markdown' : 'markdown+wikilinks_title_after_pipe',
   };
 
