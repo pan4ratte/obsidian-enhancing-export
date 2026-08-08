@@ -1,6 +1,7 @@
 import { readdirSync } from 'fs';
 import path from 'path';
 import export_templates from '../src/export_templates';
+import { FIGURE_DEFAULT_STYLE, TABLE_DEFAULT_STYLE, figureStyle, flattenOrdered, listStyles, tableStyle } from '../src/filter_args';
 import { DEFAULT_TEMPLATE_PRESETS } from '../src/settings';
 import { renderTemplate } from '../src/utils';
 
@@ -107,8 +108,22 @@ describe('the corrections these presets carry', () => {
   test("Obsidian's own markdown is read where a document is rendered for reading", () => {
     for (const preset of ['PDF', 'Word (.docx)', 'Html', 'Epub', 'Latex', 'Beamer slides (.pdf)']) {
       // Last `-f` wins, so this is the one pandoc reads by — the preset's own `-f ${fromFormat}` stands ahead of it.
-      expect(render(preset)).toMatch(/-f markdown\+wikilinks_title_after_pipe\+mark$/);
+      // Which of them comes last is the whole assertion; what follows on the line is filters, and they are not read by.
+      const from = [...render(preset).matchAll(/-f (\S+)/g)];
+      expect(from[from.length - 1][1]).toBe('markdown+wikilinks_title_after_pipe+mark');
     }
+  });
+
+  test('a new Word template comes with the style tweaks that work on their own', () => {
+    // Read back through the rows' own readers: what the editor shows ticked is the whole point of the default.
+    const args = (export_templates['Word (.docx)'] as { customArguments: string }).customArguments;
+    expect(figureStyle(args)).toBe(FIGURE_DEFAULT_STYLE);
+    expect(tableStyle(args)).toBe(TABLE_DEFAULT_STYLE);
+    // Measured against pandoc's stock reference document: it defines List Bullet with no numbering of its own, so
+    // handing it the bullets before the user has named a document of theirs leaves a bullet list with none. The row
+    // switches itself on with the reference document instead.
+    expect(listStyles(args)).toBe(false);
+    expect(flattenOrdered(args)).toBe(false);
   });
 
   test('callouts are left to the extensions row, which is where the caveat belongs', () => {

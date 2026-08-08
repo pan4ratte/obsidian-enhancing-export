@@ -664,7 +664,7 @@
  * of everything above them. The only thing the section still does is open and
  * shut, which is the only thing it was ever for.
  */
-.ex-template-modal.ex-template-modal .modal-content > .ex-card {
+.ex-template-modal.ex-template-modal .modal-content > .ex-section {
   margin-bottom: var(--size-4-3);
   padding: 0;
   border: none;
@@ -997,11 +997,17 @@
  * No side padding, so the lines between the rows run the width of the card;
  * the rows carry the inset themselves.
  */
-.ex-template-modal.ex-template-modal .ex-section .ex-card {
+.ex-template-modal.ex-template-modal .ex-card:not(.ex-section) {
   margin: 0;
   border: 1px solid var(--setting-items-border-color);
   border-radius: var(--setting-items-radius);
   background: var(--setting-items-background);
+}
+
+/* A group standing in the modal rather than inside a panel — the Word styles —
+   keeps the spacing of the rows it stands among. */
+.ex-template-modal.ex-template-modal .modal-content > .ex-card:not(.ex-section) {
+  margin-bottom: var(--size-4-3);
 }
 
 /*
@@ -1010,7 +1016,7 @@
  * carries six classes to outweigh Obsidian's own — see the padding fix above —
  * and this has to outweigh that in turn.
  */
-.ex-template-modal.ex-template-modal .ex-section .ex-card.ex-card .setting-item:not(.setting-item-heading) {
+.ex-template-modal.ex-template-modal .ex-card.ex-card:not(.ex-section) .setting-item:not(.setting-item-heading) {
   margin: 0;
   border: none;
   border-radius: 0;
@@ -1026,9 +1032,9 @@
  * belongs to the row inside it, so a panel that is shut takes its line with it
  * and the row after it still has one of its own.
  */
-.ex-template-modal.ex-template-modal .ex-section .ex-card.ex-card .setting-item:not(.setting-item-heading) + .setting-item,
-.ex-template-modal.ex-template-modal .ex-section .ex-card.ex-card .ex-collapsible > .setting-item:not(.setting-item-heading),
-.ex-template-modal.ex-template-modal .ex-section .ex-card.ex-card .ex-collapsible + .setting-item:not(.setting-item-heading) {
+.ex-template-modal.ex-template-modal .ex-card.ex-card:not(.ex-section) .setting-item:not(.setting-item-heading) + .setting-item,
+.ex-template-modal.ex-template-modal .ex-card.ex-card:not(.ex-section) .ex-collapsible > .setting-item:not(.setting-item-heading),
+.ex-template-modal.ex-template-modal .ex-card.ex-card:not(.ex-section) .ex-collapsible + .setting-item:not(.setting-item-heading) {
   border-top: 1px solid var(--setting-items-border-color);
 }
 

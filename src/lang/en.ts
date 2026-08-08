@@ -238,10 +238,11 @@ export default {
   TABLE_HEAD_STYLE_DESC: 'Left empty, header cells take the same style as the rest.',
   TABLE_HEAD_STYLE_PLACEHOLDER: 'Same as cells',
   LIST_STYLES: 'Use Word’s list styles',
-  LIST_STYLES_DESC: 'Let List Bullet and List Number draw the bullets and indents, instead of pandoc’s own numbering painting over them.',
-  FLATTEN_ORDERED: 'Numbered lists too',
+  LIST_STYLES_DESC:
+    'Let List Bullet draw the bullets and indents, instead of pandoc’s own numbering painting over them. Needs a reference document whose List Bullet carries its own numbering, as Word’s built-in one does — without it the bullets come out blank.',
+  FLATTEN_ORDERED: 'Flatten numbered lists',
   FLATTEN_ORDERED_DESC:
-    'Exactly the style’s look, at the price of the one thing only pandoc’s numbering can do: separate lists no longer restart at 1.',
+    'Off, pandoc numbers them and every list restarts at 1, with List Number setting only the font and spacing. On, List Number draws the numbers exactly as it defines them — and separate lists carry on counting instead of restarting.',
 
   // ─── Layout template and includes ────────────────────────────────────────────
   OUTPUT_TEMPLATE: 'Layout template',

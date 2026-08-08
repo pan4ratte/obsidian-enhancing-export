@@ -208,7 +208,6 @@ import { BUNDLED_LUA_FILES } from '../resources';
 
 // Whether the template editor's panels stand open. Module scope, so a modal rebuilt on
 // every open reopens where it was; not written to `data.json` — a scroll position is not a setting.
-const [stylesOpen, setStylesOpen] = createSignal(false);
 const [advancedOpen, setAdvancedOpen] = createSignal(false);
 const [commandOpen, setCommandOpen] = createSignal(false);
 
@@ -704,6 +703,22 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
       ANY_FILE,
     ]);
 
+    /**
+     * The list styles come and go with the document that defines them. They hand the bullets over to List Bullet, and
+     * pandoc's own reference document carries that style without any numbering in it — switched on with no document
+     * of the user's to take the numbering from, a bullet list comes out with no bullets at all. So the row follows
+     * the one answer that decides whether it can work, and only as the document arrives or goes: turned off by hand
+     * with a document set, it stays off.
+     */
+    const setReferenceDocument = (value: string) => {
+      const file = value.trim();
+      const had = !!referenceDoc(args());
+      writeArgs(a => {
+        const next = setReferenceDoc(a, file);
+        return format() === 'docx' && !!file !== had ? setListStyles(next, !!file) : next;
+      });
+    };
+
     /** The line pandoc is given, assembled as `exportNote` assembles it. The `${...}` are
         left standing: they are filled in at export from a note that does not exist yet. */
     const resultingCommand = createMemo(() =>
@@ -742,19 +757,15 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
             template — the same question two ways, so exactly one row stands here. */}
         <Show when={supportsReferenceDoc(format())}>
           <Setting name={t.REFERENCE_DOC} description={t.REFERENCE_DOC_DESC} class="ex-template-modal-reference-doc">
-            <FileInput
-              value={referenceDoc(args())}
-              filters={referenceDocFiles()}
-              tooltip={t.CHOOSE_FILE}
-              onChange={value => writeArgs(a => setReferenceDoc(a, value.trim()))}
-            />
+            <FileInput value={referenceDoc(args())} filters={referenceDocFiles()} tooltip={t.CHOOSE_FILE} onChange={setReferenceDocument} />
           </Setting>
         </Show>
 
         {/* Every style named here has to exist in that document. Each row runs a bundled
             filter — pandoc has no option for any of this. */}
         <Show when={supportsCustomStyle(format())}>
-          <Section name={t.WORD_STYLES} description={t.WORD_STYLES_DESC} open={stylesOpen()} onToggle={setStylesOpen}>
+          <div class="ex-card ex-template-modal-word-styles">
+            <Setting name={t.WORD_STYLES} description={t.WORD_STYLES_DESC} heading={true} />
             <Setting name={t.FIGURE_STYLE} description={t.FIGURE_STYLE_DESC} class="mod-toggle">
               <Toggle
                 checked={figureStyle(args()) !== undefined}
@@ -808,7 +819,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
                 </Setting>
               </Show>
             </Show>
-          </Section>
+          </div>
         </Show>
 
         <Show when={supportsTemplate(format())}>

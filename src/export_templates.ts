@@ -15,6 +15,17 @@ const OBSIDIAN_SYNTAX = '--lua-filter="${luaDir}/embeds.lua" -f ${fromFormat}+ma
 /** Reassembles a `$$…$$` block the reader broke up over a LaTeX environment. */
 const MATH_BLOCK = '--lua-filter="${luaDir}/math_block.lua"';
 
+/**
+ * The Styles rows a Word export starts with: an image with no caption is styled as a figure rather than left in body
+ * text, and a table cell is left alone rather than stamped "Compact". Both create the style they name if the document
+ * has none, so neither has anything to go wrong without a reference document.
+ *
+ * The list styles are not here, and cannot be: they hand the bullets over to the document's own List Bullet, and
+ * pandoc's stock reference document defines that style without any numbering in it — the bullets would simply be
+ * blank. The row switches itself on with the reference document instead; see `SettingTab`.
+ */
+const WORD_STYLES = '--lua-filter="${luaDir}/figures.lua" --lua-filter="${luaDir}/table-styles.lua"';
+
 export default {
   'Markdown': {
     name: 'Markdown',
@@ -90,7 +101,7 @@ export default {
     name: 'Word (.docx)',
     type: 'pandoc',
     arguments: `-f \${fromFormat} ${IMAGE_PATHS} ${MATH_BLOCK} -o "\${outputPath}" -t docx`,
-    customArguments: OBSIDIAN_SYNTAX,
+    customArguments: `${OBSIDIAN_SYNTAX} ${WORD_STYLES}`,
     extension: '.docx',
   },
   'OpenOffice': {
