@@ -444,40 +444,100 @@
 
 /*
  * Template modal.
+ *
+ * The modal's class is written twice in every rule below. Obsidian rules a line
+ * above each `.setting-item` and a theme may draw more on top of that, and a
+ * plain `.ex-template-modal .setting-item` weighs exactly as much as the
+ * `.modal .setting-item` sort of selector both of them reach these rows with —
+ * so which one wins comes down to the order the stylesheets happen to load,
+ * which is not something a plugin gets to decide. Repeating the class settles
+ * it. It is the same trick `.ex-setting-item.ex-setting-item` plays above.
  */
 
 /*
- * The title row carries the output picker at its end. Obsidian's close button
- * sits over the modal's top right corner rather than in this row, so the row
- * has to leave it the space.
+ * Nothing in here carries a line it was not given below. This is the one reset;
+ * every line in the modal is drawn by a rule after it.
+ *
+ * Two rules, because Obsidian 1.13 draws the divider between rows twice over: a
+ * border on some of them and a `::before` on the rest. Blanking the borders
+ * alone leaves half the lines exactly where they were, which is what the rows
+ * rendered into the settings tab ran into as well — see the same pair above.
  */
-.ex-template-modal .modal-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--size-4-4);
+.ex-template-modal.ex-template-modal .setting-item,
+.ex-template-modal.ex-template-modal .setting-item-heading,
+.ex-template-modal.ex-template-modal .ex-collapsible,
+.ex-template-modal.ex-template-modal .modal-content,
+.ex-template-modal.ex-template-modal .modal-button-container {
+  border: none;
+}
+
+.ex-template-modal.ex-template-modal .setting-item::before,
+.ex-template-modal.ex-template-modal .modal-button-container::before {
+  content: none;
+}
+
+/* Obsidian's close button sits over the modal's top right corner rather than in
+   the title row, so the row has to leave it the space. */
+.ex-template-modal.ex-template-modal .modal-title {
   padding-inline-end: var(--size-4-8);
 }
 
-.ex-template-modal-output {
-  flex: 0 1 auto;
-  min-width: 0;
-}
-
-/* The title's own size and weight are not a control's. */
-.ex-template-modal .modal-title select.dropdown {
-  max-width: 100%;
-  font-size: var(--font-ui-small);
-  font-weight: var(--font-normal);
+/*
+ * Cards, not rules.
+ *
+ * Every option is a bordered box holding its own label, description and
+ * control, and a group of options is one box around several. Nothing in the
+ * modal is separated by a line: the boxes do the separating, and a stack of
+ * them reads as a list of answers rather than as a page chopped into stripes.
+ */
+.ex-template-modal.ex-template-modal .setting-item,
+.ex-template-modal.ex-template-modal .ex-card {
+  margin-bottom: var(--size-4-2);
+  padding: var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--setting-items-radius);
+  background: var(--setting-items-background);
 }
 
 /*
- * No rules between the rows. Every field already sits under its own label with
- * space around it, so the divider Obsidian draws between settings only chops
- * the modal into stripes — the spacing does the separating.
+ * What a card holds is spaced rather than boxed again — one box around the
+ * group, plain rows inside it.
+ *
+ * The spacing goes on the rows and not as a `gap` on what holds them:
+ * `Collapsible` hides a panel with a `display` that a `display: flex` set here
+ * would outrank, and the panel would never close again.
  */
-.ex-template-modal .setting-item {
-  border-top: none;
+.ex-template-modal.ex-template-modal .ex-card .setting-item {
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+}
+
+.ex-template-modal.ex-template-modal .ex-card .setting-item + .setting-item,
+.ex-template-modal.ex-template-modal .ex-card .ex-collapsible > .setting-item {
+  margin-top: var(--size-4-3);
+}
+
+/*
+ * The name and the format the template writes share a row, read left to right:
+ * the name takes whatever room is left over, the picker only what it needs.
+ */
+.ex-template-modal.ex-template-modal .setting-item.ex-template-modal-name > .setting-item-control {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.ex-template-modal.ex-template-modal .setting-item.ex-template-modal-name > .setting-item-control > input[type='text'] {
+  flex: 1 1 auto;
+}
+
+.ex-template-modal.ex-template-modal .setting-item.ex-template-modal-name > .setting-item-control > select.dropdown {
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 40%;
 }
 
 /*
@@ -485,34 +545,44 @@
  * modal — a pandoc command line does not fit the sliver at the end of a row.
  * Toggles are left alone: an answer of that size belongs beside its question.
  */
-.ex-template-modal .setting-item:not(.mod-toggle):not(.setting-item-heading) {
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--size-4-2);
+.ex-template-modal.ex-template-modal .setting-item:not(.mod-toggle):not(.setting-item-heading) {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--setting-items-padding-x);
+    margin-bottom: 12px;
+    background: var(--setting-items-background);
+    border-radius: var(--setting-items-radius);
 }
 
-.ex-template-modal .setting-item:not(.mod-toggle) > .setting-item-info {
+/*
+ * Headings are left alone along with the toggles: a section's name and the
+ * chevron that opens it share a line, and a control given the full width would
+ * leave the name a sliver to be cut short in.
+ */
+.ex-template-modal.ex-template-modal .setting-item:not(.mod-toggle):not(.setting-item-heading) > .setting-item-info {
   margin-right: 0;
 }
 
-.ex-template-modal .setting-item:not(.mod-toggle) > .setting-item-control {
+.ex-template-modal.ex-template-modal .setting-item:not(.mod-toggle):not(.setting-item-heading) > .setting-item-control {
   width: 100%;
   justify-content: flex-start;
 }
 
-.ex-template-modal .setting-item:not(.mod-toggle) > .setting-item-control > input[type='text'],
-.ex-template-modal .setting-item:not(.mod-toggle) > .setting-item-control > select,
-.ex-template-modal .setting-item:not(.mod-toggle) > .setting-item-control > textarea {
+.ex-template-modal.ex-template-modal .setting-item:not(.mod-toggle) > .setting-item-control > input[type='text'],
+.ex-template-modal.ex-template-modal .setting-item:not(.mod-toggle) > .setting-item-control > select,
+.ex-template-modal.ex-template-modal .setting-item:not(.mod-toggle) > .setting-item-control > textarea {
   flex: 1;
   width: 100%;
   min-width: 0;
 }
 
 /*
- * A bordered card of checkboxes — the heading levels a table of contents
- * reaches, and the lua filters a template runs. Both are a set of things that
- * are either on or off, and both read better all at once than through a
- * dropdown that shows one answer at a time.
+ * A grid of checkboxes — the heading levels a table of contents reaches, and
+ * the lua filters a template runs. Both are a set of things that are either on
+ * or off, and both read better all at once than through a dropdown that shows
+ * one answer at a time. The box it is drawn in here is its own; in the template
+ * modal the row's card is usually the box, and the rule below takes this one
+ * back off.
  *
  * `auto-fit` rather than `auto-fill`: with only a few boxes the columns stretch
  * to fill the card instead of leaving a stretch of empty grid to their right.
@@ -566,14 +636,74 @@
   color: var(--text-faint);
 }
 
-/* A field the row above asks the question for: it closes up against it rather
-   than keeping the gap the other rows have. */
-.ex-template-modal .setting-item.ex-template-modal-nameless {
-  padding-top: 0;
+/*
+ * The grid keeps its columns and loses its box wherever the row it sits in is a
+ * card of its own — one box drawn inside another is a border for nothing. In a
+ * card, where the rows are plain, it keeps the box: a set of ten checkboxes
+ * needs something holding it together.
+ */
+.ex-template-modal.ex-template-modal .ex-check-grid {
+  padding: 0;
+  border: none;
+  background: none;
 }
 
-.ex-template-modal .ex-template-modal-nameless > .setting-item-info {
+.ex-template-modal.ex-template-modal .ex-card .ex-check-grid {
+  padding: var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+/* A field the row above asks the question for: it closes up against it rather
+   than keeping the space between rows. */
+.ex-template-modal.ex-template-modal .ex-card .ex-collapsible > .setting-item.ex-template-modal-nameless {
+  margin-top: var(--size-4-2);
+}
+
+.ex-template-modal.ex-template-modal .ex-template-modal-nameless > .setting-item-info {
   display: none;
+}
+
+/*
+ * The advanced panel is a card like any other group: the heading that opens it
+ * and everything it opens are in the one box, so a closed section is a single
+ * band and an open one is plainly one thing rather than a run of loose rows.
+ */
+
+/* The whole heading is the button, not the chevron at its end. */
+.ex-template-modal.ex-template-modal .ex-section-header {
+  cursor: var(--cursor);
+}
+
+.ex-template-modal.ex-template-modal .ex-section-header:hover .setting-item-name {
+  color: var(--text-normal);
+}
+
+/* Reached by tab as well as by mouse, so it has to show where the tab landed. */
+.ex-template-modal.ex-template-modal .ex-section-header:focus-visible {
+  border-radius: var(--radius-s);
+  box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+  outline: none;
+}
+
+/*
+ * Points down at what it opens, and turns to point at the heading once there is
+ * nothing below it — the panel's own 180ms, so the two move together.
+ */
+.ex-section-chevron {
+  display: flex;
+  color: var(--text-muted);
+  transition: transform 180ms ease-in-out;
+}
+
+.ex-section:not(.is-open) .ex-section-chevron {
+  transform: rotate(-90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ex-section-chevron {
+    transition: none;
+  }
 }
 
 /*

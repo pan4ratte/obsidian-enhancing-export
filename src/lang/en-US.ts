@@ -99,6 +99,10 @@ export default {
       short_subsuperscripts: 'Short sub/superscripts',
     },
 
+    /* The one folded panel in the template editor: everything the format allows
+       but few templates change. */
+    advanced: 'Advanced',
+
     /* Writes `--toc --toc-depth=N` into the template's extra arguments. */
     tableOfContents: 'Table of contents',
     tableOfContentsDesc: 'Headings down to the deepest level ticked. Tick nothing for no contents.',

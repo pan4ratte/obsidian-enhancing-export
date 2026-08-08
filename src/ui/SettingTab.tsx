@@ -60,9 +60,20 @@ import { MessageBox } from './message_box';
 import Modal from './components/Modal';
 import Button from './components/Button';
 import Collapsible from './components/Collapsible';
+import Section from './components/Section';
 import Setting, { Text, Toggle, ExtraButton, DropDown, TextArea } from './components/Setting';
 import export_templates from '../export_templates';
 import { BUNDLED_LUA_FILES } from '../resources';
+
+/**
+ * Whether the template editor's advanced section stands open.
+ *
+ * Module scope, and so remembered for as long as the plugin is loaded: the
+ * modal is built afresh on every open, and opening the same panel back up each
+ * time would be a chore of its own. It is deliberately not written to
+ * `data.json` — where someone is looking is not a setting.
+ */
+const [advancedOpen, setAdvancedOpen] = createSignal(false);
 
 const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
   const { plugin, lang } = props;
@@ -209,21 +220,22 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     <>
       <Modal
         app={app}
-        title={
-          <>
-            <span>{lang.settingTab.editCommandTemplate}</span>
-            {/* The picker rides in the title row, so it needs to say what it picks
-            on its own. */}
-            <span class="ex-template-modal-output" title={lang.settingTab.templateOutput}>
-              <DropDown options={outputOptions} selected={currentOutput()} onChange={setCurrentOutput} />
-            </span>
-          </>
-        }
+        title={lang.settingTab.editCommandTemplate}
         classList={{ 'ex-template-modal': true }}
         onClose={() => setModal(undefined)}
       >
-        <Setting name={lang.settingTab.name}>
+        {/* What a template is called and what it writes are the one answer, so
+            they share a row. The picker says what it picks on its own, since the
+            label beside it asks for the name. */}
+        <Setting name={lang.settingTab.name} class="ex-template-modal-name">
           <Text value={currentEditCommandTemplate()?.name ?? ''} onChange={renameCurrentCommandTemplate} />
+          <DropDown
+            options={outputOptions}
+            selected={currentOutput()}
+            title={lang.settingTab.templateOutput}
+            autofocus={false}
+            onChange={setCurrentOutput}
+          />
         </Setting>
 
         <Switch>
@@ -455,31 +467,31 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
       )
     );
 
+    /**
+     * Whether the advanced panel has anything to ask this writer. Every row in
+     * it is gated on the format, so a writer that answers none of them would
+     * otherwise be given a heading over an empty panel.
+     */
+    const hasAdvanced = () =>
+      numbering().length > 0 ||
+      supportsTopLevelDivision(format()) ||
+      supportsHighlighting(format()) ||
+      supportsMathMethod(format()) ||
+      isPdfOutput(format());
+
+    /*
+     * The rows a template is usually opened for come first, under its name and
+     * in plain sight. Everything a format allows but few templates use is folded
+     * away into one panel below them — one fold, not five, so the modal is a
+     * short list rather than a stack of headings. The command line stays where
+     * it can be read at the foot of it.
+     */
     return (
       <>
-        <Setting name={lang.settingTab.arguments}>
-          <Text style="width: 100%" value={template()?.arguments ?? ''} onChange={value => updateTemplate(v => (v.arguments = value))} />
-        </Setting>
-        <Setting name={lang.settingTab.extraArguments}>
-          <Text
-            style="width: 100%"
-            value={template()?.customArguments ?? ''}
-            title={template()?.customArguments}
-            onChange={value => updateTemplate(v => (v.customArguments = value))}
-          />
-        </Setting>
-
-        {/* Writes the extra arguments above: ticking a box puts `-f
-            ${fromFormat}+extension` in that line. Every extension offered is one
-            pandoc leaves off, so a cleared box is the reader's own behaviour. */}
-        <Setting name={lang.settingTab.extensions} description={lang.settingTab.extensionsDesc}>
-          <CheckGrid items={extensions()} onToggle={toggleExtension} />
-        </Setting>
-
         {/* Only for the writers that would do something with it — asking man or
             textile for a table of contents changes nothing at all. */}
         <Show when={supportsToc(format())}>
-          <Setting name={lang.settingTab.tableOfContents} description={lang.settingTab.tableOfContentsDesc}>
+          <Setting name={lang.settingTab.tableOfContents} description={lang.settingTab.tableOfContentsDesc} class="ex-template-modal-toc">
             <CheckGrid
               items={tocLevels()}
               onToggle={(value, checked) =>
@@ -491,69 +503,9 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
           </Setting>
         </Show>
 
-        {/* The rest of the writer options, each shown only where it would do
-            something — the sets they are gated on are the manual's own. */}
-        <Show when={numbering().length > 0}>
-          <Setting name={lang.settingTab.numbering} description={lang.settingTab.numberingDesc}>
-            <CheckGrid items={numbering()} onToggle={toggleNumbering} />
-          </Setting>
-        </Show>
-
-        {/* Once there is numbering for it to offset, and only in the two formats
-            pandoc says it reaches. */}
-        <Collapsible when={supportsNumberOffset(format()) && numberSections(args())}>
-          <Setting name={lang.settingTab.numberOffset} description={lang.settingTab.numberOffsetDesc}>
-            <Text value={numberOffset(args()) ?? ''} placeholder="0" onChange={value => writeArgs(a => setNumberOffset(a, value))} />
-          </Setting>
-        </Collapsible>
-
-        <Show when={supportsTopLevelDivision(format())}>
-          <Setting name={lang.settingTab.topLevelDivision} description={lang.settingTab.topLevelDivisionDesc}>
-            <DropDown
-              options={divisionOptions}
-              selected={topLevelDivision(args()) ?? ''}
-              autofocus={false}
-              onChange={value => writeArgs(a => setTopLevelDivision(a, value))}
-            />
-          </Setting>
-        </Show>
-
-        <Show when={supportsHighlighting(format())}>
-          <Setting name={lang.settingTab.syntaxHighlighting} description={lang.settingTab.syntaxHighlightingDesc}>
-            <DropDown
-              options={highlightOptions()}
-              selected={highlightStyle(args()) ?? ''}
-              autofocus={false}
-              onChange={value => writeArgs(a => setHighlightStyle(a, value))}
-            />
-          </Setting>
-        </Show>
-
-        <Show when={supportsMathMethod(format())}>
-          <Setting name={lang.settingTab.math} description={lang.settingTab.mathDesc}>
-            <DropDown
-              options={mathOptions}
-              selected={mathMethod(args()) ?? ''}
-              autofocus={false}
-              onChange={value => writeArgs(a => setMathMethod(a, value))}
-            />
-          </Setting>
-        </Show>
-
-        <Show when={isPdfOutput(format())}>
-          <Setting name={lang.settingTab.pdfEngine} description={lang.settingTab.pdfEngineDesc}>
-            <DropDown
-              options={engineOptions()}
-              selected={pdfEngine(args()) ?? ''}
-              autofocus={false}
-              onChange={value => writeArgs(a => setPdfEngine(a, value))}
-            />
-          </Setting>
-        </Show>
-
-        {/* Writes that same field: adding a filter appends its `--lua-filter`
-            flag to it. */}
-        <Setting name={lang.settingTab.luaFilters}>
+        {/* Writes the extra arguments: adding a filter appends its
+            `--lua-filter` flag to them. */}
+        <Setting name={lang.settingTab.luaFilters} class="ex-template-modal-filters">
           <TemplateLuaFilters
             lang={lang}
             installed={settings.installedLuaFilters ?? []}
@@ -564,14 +516,111 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
           />
         </Setting>
 
-        <Setting name={lang.settingTab.runCommand}>
-          <Toggle checked={template()?.runCommand} onChange={checked => updateTemplate(v => (v.runCommand = checked))} />
+        {/* Writes that same field: ticking a box puts `-f
+            ${fromFormat}+extension` in it. Every extension offered is one pandoc
+            leaves off, so a cleared box is the reader's own behaviour. */}
+        <Setting name={lang.settingTab.extensions} description={lang.settingTab.extensionsDesc} class="ex-template-modal-extensions">
+          <CheckGrid items={extensions()} onToggle={toggleExtension} />
         </Setting>
-        <Collapsible when={template()?.runCommand}>
-          <Setting class="ex-template-modal-nameless">
-            <Text style="width: 100%" value={template()?.command ?? ''} onChange={value => updateTemplate(v => (v.command = value))} />
+
+        <Show when={hasAdvanced()}>
+          <Section name={lang.settingTab.advanced} class="ex-template-modal-advanced" open={advancedOpen()} onToggle={setAdvancedOpen}>
+            <Show when={numbering().length > 0}>
+              <Setting name={lang.settingTab.numbering} description={lang.settingTab.numberingDesc} class="ex-template-modal-numbering">
+                <CheckGrid items={numbering()} onToggle={toggleNumbering} />
+              </Setting>
+            </Show>
+
+            {/* Once there is numbering for it to offset, and only in the two
+                formats pandoc says it reaches. */}
+            <Collapsible when={supportsNumberOffset(format()) && numberSections(args())} class="ex-template-modal-offset-panel">
+              <Setting
+                name={lang.settingTab.numberOffset}
+                description={lang.settingTab.numberOffsetDesc}
+                class="ex-template-modal-number-offset"
+              >
+                <Text value={numberOffset(args()) ?? ''} placeholder="0" onChange={value => writeArgs(a => setNumberOffset(a, value))} />
+              </Setting>
+            </Collapsible>
+
+            <Show when={supportsTopLevelDivision(format())}>
+              <Setting
+                name={lang.settingTab.topLevelDivision}
+                description={lang.settingTab.topLevelDivisionDesc}
+                class="ex-template-modal-division"
+              >
+                <DropDown
+                  options={divisionOptions}
+                  selected={topLevelDivision(args()) ?? ''}
+                  autofocus={false}
+                  onChange={value => writeArgs(a => setTopLevelDivision(a, value))}
+                />
+              </Setting>
+            </Show>
+
+            <Show when={supportsHighlighting(format())}>
+              <Setting
+                name={lang.settingTab.syntaxHighlighting}
+                description={lang.settingTab.syntaxHighlightingDesc}
+                class="ex-template-modal-highlight"
+              >
+                <DropDown
+                  options={highlightOptions()}
+                  selected={highlightStyle(args()) ?? ''}
+                  autofocus={false}
+                  onChange={value => writeArgs(a => setHighlightStyle(a, value))}
+                />
+              </Setting>
+            </Show>
+
+            <Show when={supportsMathMethod(format())}>
+              <Setting name={lang.settingTab.math} description={lang.settingTab.mathDesc} class="ex-template-modal-math">
+                <DropDown
+                  options={mathOptions}
+                  selected={mathMethod(args()) ?? ''}
+                  autofocus={false}
+                  onChange={value => writeArgs(a => setMathMethod(a, value))}
+                />
+              </Setting>
+            </Show>
+
+            <Show when={isPdfOutput(format())}>
+              <Setting name={lang.settingTab.pdfEngine} description={lang.settingTab.pdfEngineDesc} class="ex-template-modal-pdf-engine">
+                <DropDown
+                  options={engineOptions()}
+                  selected={pdfEngine(args()) ?? ''}
+                  autofocus={false}
+                  onChange={value => writeArgs(a => setPdfEngine(a, value))}
+                />
+              </Setting>
+            </Show>
+          </Section>
+        </Show>
+
+        <Setting name={lang.settingTab.arguments} class="ex-template-modal-arguments">
+          <Text style="width: 100%" value={template()?.arguments ?? ''} onChange={value => updateTemplate(v => (v.arguments = value))} />
+        </Setting>
+        <Setting name={lang.settingTab.extraArguments} class="ex-template-modal-extra-arguments">
+          <Text
+            style="width: 100%"
+            value={template()?.customArguments ?? ''}
+            title={template()?.customArguments}
+            onChange={value => updateTemplate(v => (v.customArguments = value))}
+          />
+        </Setting>
+
+        {/* The toggle and the field it reveals are one answer, so they share one
+            card rather than standing as two. */}
+        <div class="ex-card ex-template-modal-run">
+          <Setting name={lang.settingTab.runCommand} class="ex-template-modal-run-toggle">
+            <Toggle checked={template()?.runCommand} onChange={checked => updateTemplate(v => (v.runCommand = checked))} />
           </Setting>
-        </Collapsible>
+          <Collapsible when={template()?.runCommand} class="ex-template-modal-run-panel">
+            <Setting class="ex-template-modal-command ex-template-modal-nameless">
+              <Text style="width: 100%" value={template()?.command ?? ''} onChange={value => updateTemplate(v => (v.command = value))} />
+            </Setting>
+          </Collapsible>
+        </div>
       </>
     );
   };
@@ -583,16 +632,16 @@ const SettingTab = (props: { lang: Lang; plugin: UniversalExportPlugin }) => {
     };
     return (
       <>
-        <Setting name={lang.settingTab.command}>
+        <Setting name={lang.settingTab.command} class="ex-template-modal-custom-command">
           <Text style="width: 100%" value={template()?.command ?? ''} onChange={value => updateTemplate(v => (v.command = value))} />
         </Setting>
-        <Setting name={lang.settingTab.targetFileExtensions}>
+        <Setting name={lang.settingTab.targetFileExtensions} class="ex-template-modal-target-extensions">
           <Text value={template()?.targetFileExtensions ?? ''} onChange={value => updateTemplate(v => (v.targetFileExtensions = value))} />
         </Setting>
 
         {/* The counterpart of the pandoc block's run-command toggle: a custom
           template is a command, and this is the only word it says back. */}
-        <Setting name={lang.settingTab.showCommandOutput}>
+        <Setting name={lang.settingTab.showCommandOutput} class="ex-template-modal-show-output">
           <Toggle
             checked={template()?.showCommandOutput ?? false}
             onChange={checked => updateTemplate(v => (v.showCommandOutput = checked))}

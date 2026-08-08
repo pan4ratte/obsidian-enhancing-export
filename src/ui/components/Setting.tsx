@@ -164,6 +164,8 @@ export const TextArea = (props: {
 export const DropDown = (props: {
   options: { name?: string; value: string }[];
   selected?: string;
+  /** Said where the row's own label asks for something else. */
+  title?: string;
   /**
    * A dropdown claims the focus by default — it is the one control a dialog
    * opened for it is about. One of several rows in a form says otherwise.
@@ -173,7 +175,12 @@ export const DropDown = (props: {
 }) => {
   return (
     <>
-      <select class="dropdown" onChange={e => props.onChange?.(e.target.value, e.target.selectedIndex)} autofocus={props.autofocus ?? true}>
+      <select
+        class="dropdown"
+        title={props.title}
+        onChange={e => props.onChange?.(e.target.value, e.target.selectedIndex)}
+        autofocus={props.autofocus ?? true}
+      >
         <For each={props.options}>
           {item => (
             <option value={item.value} selected={item.value === props.selected}>
