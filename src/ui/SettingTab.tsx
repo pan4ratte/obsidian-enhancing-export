@@ -18,7 +18,14 @@ import TemplateActions from './TemplateActions';
 import TemplateTable from './TemplateTable';
 import LuaFilterStore from './LuaFilterStore';
 import EnvVars, { addEnvFolder } from './EnvVars';
-import { LuaFilterManager, addLuaFilterArg, hasLuaFilterArg, removeLuaFilterArg, type InstalledLuaFilter } from '../lua_filters';
+import {
+  LuaFilterManager,
+  addLuaFilterArg,
+  hasLuaFilterArg,
+  orderLuaFilters,
+  removeLuaFilterArg,
+  type InstalledLuaFilter,
+} from '../lua_filters';
 import TemplateLuaFilters from './TemplateLuaFilters';
 import CheckGrid from './components/CheckGrid';
 import StepSlider from './components/StepSlider';
@@ -700,16 +707,19 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
     /** The line pandoc is given, assembled as `exportNote` assembles it. The `${...}` are
         left standing: they are filled in at export from a note that does not exist yet. */
     const resultingCommand = createMemo(() =>
-      [
-        pandoc.normalizePath(getPlatformValue(settings.pandocPath)),
-        '"${currentPath}"',
-        template()?.arguments,
-        template()?.customArguments,
-        template()?.userArguments,
-      ]
-        .map(part => part?.trim())
-        .filter(part => part)
-        .join(' ')
+      // Assembled as `exportNote` assembles it, filters put in their running order and all.
+      orderLuaFilters(
+        [
+          pandoc.normalizePath(getPlatformValue(settings.pandocPath)),
+          '"${currentPath}"',
+          template()?.arguments,
+          template()?.customArguments,
+          template()?.userArguments,
+        ]
+          .map(part => part?.trim())
+          .filter(part => part)
+          .join(' ')
+      )
     );
 
     /** The same command, one option a line — for reading only; the single line gets copied. */

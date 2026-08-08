@@ -320,7 +320,13 @@ export const setPdfEngine = (args: string | undefined, engine: string): string =
 
 /* -- Citations ------------------------------------------------------------ */
 
-/** `-C` is pandoc's short form; the long one is what gets written. */
+/**
+ * `-C` is pandoc's short form; the long one is what gets written.
+ *
+ * Where it lands on the line does not matter, unlike a filter's: `--citeproc` runs after every `--lua-filter`
+ * whatever order they are written in — the positional form is `--filter citeproc`, which is a separate program and
+ * not what this writes.
+ */
 const CITEPROC = ['--citeproc', '-C'] as const;
 const BIBLIOGRAPHY = '--bibliography';
 const CSL = '--csl';

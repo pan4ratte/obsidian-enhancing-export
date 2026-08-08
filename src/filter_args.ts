@@ -1,4 +1,4 @@
-import { addLuaFilterArg, hasLuaFilterArg, removeLuaFilterArg } from './lua_filters';
+import { EMBEDS_FILTER, addLuaFilterArg, hasLuaFilterArg, removeLuaFilterArg } from './lua_filters';
 
 /* The filters the plugin ships with, read out of and written into a template's extra arguments. */
 
@@ -9,7 +9,7 @@ export const FILTERS = {
   listStyles: 'list-styles.lua',
   keywords: 'keywords.lua',
   today: 'today.lua',
-  embeds: 'embeds.lua',
+  embeds: EMBEDS_FILTER,
 } as const;
 
 /* -- The primitives ------------------------------------------------------- */

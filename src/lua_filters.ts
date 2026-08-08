@@ -79,6 +79,45 @@ export const addLuaFilterArg = (args: string | undefined, fileName: string) => {
   return current.includes(arg) ? current : `${current} ${arg}`;
 };
 
+/**
+ * The filter that writes transcluded notes into the document. Named here because where it stands among the others is
+ * not a matter of taste — see `orderLuaFilters`.
+ */
+export const EMBEDS_FILTER = 'embeds.lua';
+
+/** A lua filter on the command line, in every spelling pandoc takes for one. */
+const LUA_FILTER_FLAG = /(?:--lua-filter|-L)[= ]("[^"]*"|[^\s"]+)/g;
+
+/** Whether a matched flag is the embeds filter, whatever folder it was found in. */
+const namesEmbeds = (value: string) => {
+  const file = value.replace(/"/g, '');
+  return file === EMBEDS_FILTER || file.endsWith(`/${EMBEDS_FILTER}`) || file.endsWith(`\\${EMBEDS_FILTER}`);
+};
+
+/**
+ * `command` with the embeds filter ahead of every other lua filter.
+ *
+ * Pandoc runs filters in the order they are written, and this one is not one among equals: it reads the transcluded
+ * notes and parses them into the document, so every filter after it sees that writing and every filter before it
+ * sees a broken image where a page should be. The order it ends up in otherwise is an accident — the presets put it
+ * first, but a row toggled off and on again appends it, and the preset's own filters are on the line before the
+ * rows' are. The one rule is applied where the command is assembled, so what the preview shows is what runs.
+ */
+export const orderLuaFilters = (command: string) => {
+  const flags = [...command.matchAll(LUA_FILTER_FLAG)];
+  const first = flags[0];
+  const embeds = flags.find(flag => namesEmbeds(flag[1]));
+  if (!first || !embeds || first.index === embeds.index) {
+    return command;
+  }
+  // Cut where it stands, taking one space with it, then put it back in front of the first filter — which is earlier
+  // in the line, so the cut leaves its offset where it was.
+  const before = command.slice(0, embeds.index);
+  const after = command.slice(embeds.index + embeds[0].length);
+  const cut = after.startsWith(' ') ? before + after.slice(1) : before.replace(/ $/, '') + after;
+  return `${cut.slice(0, first.index)}${embeds[0]} ${cut.slice(first.index)}`;
+};
+
 /** `args` with the filter taken out, and the gap it left closed up. */
 export const removeLuaFilterArg = (args: string | undefined, fileName: string) => {
   if (!args) {

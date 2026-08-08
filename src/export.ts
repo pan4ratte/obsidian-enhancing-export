@@ -12,6 +12,7 @@ import ProgressBar from './ui/components/ProgressBar';
 import { describeExportFailure } from './export_error';
 import type PandocGuiPlugin from './main';
 import pandoc from './pandoc';
+import { orderLuaFilters } from './lua_filters';
 
 export async function exportNote(
   plugin: PandocGuiPlugin,
@@ -202,13 +203,16 @@ export async function exportNote(
     }
   }
 
-  // Later options win, so least specific first: preset, editor rows, then hand-typed.
+  // Later options win, so least specific first: preset, editor rows, then hand-typed. Filters are the exception —
+  // they run where they stand, so `orderLuaFilters` has the last word on the one whose place is not negotiable.
   const cmdTpl =
     setting.type === 'pandoc'
-      ? [pandocPath, '"${currentPath}"', setting.arguments, setting.customArguments, setting.userArguments]
-          .map(part => part?.trim())
-          .filter(Boolean)
-          .join(' ')
+      ? orderLuaFilters(
+          [pandocPath, '"${currentPath}"', setting.arguments, setting.customArguments, setting.userArguments]
+            .map(part => part?.trim())
+            .filter(Boolean)
+            .join(' ')
+        )
       : setting.command;
 
   const cmd = renderTemplate(cmdTpl, variables);
