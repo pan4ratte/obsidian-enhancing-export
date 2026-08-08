@@ -91,11 +91,11 @@ export default class PandocGuiPlugin extends Plugin {
     settings.items.forEach(v => {
       Object.assign(v, Object.assign({}, DEFAULT_SETTINGS.items.find(o => o.name === v.name) ?? {}, v));
     });
-    // A bundled template is stored as only its diff from the default, so one no longer
-    // seeded leaves a husk with nothing to run. User-made templates carry their own fields.
+    // A bundled template is stored as only its diff from the default, so one no longer seeded leaves a husk with
+    // nothing to run.
     settings.items = settings.items.filter(v => v.type);
-    // A filter that used to come from the store and now ships with the plugin: drop the
-    // claim that the user installed it, which would list it as theirs to uninstall.
+    // A filter that used to come from the store and now ships with the plugin: drop the claim that the user installed
+    // it, which would list it as theirs to uninstall.
     if (settings.installedLuaFilters?.some(f => BUNDLED_LUA_FILES.includes(f.fileName))) {
       settings.installedLuaFilters = settings.installedLuaFilters.filter(f => !BUNDLED_LUA_FILES.includes(f.fileName));
     }

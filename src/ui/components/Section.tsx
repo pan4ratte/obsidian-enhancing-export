@@ -2,17 +2,7 @@ import { JSX, Show } from 'solid-js';
 import Collapsible from './Collapsible';
 import Icon from './Icon';
 
-/**
- * A named group of settings that folds away.
- *
- * The heading is Obsidian's own, made into a button: the whole row is the hit
- * area, and the chevron turns to say which way the section is about to go. What
- * it holds is a `Collapsible`, so a section grows and shrinks rather than making
- * the rows below it jump.
- *
- * Whether it is open is the caller's to keep. A section is not a setting — it is
- * where someone happens to be looking — so nothing here writes to `data.json`.
- */
+/** A named group of settings that folds away. */
 export default (props: {
   name: string;
   description?: string;
@@ -21,9 +11,8 @@ export default (props: {
   open?: boolean;
   onToggle?: (open: boolean) => void;
   /**
-   * Controls in the header, beside the chevron — for something the section is
-   * about that is worth doing without opening it. A click on one is stopped from
-   * reaching the header, since the whole row is the toggle.
+   * Controls in the header, beside the chevron — for something the section is about that is worth doing without
+   * opening it.
    */
   actions?: JSX.Element;
   children?: JSX.Element;
@@ -31,8 +20,7 @@ export default (props: {
   const toggle = () => props.onToggle?.(!props.open);
 
   return (
-    // `class` before `classList`: the two are applied in that order, so the
-    // string cannot take `is-open` back off.
+    // `class` before `classList`: the two are applied in that order, so the string cannot take `is-open` back off.
     <div class={`ex-section ex-card ${props.class ?? ''}`.trimEnd()} classList={{ 'is-open': props.open }}>
       <div
         class="setting-item setting-item-heading ex-section-header"

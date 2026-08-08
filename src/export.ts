@@ -42,9 +42,7 @@ export async function exportNote(
     showOverwriteConfirmation = globalSetting.showOverwriteConfirmation;
   }
 
-  // Template variables, for `/User/aaa/Documents/test.pdf`: `${outputDir}` is the folder,
-  // `${outputPath}` the whole path, `${outputFileName}` is `test`, `${outputFileFullName}`
-  // is `test.pdf`. The `current*` set says the same of the note being exported.
+  // The `${...}` a template can use — see the `Variables` interface in settings.ts.
   const vaultDir = adapter.getBasePath();
   const pluginDir = `${vaultDir}/${manifest.dir}`;
   const luaDir = `${pluginDir}/lua`;
@@ -94,8 +92,6 @@ export async function exportNote(
   const embedDirs = targetDirArray.join(path.delimiter);
 
   // Every embedded note, transitively, as the written link against the file it means.
-  // Only Obsidian can resolve a link, so the plugin resolves and the filter substitutes.
-  // Notes only — an embedded image is pandoc's business, found through the resource path.
   const noteEmbeds = new Map<string, string>();
   const walkedForEmbeds = new Set<string>([currentFile.path]);
   const collectNoteEmbeds = (file: TFile, depth: number) => {
@@ -170,9 +166,7 @@ export async function exportNote(
 
   const env = (variables.env = createEnv(getPlatformValue(globalSetting.env) ?? {}, variables));
 
-  // The embed map goes to `embeds.lua` in the environment, not on the command line: a link
-  // is whatever someone typed. Set after `createEnv` so the template renderer skips it too.
-  // Windows caps a variable at 32k; what does not fit is left alone rather than truncated.
+  // The embed map goes to `embeds.lua` in the environment, not on the command line: a link is whatever someone typed.
   const EMBED_ENV_LIMIT = 30000;
   let embedLines = '';
   for (const [link, file] of noteEmbeds) {

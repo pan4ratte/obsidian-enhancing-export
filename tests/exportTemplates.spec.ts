@@ -5,13 +5,8 @@ import { DEFAULT_TEMPLATE_PRESETS } from '../src/settings';
 import { renderTemplate } from '../src/utils';
 
 /*
- * A preset is a command line with holes in it, and nothing type-checks the
- * holes: a variable that is never filled in, or an input file named twice,
- * reads perfectly well right up until pandoc is handed it.
- *
- * So every preset is rendered here the way `export.ts` renders it — the pandoc
- * path, the note, the preset's own arguments, then the extra ones — and held to
- * what a command line has to be.
+ * A preset is a command line with holes in it, and nothing type-checks the holes: a variable that is never filled in,
+ * or an input file named twice, reads perfectly well right up until pandoc is handed it.
  */
 
 const VARIABLES = {
@@ -53,12 +48,12 @@ const pandocPresets = Object.entries(export_templates)
 describe('every preset renders a command', () => {
   test.each(pandocPresets)('%s', preset => {
     const cmd = render(preset);
-    // A variable nothing filled in is left as `${name}` rather than throwing,
-    // so an unrenderable command reaches pandoc looking almost right.
+    // A variable nothing filled in is left as `${name}` rather than throwing, so an unrenderable command reaches
+    // pandoc looking almost right.
     expect(cmd).not.toMatch(/\$\{/);
     expect(cmd).toContain('-o "/out/');
-    // The note is an argument, not an option's value: naming it twice makes
-    // pandoc read it twice and write the document out doubled.
+    // The note is an argument, not an option's value: naming it twice makes pandoc read it twice and write the
+    // document out doubled.
     expect(cmd.split('"/vault/Notes/Note.md"')).toHaveLength(2);
   });
 
@@ -85,8 +80,8 @@ describe('what the defaults are', () => {
   });
 
   test('the list is shorter than the presets it is drawn from', () => {
-    // The point of the list: every format pandoc writes is still offered under
-    // *New template*, but an export dropdown opens with the ones people export.
+    // The point of the list: every format pandoc writes is still offered under *New template*, but an export dropdown
+    // opens with the ones people export.
     expect(DEFAULT_TEMPLATE_PRESETS.length).toBeLessThan(pandocPresets.length);
   });
 });
@@ -111,25 +106,22 @@ describe('the corrections these presets carry', () => {
 
   test("Obsidian's own markdown is read where a document is rendered for reading", () => {
     for (const preset of ['PDF', 'Word (.docx)', 'Html', 'Epub', 'Latex', 'Beamer slides (.pdf)']) {
-      // Last `-f` wins, so this is the one pandoc reads by — the preset's own
-      // `-f ${fromFormat}` stands ahead of it.
+      // Last `-f` wins, so this is the one pandoc reads by — the preset's own `-f ${fromFormat}` stands ahead of it.
       expect(render(preset)).toMatch(/-f markdown\+wikilinks_title_after_pipe\+mark$/);
     }
   });
 
   test('callouts are left to the extensions row, which is where the caveat belongs', () => {
-    // Measured, not assumed: pandoc's `alerts` reads `> [!NOTE]`, and Obsidian
-    // writes `> [!note]`, which it leaves as a plain blockquote. Switching it on
-    // by default would raise the pandoc every user needs to 3.2 for nothing.
+    // Measured, not assumed: pandoc's `alerts` reads `> [!NOTE]`, and Obsidian writes `> [!note]`, which it leaves as
+    // a plain blockquote.
     for (const preset of pandocPresets) {
       expect(render(preset)).not.toContain('+alerts');
     }
   });
 
   test('the lua filters named are ones the plugin still ships', () => {
-    // Read off the folder rather than listed here: a preset naming a filter
-    // that is not written to `lua/` fails every export it is used for, and a
-    // list in a test is one more thing to forget to update.
+    // Read off the folder rather than listed here: a preset naming a filter that is not written to `lua/` fails every
+    // export it is used for, and a list in a test is one more thing to forget to update.
     const shipped = readdirSync(path.join(__dirname, '..', 'lua-filters', 'bundled'));
     for (const preset of pandocPresets) {
       for (const [, file] of render(preset).matchAll(/--lua-filter="[^"]*\/([^"/]+)"/g)) {
@@ -139,9 +131,7 @@ describe('the corrections these presets carry', () => {
   });
 
   test('a note that embeds another is written out whole, wherever it is read', () => {
-    // Transclusion is Obsidian's own, and every format that renders a note for
-    // reading has to answer to it. The markdown writers deliberately do not:
-    // a vault-to-vault export keeps the embed as the embed it is.
+    // Transclusion is Obsidian's own, and every format that renders a note for reading has to answer to it.
     for (const preset of ['PDF', 'Word (.docx)', 'Html', 'Epub', 'Latex', 'Typst', 'PowerPoint (.pptx)']) {
       expect(render(preset)).toContain('embeds.lua');
     }

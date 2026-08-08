@@ -1,8 +1,8 @@
 import { describeExportFailure } from '../src/export_error';
 import { t } from '../src/lang/helpers';
 
-// Two things are tested: that the command line never reaches the box, and that the
-// errors people actually hit are recognised as themselves.
+// Two things are tested: that the command line never reaches the box, and that the errors people actually hit are
+// recognised as themselves.
 
 const hint = t.ERROR_HINTS;
 

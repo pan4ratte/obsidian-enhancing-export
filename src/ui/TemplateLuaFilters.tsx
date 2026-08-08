@@ -4,10 +4,7 @@ import { hasLuaFilterArg, type InstalledLuaFilter } from '../lua_filters';
 import { runsInFormat } from '../pandoc_format';
 import CheckGrid from './components/CheckGrid';
 
-/**
- * Which installed lua filters this template runs. Every filter on disk that can do
- * something for the template's output format is listed, ticked or not.
- */
+/** Which installed lua filters this template runs. */
 export default (props: {
   installed: InstalledLuaFilter[];
   format?: string;

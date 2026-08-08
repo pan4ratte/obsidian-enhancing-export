@@ -32,24 +32,9 @@ export function getPlatformValue<T>(obj: PlatformValue<T>, platform?: PlatformKe
   return val ?? all;
 }
 
-/** A template's placeholders take whatever the caller interpolates, so `any` is the type. */
-export function strTpl(strings: TemplateStringsArray, ...keys: number[]): (...values: any[]) => string {
-  return function (...values) {
-    const dict = values[values.length - 1] || {};
-    const result = [strings[0]];
-    keys.forEach(function (key, i) {
-      const value = Number.isInteger(key) ? values[key] : dict[key];
-      result.push(value, strings[i + 1]);
-    });
-    return result.join('');
-  };
-}
-
 export function exec(cmd: string, options?: ExecOptions): Promise<string> {
   return new Promise((resolve, reject) => {
-    // Naming the encoding picks the overload that hands back text rather than a
-    // Buffer. Every caller parses what comes out as a string, and `utf8` is what
-    // node would have defaulted to anyway.
+    // Naming the encoding picks the overload that returns text rather than a Buffer.
     node_exec(cmd, { ...options, encoding: 'utf8' }, (error, stdout, stderr) => {
       if (error) {
         reject(error);
@@ -61,8 +46,7 @@ export function exec(cmd: string, options?: ExecOptions): Promise<string> {
         console.error(stdout, error);
         return;
       }
-      // A developer's own debug switch, not vault data — so raw localStorage rather
-      // than `App#saveLocalStorage`, which would scope the flag to a single vault.
+      // A developer's switch, not vault data — raw localStorage, not `App#saveLocalStorage`.
       if (stdout?.trim().length === 0 && '1' === localStorage.getItem('debug-plugin')) {
         console.log(stdout);
       }
@@ -75,14 +59,7 @@ export function trimQuotes(s: string) {
   return (s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'")) ? s.substring(1, s.length - 1) : s;
 }
 
-/**
- * render template
- * @example
- * renderTemplate('Hi, ${name}', { name: 'John' }) // returns 'Hi, John'
- * @param template
- * @param variables
- * @returns {string}
- */
+/** `renderTemplate('Hi, ${name}', { name: 'John' })` returns `'Hi, John'`. */
 export function renderTemplate(template: string, variables: Record<string, unknown> = {}): string {
   while (true) {
     try {
@@ -114,8 +91,7 @@ const isVarName = (str: string) => {
   }
 
   try {
-    // Asking the engine whether a string is a legal identifier, which is the only
-    // thing that knows for certain. Nothing built here is ever called.
+    // Only the engine knows for certain what a legal identifier is. This is never called.
     new Function(str, 'var ' + str);
   } catch {
     return false;

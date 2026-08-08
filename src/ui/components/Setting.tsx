@@ -120,29 +120,25 @@ export const TextArea = (props: {
   let el!: HTMLTextAreaElement;
 
   // The height is measured, not chosen: it is however tall the text currently is.
-  // A stylesheet has no way to say that, which is why this function exists.
   const resize = () => {
     if (!props.autoSize) {
       return;
     }
-    // Nothing rendered has a height to read. `rows` below carries the field
-    // until it is on screen and can be measured for real.
+    // Nothing rendered has a height to read.
     if (el.getClientRects().length === 0) {
       el.style.height = '';
       return;
     }
-    // Measured with nothing of its own in the way; `scrollHeight` is content
-    // and padding, and a border-box height has to carry the border as well.
+    // Measured with nothing of its own in the way; `scrollHeight` is content and padding, and a border-box height has
+    // to carry the border as well.
     el.style.height = 'auto';
     const style = getComputedStyle(el);
     const border = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
     el.style.height = `${el.scrollHeight + border}px`;
   };
 
-  // Every way it can change: typed into, written from the settings, or brought
-  // on screen where it can finally be measured. `on` names those dependencies
-  // instead of reading them for their tracking side effect — the same thing to
-  // solid, and a good deal plainer to everyone else.
+  // Every way it can change: typed into, written from the settings, or brought on screen where it can finally be
+  // measured.
   createEffect(on([() => props.value, () => props.visible], resize));
 
   return (
@@ -150,8 +146,8 @@ export const TextArea = (props: {
       ref={el}
       class={props.class}
       placeholder={props.placeholder}
-      // A line per line, so a field that has never been on screen is still about
-      // the right height for whatever reveals it.
+      // A line per line, so a field that has never been on screen is still about the right height for whatever
+      // reveals it.
       rows={props.autoSize ? Math.max(1, props.value?.split('\n').length ?? 1) : undefined}
       readOnly={props.readOnly}
       spellcheck={props.spellcheck ?? false}
@@ -169,27 +165,16 @@ export const DropDown = (props: {
   selected?: string;
   /** Said where the row's own label asks for something else. */
   title?: string;
-  /**
-   * A dropdown claims the focus by default — it is the one control a dialog
-   * opened for it is about. One of several rows in a form says otherwise.
-   */
+  /** A dropdown claims the focus by default — it is the one control a dialog opened for it is about. */
   autofocus?: boolean;
   onChange?: (value: string, index: number) => void;
 }) => {
   let el!: HTMLSelectElement;
 
-  // Which option is standing, said to the element rather than left to the
-  // `selected` attributes below. That attribute only sets an option's *default*
-  // selectedness: once a select has been picked from, writing it again moves
-  // nothing, and a dropdown rewritten from the settings — a preset changed, an
-  // option cleared — would go on showing the answer it used to have. This runs
-  // after the options themselves have been updated, so there is always
-  // something for the value to land on.
+  // Which option is standing, said to the element rather than left to the `selected` attributes below.
   createEffect(() => {
-    // The options are read along with the value: which of them the value lands
-    // on is half of what decides whether the element is showing the right
-    // answer. `-1` — nothing matched — deselects, which is the honest thing to
-    // show for a value none of the options carries.
+    // The options are read along with the value: which of them the value lands on is half of what decides whether the
+    // element is showing the right answer.
     const index = props.options.findIndex(o => o.value === (props.selected ?? ''));
     if (el.selectedIndex !== index) {
       el.selectedIndex = index;

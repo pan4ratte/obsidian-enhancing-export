@@ -5,10 +5,7 @@ import type { SemVer } from 'semver';
 
 export const normalizePandocPath = (path?: string) => (path?.includes(' ') ? `"${path}"` : `${path ?? 'pandoc'}`);
 
-/**
- * Pandoc versions are not semver: they carry two components (`2.9`) or four
- * (`3.1.11.1`). Pad or trim them down to the three semver takes.
- */
+/** Pandoc versions are not semver: they carry two components (`2.9`) or four (`3.1.11.1`). */
 export function parsePandocVersion(version: string) {
   version = version.trim().replace(/^v/i, '');
   let dotCount = [...version].filter(c => c === '.').length;
@@ -31,23 +28,14 @@ export async function getPandocVersion(path?: string, env?: Record<string, strin
 }
 
 /**
- * What the last lookup was made with, so pointing the setting at a different
- * binary asks that one rather than reporting the previous one's version.
+ * What the last lookup was made with, so pointing the setting at a different binary asks that one rather than
+ * reporting the previous one's version.
  */
 let versionCache: { key: string; version: SemVer } | undefined;
 
 const versionCacheKey = (path?: string, env?: Record<string, string>) => JSON.stringify([path ?? '', env ?? {}]);
 
-/**
- * Installed pandoc's version, looked up once per session for any given binary.
- *
- * Running pandoc costs a process, and the settings tab asks every time it is
- * opened — but the answer only changes when the user installs or moves pandoc,
- * and moving it changes the path this is keyed by. Only an answer is cached: a
- * lookup that threw or produced nothing leaves the cache empty, so the next
- * time the settings are opened it tries again. That is the case worth retrying,
- * being the one where the user has gone off to install pandoc.
- */
+/** Installed pandoc's version, looked up once per session for any given binary. */
 export async function getCachedPandocVersion(path?: string, env?: Record<string, string>) {
   const key = versionCacheKey(path, env);
   if (versionCache?.key === key) {
@@ -75,16 +63,16 @@ export interface PandocRelease {
 }
 
 /**
- * Pandoc ships a few times a year, so one lookup per plugin session is plenty
- * and leaves GitHub's unauthenticated rate limit alone.
+ * Pandoc ships a few times a year, so one lookup per plugin session is plenty and leaves GitHub's unauthenticated
+ * rate limit alone.
  */
 const RELEASE_CACHE_TTL = 6 * 60 * 60 * 1000;
 
 let releaseCache: { fetchedAt: number; release: PandocRelease } | undefined;
 
 /**
- * Newest release published on the official repository, or `undefined` when it
- * cannot be determined (offline, rate limited, unparsable tag).
+ * Newest release published on the official repository, or `undefined` when it cannot be determined (offline, rate
+ * limited, unparsable tag).
  */
 export async function getLatestPandocRelease(): Promise<PandocRelease | undefined> {
   if (releaseCache && Date.now() - releaseCache.fetchedAt < RELEASE_CACHE_TTL) {

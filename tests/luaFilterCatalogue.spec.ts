@@ -1,9 +1,4 @@
-/*
- * The store reads one catalogue, and every filter it offers is vendored beside
- * it in `lua-filters/`. Two things are worth holding: what the manager makes of
- * a catalogue it is handed, and that the catalogue in this repository actually
- * points at files that are in it.
- */
+/* The store reads one catalogue, and every filter it offers is vendored beside it in `lua-filters/`. */
 
 const requestUrlMock = jest.fn<Promise<{ json: unknown }>, [{ url: string }]>();
 
@@ -110,16 +105,16 @@ describe('the catalogue in this repository', () => {
 
   test('a filter written for particular outputs names families the editor knows', () => {
     const restricted = entries.filter(e => e.formats);
-    // A typo here would not fail anything — it would quietly hide the filter
-    // from every template, since no writer would ever match it.
+    // A typo here would not fail anything — it would quietly hide the filter from every template, since no writer
+    // would ever match it.
     for (const entry of restricted) {
       expect(entry.formats.length).toBeGreaterThan(0);
       for (const family of entry.formats) {
         expect(FORMAT_FAMILIES).toContain(family);
       }
     }
-    // The rest work on the document rather than the output; if that ever fell
-    // to nothing, the whole idea of narrowing by format would have gone wrong.
+    // The rest work on the document rather than the output; if that ever fell to nothing, the whole idea of narrowing
+    // by format would have gone wrong.
     expect(entries.length - restricted.length).toBeGreaterThan(restricted.length);
   });
 
@@ -134,10 +129,8 @@ describe('the catalogue in this repository', () => {
   });
 
   test('nothing offered answers to the name of a filter the plugin ships', () => {
-    // `bundled/` is written over the plugin's `lua/` on every load, so an entry
-    // taking one of those names could never stay installed. `fetchCatalogue`
-    // drops it silently — which is how a duplicate went unnoticed once — so the
-    // clash is caught here instead, where it can be named.
+    // `bundled/` is written over the plugin's `lua/` on every load, so an entry taking one of those names could never
+    // stay installed.
     const bundled = readdirSync(path.join(__dirname, '..', 'lua-filters', 'bundled')).filter(f => f.endsWith('.lua'));
     expect(bundled.length).toBeGreaterThan(0);
     const clashing = entries.filter(e => bundled.includes(e.fileName));

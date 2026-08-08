@@ -2,11 +2,6 @@
 
 Export notes with Pandoc without writing a command line. Every option Pandoc offers for the format you are exporting to is an ordinary Obsidian setting — page size, PDF engine, table of contents, citations, Word styles — and the command it builds is shown to you before it runs. Templates for Word, PDF, LaTeX, HTML, EPUB, slides, Markdown and a dozen more formats come ready to use, Obsidian's own syntax survives the trip, and a store of lua filters covers the rest.
 
-<div align="center">
-<br>
- <picture><source media="(prefers-color-scheme: dark)" srcset="https://www.shieldcn.dev/github/release/pan4ratte/obsidian-pandoc-gui.svg?size=sm&amp;mode=dark&amp;variant=outline"><img alt="Release" src="https://www.shieldcn.dev/github/release/pan4ratte/obsidian-pandoc-gui.svg?size=sm&amp;mode=light&amp;variant=outline"></picture> <a href="https://github.com/pan4ratte/obsidian-pandoc-gui/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/pan4ratte/obsidian-pandoc-gui/downloads.svg?variant=outline&amp;mode=dark"><img alt="Downloads" src="https://shieldcn.dev/github/pan4ratte/obsidian-pandoc-gui/downloads.svg?variant=outline&amp;mode=light"></picture></a> <a href="https://pandoc.org/"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/built%20on-pandoc.svg?variant=outline&amp;mode=dark"><img alt="Built on Pandoc" src="https://shieldcn.dev/badge/built%20on-pandoc.svg?variant=outline&amp;mode=light"></picture></a>
-</div>
-
 
 ## Features
 
@@ -55,7 +50,7 @@ The settings open on the installed Pandoc: its version, whether it is the newest
 
 ## Installation
 
-### Option 0: Pandoc itself
+### First of all, install Pandoc
 
 This plugin drives Pandoc; it does not contain it. Install Pandoc 3.1.9 or newer from [https://pandoc.org/installing.html](https://pandoc.org/installing.html) and either add it to your `PATH` or point the plugin at its folder in the settings. Exporting to PDF additionally needs a LaTeX distribution — MiKTeX or TeX Live — or one of Pandoc's other PDF engines.
 

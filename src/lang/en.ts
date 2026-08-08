@@ -52,7 +52,7 @@ export default {
   CHOOSE_FOLDER: 'Choose folder',
 
   // ─── Pandoc dashboard ────────────────────────────────────────────────────────
-  SETTING_HEADER: 'Pandoc GUI',
+  // The settings tab's own name is the manifest's, so it is not repeated here.
   PANDOC_DASHBOARD: 'Pandoc dashboard',
   PANDOC_VERSION: (version: string) => `Pandoc version: ${version}`,
   PANDOC_NOT_INSTALLED: 'Not installed',

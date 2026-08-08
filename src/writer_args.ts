@@ -1,18 +1,8 @@
 /*
- * The writer options a template carries, read out of and written into its extra
- * arguments.
- *
- * The extra arguments, not the arguments proper: those are rewritten wholesale
- * whenever the template's output format changes, and would take these options
- * with them — the same reason the table-of-contents flags and the lua-filter
- * flags live there. `toc_args.ts` is this same idea for `--toc`; it was written
- * first and is left where it is.
- *
- * Reading is deliberately more forgiving than writing. A template may have been
- * typed by hand, so every spelling pandoc accepts is understood — `-N`, `--lof`,
- * a space-separated `--highlight-style kate`, a `--mathjax=URL` naming a build
- * of its own — while what is written back is always one settled form. Where an
- * option can be given twice pandoc takes the last, and so do these readers.
+ * The writer options a template carries, read out of and written into its *extra* arguments —
+ * the arguments proper are rewritten wholesale on every format change and would take these
+ * with them. Reading is more forgiving than writing: every spelling pandoc accepts is
+ * understood, and the last of a repeated option wins, as it does for pandoc.
  */
 
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -29,11 +19,7 @@ const written = (names: Names) => (typeof names === 'string' ? names : names[0])
 /** An option under all the names pandoc answers to for it, longest form first. */
 type Names = string | readonly string[];
 
-/**
- * Flags with nothing after them, as one alternation. The lookahead is what
- * keeps `--lof` from matching the front of a longer flag — the same trick
- * `toc_args` plays to keep `--toc` out of `--toc-depth`.
- */
+/** Flags with nothing after them, as one alternation. */
 const flagsPattern = (names: Names) => String.raw`(?:^|\s)(?:${alternation(names)})(?=\s|$)`;
 
 /** A flag carrying a value: `--pdf-engine=xelatex`, `--highlight-style kate`. */
@@ -68,11 +54,7 @@ const valueOf = (args: string | undefined, name: Names): string | undefined => {
   return found === undefined ? undefined : unquote(found);
 };
 
-/**
- * `args` with `name` set to `value`, or taken back out at undefined. Whatever
- * was there before is replaced rather than added to, so the option can never
- * end up in the line twice.
- */
+/** `args` with `name` set to `value`, or taken back out at undefined. */
 const setValue = (args: string | undefined, name: Names, value?: string): string => {
   const stripped = without(args, optionPattern(name));
   return value ? append(stripped, `${written(name)}=${quote(value)}`) : stripped;
@@ -87,8 +69,8 @@ const setPresence = (args: string | undefined, names: Names, on: boolean): strin
 };
 
 /**
- * A switch in all three spellings pandoc 3 takes: `--section-divs`, and the
- * `=true` and `=false` that let a later option undo an earlier one.
+ * A switch in all three spellings pandoc 3 takes: `--section-divs`, and the `=true` and `=false` that let a later
+ * option undo an earlier one.
  */
 const switchPattern = (names: Names) => String.raw`(?:^|\s)(?:${alternation(names)})(?:=(true|false))?(?=\s|$)`;
 
@@ -98,14 +80,7 @@ const switchValue = (args: string | undefined, names: Names): boolean | undefine
   return found ? found[1] !== 'false' : undefined;
 };
 
-/**
- * `args` saying a switch is `on`, against a default of `byDefault`.
- *
- * Agreeing with the default is written as nothing at all: pandoc does that
- * already, and a line says more when it holds only what was asked for. The
- * default is not always pandoc's own — where the arguments proper already ask
- * for the option, theirs is the default this one has to differ from.
- */
+/** `args` saying a switch is `on`, against a default of `byDefault`. */
 const setSwitch = (args: string | undefined, names: Names, on: boolean, byDefault = false): string => {
   const stripped = without(args, switchPattern(names));
   return on === byDefault ? stripped : append(stripped, on ? written(names) : `${written(names)}=false`);
@@ -127,20 +102,19 @@ export const numberSections = (args?: string): boolean => has(args, NUMBER_SECTI
 
 export const setNumberSections = (args: string | undefined, on: boolean): string => {
   const next = setPresence(args, NUMBER_SECTIONS, on);
-  // An offset is only ever an offset into numbering, and pandoc reads one as
-  // asking for numbering — left behind, it would switch straight back on.
+  // An offset is only ever an offset into numbering, and pandoc reads one as asking for numbering — left behind, it
+  // would switch straight back on.
   return on ? next : setValue(next, NUMBER_OFFSET);
 };
 
 /**
- * Where the numbering starts: pandoc's comma-separated list of per-level
- * offsets, `5` for a first heading numbered 6, `1,4` for one numbered 1.5.
+ * Where the numbering starts: pandoc's comma-separated list of per-level offsets, `5` for a first heading numbered 6,
+ * `1,4` for one numbered 1.5.
  */
 export const numberOffset = (args?: string): string | undefined => valueOf(args, NUMBER_OFFSET);
 
 export const setNumberOffset = (args: string | undefined, offset: string): string => {
-  // Digits and the commas between them, which is all pandoc accepts. An empty
-  // field takes the option out rather than writing `--number-offset=`.
+  // Digits and the commas between them, which is all pandoc accepts.
   const cleaned = offset
     .replace(/[^\d,]/g, '')
     .replace(/,{2,}/g, ',')
@@ -150,10 +124,7 @@ export const setNumberOffset = (args: string | undefined, offset: string): strin
 
 /* -- Reading the note ----------------------------------------------------- */
 
-/*
- * Options pandoc applies as it reads the note, before any writer sees it. None
- * of them is asked of a format, because all of them reach every format.
- */
+/* Options pandoc applies as it reads the note, before any writer sees it. */
 
 const TAB_STOP = '--tab-stop';
 const STRIP_COMMENTS = '--strip-comments';
@@ -173,11 +144,8 @@ export const setStripComments = (args: string | undefined, on: boolean): string 
 const SHIFT_HEADING_LEVEL_BY = '--shift-heading-level-by';
 
 /**
- * How far the note's headings move on the way out: `1` makes an `#` into an `##`,
- * `-1` promotes it and turns a single top-level heading into the document title.
- *
- * Pandoc reaches six levels either way, and a `0` is the default said out loud —
- * both are written as no option at all.
+ * How far the note's headings move on the way out: `1` makes an `#` into an `##`, `-1` promotes it and turns a single
+ * top-level heading into the document title.
  */
 export const SHIFT_HEADING_LEVELS = [-3, -2, -1, 1, 2, 3] as const;
 
@@ -202,11 +170,7 @@ export const setListOfTables = (args: string | undefined, on: boolean): string =
 
 /* -- Top-level division --------------------------------------------------- */
 
-/**
- * What a level-1 heading becomes. Pandoc's own answer is spelled `default`, and
- * is written as no option at all — the same thing, and one less thing in a line
- * the user reads.
- */
+/** What a level-1 heading becomes. */
 export const TOP_LEVEL_DIVISIONS = ['section', 'chapter', 'part'] as const;
 export type TopLevelDivision = (typeof TOP_LEVEL_DIVISIONS)[number];
 
@@ -224,14 +188,7 @@ export const setTopLevelDivision = (args: string | undefined, division: string):
 
 /* -- Code highlighting ---------------------------------------------------- */
 
-/**
- * The styles pandoc ships, `pygments` — its own default — first.
- *
- * Pandoc now spells this option `--syntax-highlighting=STYLE|none` and calls
- * the older pair deprecated, but deprecated is not gone, and the older pair is
- * all a pandoc before 3.7 understands. So both spellings are read, and the ones
- * every version takes are what get written.
- */
+/** The styles pandoc ships, `pygments` — its own default — first. */
 export const HIGHLIGHT_STYLES = ['pygments', 'tango', 'espresso', 'zenburn', 'kate', 'monochrome', 'breezedark', 'haddock'] as const;
 
 /** Highlighting switched off, as against left to pandoc — that is `undefined`. */
@@ -239,11 +196,7 @@ export const HIGHLIGHT_NONE = 'none';
 
 const HIGHLIGHT = String.raw`(?:^|\s)(?:(--no-highlight)|(?:--highlight-style|--syntax-highlighting)[= ]${VALUE})(?=\s|$)`;
 
-/**
- * The style asked for, `HIGHLIGHT_NONE`, or undefined where pandoc is left to
- * itself. A value none of `HIGHLIGHT_STYLES` names is a theme file of the
- * user's own, and is given back as it stands rather than thrown away.
- */
+/** The style asked for, `HIGHLIGHT_NONE`, or undefined where pandoc is left to itself. */
 export const highlightStyle = (args?: string): string | undefined => {
   const found = lastMatch(args, HIGHLIGHT);
   if (!found) {
@@ -264,21 +217,13 @@ export const setHighlightStyle = (args: string | undefined, style: string): stri
 /* -- Math ----------------------------------------------------------------- */
 
 /**
- * How TeX math reaches HTML.
- *
- * Three of these may carry a URL naming the build to load — the Html preset pins
- * one that way — and it is read and written as a field of its own, since nothing
- * else in the modal could say it. The URL belongs to the method that reads it, so
- * changing the method drops it: a MathJax build is no use to KaTeX.
+ * How TeX math reaches HTML. Three of these may carry a URL naming the build to load — the Html preset pins one that
+ * way — and it is read and written as a field of its own, since nothing else in the modal could say it.
  */
 export const MATH_METHODS = ['mathjax', 'katex', 'mathml', 'webtex', 'gladtex'] as const;
 export type MathMethod = (typeof MATH_METHODS)[number];
 
-/**
- * The three that load something from somewhere. `--mathml` writes the markup
- * itself and `--gladtex` leaves the work to a program that runs afterwards, so
- * neither has a URL to be given.
- */
+/** The three that load something from somewhere. */
 const MATH_URL_METHODS: readonly MathMethod[] = ['mathjax', 'katex', 'webtex'];
 
 export const takesMathUrl = (method?: string): boolean => MATH_URL_METHODS.includes(method as MathMethod);
@@ -314,12 +259,7 @@ export const setMathUrl = (args: string | undefined, url: string): string => {
 
 const TEMPLATE = '--template';
 
-/**
- * A layout of the user's own, in place of pandoc's built-in one for the writer.
- *
- * The counterpart of `--reference-doc`, and no writer takes both: the word
- * processors are laid out by a document, everything else by a template.
- */
+/** A layout of the user's own, in place of pandoc's built-in one for the writer. */
 export const templateFile = (args?: string): string | undefined => valueOf(args, TEMPLATE);
 
 export const setTemplateFile = (args: string | undefined, file: string): string => setValue(args, TEMPLATE, file || undefined);
@@ -328,12 +268,7 @@ export const setTemplateFile = (args: string | undefined, file: string): string 
 
 const SYNTAX_DEFINITION = ['--syntax-definition', '--syntax-highlighting'] as const;
 
-/**
- * A KDE XML syntax file, teaching the highlighter a language it does not know.
- *
- * `--syntax-highlighting` is pandoc's newer spelling of the same option and is
- * read as well, the way every other option here answers to all its names.
- */
+/** A KDE XML syntax file, teaching the highlighter a language it does not know. */
 export const syntaxDefinition = (args?: string): string | undefined => valueOf(args, SYNTAX_DEFINITION);
 
 export const setSyntaxDefinition = (args: string | undefined, file: string): string => setValue(args, SYNTAX_DEFINITION, file || undefined);
@@ -351,8 +286,8 @@ export const eol = (args?: string): string | undefined => valueOf(args, EOL);
 export const setEol = (args: string | undefined, mode: string): string => setValue(args, EOL, mode || undefined);
 
 /**
- * Whether anything outside ASCII is escaped rather than written as itself —
- * entities in HTML and XML, commands in LaTeX, hexadecimal in roff.
+ * Whether anything outside ASCII is escaped rather than written as itself — entities in HTML and XML, commands in
+ * LaTeX, hexadecimal in roff.
  */
 export const ascii = (args?: string): boolean => switchValue(args, ASCII) ?? false;
 
@@ -360,10 +295,7 @@ export const setAscii = (args: string | undefined, on: boolean): string => setSw
 
 /* -- PDF engine ----------------------------------------------------------- */
 
-/**
- * The engines pandoc names, likeliest first. Anything else is a program of the
- * user's own — a path, or an engine newer than this list — and is kept.
- */
+/** The engines pandoc names, likeliest first. */
 export const PDF_ENGINES = [
   'pdflatex',
   'xelatex',
@@ -397,17 +329,12 @@ export const citeproc = (args?: string): boolean => has(args, CITEPROC);
 
 export const setCiteproc = (args: string | undefined, on: boolean): string => {
   const next = setPresence(args, CITEPROC, on);
-  // Neither file does anything by itself — both only set a metadata field that
-  // citeproc goes on to read — and the rows they are typed into are hidden
-  // along with the toggle. Left behind they would be answers nobody can see.
+  // Neither file does anything by itself — both only set a metadata field that citeproc goes on to read — and the
+  // rows they are typed into are hidden along with the toggle.
   return on ? next : setValue(setValue(next, CSL), BIBLIOGRAPHY);
 };
 
-/**
- * The references citeproc reads. Pandoc takes this option more than once and
- * reads every file named; the modal asks for one, so a line naming several is
- * read as the last of them and settles to that one when the row is changed.
- */
+/** The references citeproc reads. */
 export const bibliography = (args?: string): string | undefined => valueOf(args, BIBLIOGRAPHY);
 
 export const setBibliography = (args: string | undefined, file: string): string => setValue(args, BIBLIOGRAPHY, file || undefined);
@@ -438,9 +365,8 @@ export const setCss = (args: string | undefined, file: string): string => setVal
 /* -- Include files -------------------------------------------------------- */
 
 /**
- * Files copied into the written document verbatim — a LaTeX preamble, a script
- * in an HTML head, a footer under the body. Each implies `--standalone`, which
- * every shipped template already asks for.
+ * Files copied into the written document verbatim — a LaTeX preamble, a script in an HTML head, a footer under the
+ * body.
  */
 const INCLUDE_IN_HEADER = ['--include-in-header', '-H'] as const;
 const INCLUDE_BEFORE_BODY = ['--include-before-body', '-B'] as const;
@@ -463,9 +389,8 @@ export const setIncludeAfterBody = (args: string | undefined, file: string): str
 export type Pair = { key: string; value: string };
 
 /**
- * A `key=value` after `-V`, quoted whole (`-V "mainfont=PT Serif"`), quoted in
- * part (`-V mainfont="PT Serif"`) or not at all. Unlike every other value here
- * it is one token made of several, since the quotes may fall anywhere in it.
+ * A `key=value` after `-V`, quoted whole (`-V "mainfont=PT Serif"`), quoted in part (`-V mainfont="PT Serif"`) or not
+ * at all.
  */
 const PAIR = String.raw`((?:"[^"]*"|[^\s"])+)`;
 
@@ -480,13 +405,7 @@ const readPair = (token: string): Pair => {
 
 const writePair = ({ key, value }: Pair) => quote(value ? `${key}=${value}` : key);
 
-/**
- * The readers and writers a repeatable `KEY=VALUE` option needs.
- *
- * `-V` and `-M` are what get written, against the long forms every other option
- * here settles to: `--variable=fontsize=12pt` carries two `=` and reads as a
- * puzzle, and the short form is what pandoc's own documentation uses.
- */
+/** The readers and writers a repeatable `KEY=VALUE` option needs. */
 const pairOption = (names: readonly string[]) => {
   const pattern = pairPattern(names);
 
@@ -514,8 +433,10 @@ const pairOption = (names: readonly string[]) => {
       const stripped = strip(args, k => k === key);
       return value ? add(stripped, [{ key, value }]) : stripped;
     },
-    /** The line rewritten to `pairs`, less the keys `keep` names — those are
-        written by rows of their own and are left exactly as they were found. */
+    /**
+     * The line rewritten to `pairs`, less the keys `keep` names — those are written by rows of their own and are left
+     * exactly as they were found.
+     */
     setAll: (args: string | undefined, pairs: readonly Pair[], keep: readonly string[] = []): string => {
       const stripped = strip(args, k => !keep.includes(k));
       return add(
@@ -539,12 +460,7 @@ export const metadataValue = METADATA.valueOf;
 export const setMetadataValue = METADATA.set;
 export const setMetadata = METADATA.setAll;
 
-/**
- * The variables the modal asks for by name, each with a row of its own. Every
- * other one is typed into the list, which leaves these alone — see `setAll`.
- *
- * Which writers read which of them is `pandoc_format`'s to say.
- */
+/** The variables the modal asks for by name, each with a row of its own. */
 export const CURATED_VARIABLES = ['papersize', 'fontsize', 'mainfont', 'geometry', 'linkcolor', 'lang'] as const;
 
 export type CuratedVariable = (typeof CURATED_VARIABLES)[number];
@@ -567,15 +483,7 @@ export const textFromPairs = (pairs: readonly Pair[]): string =>
 
 /* -- The command, for reading --------------------------------------------- */
 
-/**
- * The command's tokens, in the order pandoc reads them.
- *
- * Whitespace separates them, except where it falls inside a quoted string or a
- * `${...}` substitution: the PDF and Latex presets carry a whole conditional in
- * one of those, spaces and quotes and all, and splitting it would make nonsense
- * of it. Nesting is counted rather than matched loosely, since a substitution
- * holds substitutions of its own.
- */
+/** The command's tokens, in the order pandoc reads them. */
 const commandTokens = (command: string): string[] => {
   const tokens: string[] = [];
   let token = '';
@@ -591,8 +499,8 @@ const commandTokens = (command: string): string[] => {
 
   for (let i = 0; i < command.length; i += 1) {
     const char = command[i];
-    // Everything up to the closing quote belongs to the token, `}` included —
-    // a brace inside a path is not the end of a substitution.
+    // Everything up to the closing quote belongs to the token, `}` included — a brace inside a path is not the end of
+    // a substitution.
     if (quoted) {
       token += char;
       quoted = char !== '"';
@@ -624,15 +532,7 @@ const commandTokens = (command: string): string[] => {
   return tokens;
 };
 
-/**
- * The command as one line an option — the form it is read in, not the form it is
- * run in.
- *
- * A line starts at each `-` flag and carries whatever follows it that is not a
- * flag of its own, so an option and its value stay together. A `${...}` standing
- * on its own gets a line too, unless the flag before it is bare and so takes it
- * as its value: `-o "${outputPath}"` is one option, not two.
- */
+/** The command as one line an option — the form it is read in, not the form it is run in. */
 export const commandLines = (command: string): string[] => {
   const tokens = commandTokens(command);
   return tokens.reduce<string[]>((lines, token, i) => {
@@ -656,13 +556,7 @@ export const FONT_SIZES = ['10pt', '11pt', '12pt'] as const;
 
 /* -- The written source --------------------------------------------------- */
 
-/**
- * How the lines of the written file are broken.
- *
- * Pandoc's own answer is `auto`, written as no option at all. `none` puts each
- * paragraph on one line, which is what a document kept under version control
- * usually wants; `preserve` keeps the breaks the note itself had.
- */
+/** How the lines of the written file are broken. */
 export const WRAP_MODES = ['none', 'preserve'] as const;
 
 const WRAP = '--wrap';
@@ -714,10 +608,7 @@ export const incremental = (args?: string): boolean => switchValue(args, INCREME
 
 export const setIncremental = (args: string | undefined, on: boolean): string => setSwitch(args, INCREMENTAL, on);
 
-/**
- * The heading level that starts a new slide. Pandoc works one out from the
- * document unless told, and `0` says that no heading starts one.
- */
+/** The heading level that starts a new slide. */
 export const SLIDE_LEVELS = ['0', '1', '2', '3'] as const;
 
 const SLIDE_LEVEL = '--slide-level';
@@ -757,14 +648,7 @@ export const splitLevel = (args?: string): string | undefined => valueOf(args, S
 
 export const setSplitLevel = (args: string | undefined, level: string): string => setValue(args, SPLIT_LEVEL, digits(level) || undefined);
 
-/**
- * The folder inside the EPUB container the contents are put in. Pandoc's own
- * answer is `EPUB`, written as no option at all.
- *
- * Pandoc reads an empty string here as "put them at the top level", which an
- * empty field cannot say — an empty field is the default, as everywhere else in
- * the modal. A reader that needs the top level says so in the extra arguments.
- */
+/** The folder inside the EPUB container the contents are put in. */
 export const epubSubdirectory = (args?: string): string | undefined => valueOf(args, EPUB_SUBDIRECTORY);
 
 export const setEpubSubdirectory = (args: string | undefined, name: string): string =>
@@ -781,21 +665,13 @@ export const EMAIL_OBFUSCATIONS = ['none', 'javascript', 'references'] as const;
 
 const EMAIL_OBFUSCATION = '--email-obfuscation';
 
-/**
- * Whether the page carries its own images, styles and scripts.
- *
- * Read across both lines rather than out of the extra arguments alone: the
- * shipped Html template asks for this in the arguments proper, and a row that
- * could not see it would report a self-contained page as a page of loose
- * files. Writing is `setEmbedResources`, which is told the same thing.
- */
+/** Whether the page carries its own images, styles and scripts. */
 export const embedResources = (...args: (string | undefined)[]): boolean => switchValue(joined(args), EMBED_RESOURCES) ?? false;
 
 /**
- * `inherited` is what the arguments proper already say, so a template whose
- * preset embeds resources writes nothing to say so — and writes
- * `--embed-resources=false` to say otherwise, which is how pandoc is told to
- * undo an option given earlier in the same line.
+ * `inherited` is what the arguments proper already say, so a template whose preset embeds resources writes nothing to
+ * say so — and writes `--embed-resources=false` to say otherwise, which is how pandoc is told to undo an option given
+ * earlier in the same line.
  */
 export const setEmbedResources = (args: string | undefined, on: boolean, inherited = false): string =>
   setSwitch(args, EMBED_RESOURCES, on, inherited);
@@ -820,11 +696,7 @@ export const setIdPrefix = (args: string | undefined, prefix: string): string =>
 const EXTRACT_MEDIA = '--extract-media';
 const DPI = '--dpi';
 
-/**
- * The folder the images are written out to. Read across both lines, as
- * `embedResources` is: the shipped Latex template extracts media in the
- * arguments proper.
- */
+/** The folder the images are written out to. */
 export const extractMedia = (...args: (string | undefined)[]): string | undefined => valueOf(joined(args), EXTRACT_MEDIA);
 
 export const setExtractMedia = (args: string | undefined, dir: string): string => setValue(args, EXTRACT_MEDIA, dir || undefined);

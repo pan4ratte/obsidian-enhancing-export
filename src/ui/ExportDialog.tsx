@@ -19,14 +19,13 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
 
   const [hidden, setHidden] = createSignal(false);
   const [showOverwriteConfirmation, setShowOverwriteConfirmation] = createSignal(globalSetting.showOverwriteConfirmation);
-  // The template last exported with, where it is still a template: it is remembered
-  // by name, and a deleted or renamed one would leave this pointing at nothing.
+  // The template last exported with, where it is still a template: it is remembered by name, and a deleted or renamed
+  // one would leave this pointing at nothing.
   const [exportType, setExportType] = createSignal(
     globalSetting.items.find(o => o.name === globalSetting.lastExportType)?.name ?? globalSetting.items.first()?.name
   );
   const setting = createMemo(() => globalSetting.items.find(o => o.name === exportType()) ?? globalSetting.items.first());
   const extension = createMemo(() => (setting() ? extractExtension(setting()) : ''));
-
 
   const [candidateOutputDirectory, setCandidateOutputDirectory] = createSignal(
     `${getPlatformValue(globalSetting.lastExportDirectory) ?? ct.remote.app.getPath('documents')}`

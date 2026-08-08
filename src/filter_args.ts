@@ -1,24 +1,6 @@
 import { addLuaFilterArg, hasLuaFilterArg, removeLuaFilterArg } from './lua_filters';
 
-/*
- * The filters the plugin ships with, read out of and written into a template's
- * extra arguments.
- *
- * Each of these solves a problem that belongs to exporting an Obsidian note
- * rather than to pandoc — a picture that lands in body text, a table whose
- * cells ignore the table style, a list whose bullets ignore Word's list style,
- * an embedded note that arrives as a broken image. Pandoc has no option for any
- * of them: only a filter can rewrite the document that far. So the filters are
- * the plugin's own, shipped in `lua-filters/bundled` and written to `lua/` on
- * load, and this module is what the template editor's rows read and write —
- * exactly as `toc_args` is for `--toc` and `writer_args` for the rest.
- *
- * A row is two things on the command line: the `--lua-filter` that runs the
- * filter, and a `-M` field or two that configures it. Both are written here so
- * a row is one answer, and a filter's own default is written as nothing at all
- * — it is what the filter does anyway, and the line says more when it holds
- * only what was asked for.
- */
+/* The filters the plugin ships with, read out of and written into a template's extra arguments. */
 
 /** The bundled filters a row can run, by the name they are written under. */
 export const FILTERS = {
@@ -51,14 +33,7 @@ const metadata = (args: string | undefined, key: string): string | undefined => 
   return last ? unquote(last[1]) : undefined;
 };
 
-/**
- * `args` with `key` set to `value`, or taken back out at undefined. Whatever
- * was there before is replaced rather than added to, so the field can never end
- * up in the line twice.
- *
- * `always` quotes a value that does not look as though it needs it — for a
- * `${…}` that is a date by the time pandoc reads it, and dates have spaces.
- */
+/** `args` with `key` set to `value`, or taken back out at undefined. */
 const setMetadata = (args: string | undefined, key: string, value?: string, always = false): string => {
   const stripped = tidy((args ?? '').replace(new RegExp(metaPattern(key), 'g'), ' '));
   if (value === undefined) {
@@ -72,9 +47,8 @@ const setMetadata = (args: string | undefined, key: string, value?: string, alwa
 const runs = (args: string | undefined, filter: string) => hasLuaFilterArg(args, filter);
 
 /**
- * `args` running `filter` or not, with every field `keys` names cleared when it
- * is switched off — a field configuring a filter that is not running is an
- * answer to a question nobody can see.
+ * `args` running `filter` or not, with every field `keys` names cleared when it is switched off — a field configuring
+ * a filter that is not running is an answer to a question nobody can see.
  */
 const setRuns = (args: string | undefined, filter: string, on: boolean, keys: readonly string[] = []): string => {
   if (on) {
@@ -93,13 +67,7 @@ export const FIGURE_DEFAULT_STYLE = 'Figure';
 
 const FIGURE_STYLE = 'figure-style';
 
-/**
- * The paragraph style `args` gives captionless images, or undefined where it
- * leaves them alone.
- *
- * The filter is what does the styling, so the filter is what says whether this
- * is on at all; a style named without it is a metadata field nothing reads.
- */
+/** The paragraph style `args` gives captionless images, or undefined where it leaves them alone. */
 export const figureStyle = (args?: string): string | undefined =>
   runs(args, FILTERS.figures) ? (metadata(args, FIGURE_STYLE) ?? FIGURE_DEFAULT_STYLE) : undefined;
 
@@ -130,10 +98,7 @@ export const setTableStyle = (args: string | undefined, style?: string): string 
   return setMetadata(setRuns(args, FILTERS.tableStyles, true), TABLE_STYLE, name === TABLE_DEFAULT_STYLE ? undefined : name);
 };
 
-/**
- * The style header cells take, where they are to differ from the rest. Empty
- * means what the filter does on its own: the same style as the body cells.
- */
+/** The style header cells take, where they are to differ from the rest. */
 export const tableHeadStyle = (args?: string): string | undefined =>
   runs(args, FILTERS.tableStyles) ? metadata(args, TABLE_HEAD_STYLE) : undefined;
 
@@ -149,13 +114,7 @@ export const listStyles = (args?: string): boolean => runs(args, FILTERS.listSty
 
 export const setListStyles = (args: string | undefined, on: boolean): string => setRuns(args, FILTERS.listStyles, on, [FLATTEN_ORDERED]);
 
-/**
- * Whether numbered lists are styled the same way as bullets.
- *
- * They cannot both take their look from the style and restart at 1 — the
- * numbering that restarts them is pandoc's own, and it is what overrides the
- * style. So this is a choice, and the row that offers it says so.
- */
+/** Whether numbered lists are styled the same way as bullets. */
 export const flattenOrdered = (args?: string): boolean => listStyles(args) && metadata(args, FLATTEN_ORDERED) === 'true';
 
 export const setFlattenOrdered = (args: string | undefined, on: boolean): string =>
@@ -178,13 +137,7 @@ export const setKeywordsTitle = (args: string | undefined, title?: string): stri
 
 /* -- Today's date --------------------------------------------------------- */
 
-/**
- * The forms today's date can take. Not pandoc's business and not the filter's:
- * `export.ts` writes the date itself, in the language Obsidian is set to, and
- * offers each form as a variable. The row picks which variable to write, so the
- * command shown in the editor says exactly what will be substituted, and a
- * language the plugin has never heard of costs nothing.
- */
+/** The forms today's date can take. */
 export const TODAY_FORMATS = ['long', 'medium', 'short', 'iso'] as const;
 
 export type TodayFormat = (typeof TODAY_FORMATS)[number];
@@ -194,8 +147,8 @@ export const TODAY_DEFAULT_FORMAT: TodayFormat = 'long';
 const TODAY = 'today';
 
 /**
- * Written without a template literal so the `$` is plainly not this file's to
- * interpolate: it is filled in at export time, like `${luaDir}` in a filter flag.
+ * Written without a template literal so the `$` is plainly not this file's to interpolate: it is filled in at export
+ * time, like `${luaDir}` in a filter flag.
  */
 const todayVariable = (format: TodayFormat) => '${today.' + format + '}';
 

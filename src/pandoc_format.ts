@@ -1,14 +1,6 @@
 import type { CuratedVariable } from './writer_args';
 
-/*
- * What a template writes, and what that writer can be asked to do.
- *
- * The output format is read back out of the arguments rather than taken from
- * the preset: the preset is only what the template started as, and the `-t` in
- * the arguments is what pandoc will actually be told. Later options win, so the
- * last one on the line is the answer — which is why the caller passes every part
- * of the line, in the order pandoc is given them.
- */
+/* What a template writes, and what that writer can be asked to do. */
 
 /** The `-t`/`--to` a template ends up passing, without any `+extensions`. */
 export const outputFormat = (...args: (string | undefined)[]): string | undefined => {
@@ -18,16 +10,14 @@ export const outputFormat = (...args: (string | undefined)[]): string | undefine
       writer = found;
     }
   }
-  // `commonmark_x-attributes` is the commonmark_x writer; no writer's own name
-  // carries a `+` or `-`, so the first one starts the extension list.
+  // `commonmark_x-attributes` is the commonmark_x writer; no writer's own name carries a `+` or `-`, so the first one
+  // starts the extension list.
   return writer?.toLowerCase().split(/[+-]/)[0] || undefined;
 };
 
 /**
- * Writers that ignore `--toc`, measured against pandoc 3.10 by writing the same
- * document with and without it and comparing the results. Everything not named
- * here produces a table of contents, so a writer this list has never heard of
- * is given the benefit of the doubt.
+ * Writers that ignore `--toc`, measured against pandoc 3.10 by writing the same document with and without it and
+ * comparing the results.
  */
 const TOC_UNSUPPORTED = new Set([
   'ansi',
@@ -70,16 +60,7 @@ const TOC_UNSUPPORTED = new Set([
 /** Whether asking this writer for a table of contents would do anything. */
 export const supportsToc = (writer?: string): boolean => !!writer && !TOC_UNSUPPORTED.has(writer);
 
-/*
- * The rest of the writer options the template modal offers.
- *
- * `--toc` is listed by what does *not* take it, because nearly everything does.
- * These are the other way round: the manual names a handful of formats for each
- * one, so a writer not named is not offered the option at all rather than given
- * the benefit of the doubt and left to ignore it quietly. Each list is the
- * manual's, plus the other spellings of the same writer pandoc answers to —
- * `html5`, `epub3`, and `pdf`, which is LaTeX unless the engine says otherwise.
- */
+/* The rest of the writer options the template modal offers. */
 const supportedBy = (writers: readonly string[]) => {
   const supported = new Set(writers);
   return (writer?: string): boolean => !!writer && supported.has(writer);
@@ -111,11 +92,7 @@ export const supportsSectionLists = supportedBy(['latex', 'pdf', 'context', 'doc
 /** `--top-level-division`, honoured "in LaTeX, ConTeXt, DocBook, and TEI output". */
 export const supportsTopLevelDivision = supportedBy(['latex', 'pdf', 'context', 'docbook', 'docbook4', 'docbook5', 'tei']);
 
-/**
- * The writers that colour code at all; the rest print it as it stands. Covers
- * `--syntax-definition` as well, which only teaches the highlighter a language
- * and so is a question exactly where highlighting is one.
- */
+/** The writers that colour code at all; the rest print it as it stands. */
 export const supportsHighlighting = supportedBy([
   'latex',
   'beamer',
@@ -141,9 +118,8 @@ export const supportsHighlighting = supportedBy([
 ]);
 
 /**
- * Where a maths method is a question at all: the flags each name a way of
- * getting TeX into HTML, so only the writers that produce HTML have an answer.
- * LaTeX and Typst write maths themselves and are not asked.
+ * Where a maths method is a question at all: the flags each name a way of getting TeX into HTML, so only the writers
+ * that produce HTML have an answer.
  */
 export const supportsMathMethod = supportedBy([
   'html',
@@ -167,30 +143,20 @@ export const isPdfOutput = (writer?: string): boolean => writer === 'pdf';
 export const supportsReferenceDoc = supportedBy(['docx', 'odt', 'pptx']);
 
 /**
- * The writers that read a `custom-style` Div and set the named style on what is
- * inside it — the two word processors, and not pptx, whose writer has no such
- * thing. It is what the figure-styling row is worth offering for.
+ * The writers that read a `custom-style` Div and set the named style on what is inside it — the two word processors,
+ * and not pptx, whose writer has no such thing.
  */
 export const supportsCustomStyle = supportedBy(['docx', 'odt']);
 
 /**
- * `--template`, the counterpart of the reference document: the writers that lay
- * their output out with a template of pandoc's that one of the user's can stand
- * in for.
- *
- * Listed by what has none, since nearly every writer does. The word processors
- * take a reference document instead, and the data formats — a notebook, pandoc's
- * own AST, a CSL list, a bibliography — have no layout to replace.
+ * `--template`, the counterpart of the reference document: the writers that lay their output out with a template of
+ * pandoc's that one of the user's can stand in for.
  */
 const TEMPLATE_UNSUPPORTED = new Set(['biblatex', 'bibtex', 'csljson', 'docx', 'ipynb', 'json', 'native', 'odt', 'opendocument', 'pptx']);
 
 export const supportsTemplate = (writer?: string): boolean => !!writer && !TEMPLATE_UNSUPPORTED.has(writer);
 
-/**
- * `--eol`: the writers whose output is a text file with lines to end. A word
- * processor's document, an EPUB and a PDF are containers, and pandoc writes the
- * lines inside them its own way.
- */
+/** `--eol`: the writers whose output is a text file with lines to end. */
 const EOL_UNSUPPORTED = new Set(['docx', 'odt', 'opendocument', 'pptx', 'epub', 'epub2', 'epub3', 'pdf']);
 
 export const supportsEol = (writer?: string): boolean => !!writer && !EOL_UNSUPPORTED.has(writer);
@@ -212,12 +178,9 @@ export const supportsCss = supportedBy([
 ]);
 
 /*
- * The include files, which the manual gives no list for: what happens to them
- * is up to each writer's template, so the two sets below were measured against
- * pandoc 3.10 the way `--toc` was — the same document written with each option
+ * The include files, which the manual gives no list for: what happens to them is up to each writer's template, so the
+ * two sets below were measured against pandoc 3.10 the way `--toc` was — the same document written with each option
  * and searched for the file's contents.
- *
- * Both are listed by what does *not* take them, since nearly everything does.
  */
 const INCLUDES_UNSUPPORTED = new Set([
   'bbcode',
@@ -265,14 +228,7 @@ const HEADER_UNSUPPORTED = new Set([
 /** Whether `--include-in-header` reaches the output. */
 export const supportsHeaderInclude = (writer?: string): boolean => supportsIncludes(writer) && !HEADER_UNSUPPORTED.has(writer);
 
-/*
- * The curated template variables, and who reads them.
- *
- * A variable is only ever read by the template it is written for, so these were
- * measured rather than looked up: the same document written with and without
- * each one, against pandoc 3.10. A writer left out ignores the variable
- * entirely, and is not asked for it.
- */
+/* The curated template variables, and who reads them. */
 const HTML_WRITERS = ['html', 'html4', 'html5', 'chunkedhtml'] as const;
 const EPUB_WRITERS = ['epub', 'epub2', 'epub3'] as const;
 const LATEX_WRITERS = ['latex', 'beamer', 'pdf'] as const;
@@ -305,11 +261,9 @@ export const supportsVariable: Record<CuratedVariable, (writer?: string) => bool
 };
 
 /**
- * `--ascii`: "Currently supported only for XML and HTML formats (which use
- * entities instead of UTF-8 when this option is selected), CommonMark, gfm, and
- * Markdown (which use entities), roff ms (which use hexadecimal escapes), and to
- * a limited degree LaTeX (which uses standard commands for accented characters
- * when possible)."
+ * `--ascii`: "Currently supported only for XML and HTML formats (which use entities instead of UTF-8 when this option
+ * is selected), CommonMark, gfm, and Markdown (which use entities), roff ms (which use hexadecimal escapes), and to a
+ * limited degree LaTeX (which uses standard commands for accented characters when possible)."
  */
 export const supportsAscii = supportedBy([
   ...HTML_WRITERS,
@@ -337,13 +291,8 @@ export const supportsAscii = supportedBy([
 ]);
 
 /*
- * The format-specific rows: a group each for the source a text writer produces,
- * for slides, for EPUB, for a page, and for the media a document carries.
- *
- * Measured against pandoc 3.10 like the rest, and with the same care over the
- * writers whose output is never reproducible — epub, docx, pptx and pdf stamp a
- * fresh id or date into every build, so those were compared with the dates and
- * uuids blanked rather than by digest.
+ * The format-specific rows: a group each for the source a text writer produces, for slides, for EPUB, for a page, and
+ * for the media a document carries.
  */
 
 /** The slide shows, which are also a family a lua filter can be written for. */
@@ -352,14 +301,7 @@ const SLIDE_WRITERS = ['revealjs', 'slidy', 'slideous', 'dzslides', 's5', 'beame
 /** A page, in the writers that produce one: HTML, its slide shows, chunked HTML. */
 const HTML_PAGE_WRITERS = ['html', 'html4', 'html5', 'chunkedhtml', 'revealjs', 'slidy', 'slideous', 'dzslides', 's5'] as const;
 
-/**
- * The writers that wrap what they write. Listed by what does *not*, since
- * nearly every writer that produces text of its own does — and a writer this
- * list has never heard of is given the benefit of the doubt.
- *
- * EPUB is here on measurement rather than on principle: it writes XHTML, but
- * its own writer lays that out and `--wrap` never reaches it.
- */
+/** The writers that wrap what they write. */
 const WRAP_UNSUPPORTED = new Set([
   'bbcode',
   'bbcode_fluxbb',
@@ -457,13 +399,7 @@ export const isEpubOutput = supportedBy(['epub', 'epub2', 'epub3']);
 /** `--split-level`, which chunked HTML splits on as an EPUB splits chapters. */
 export const supportsSplitLevel = supportedBy(['epub', 'epub2', 'epub3', 'chunkedhtml']);
 
-/**
- * `--section-divs`, `--email-obfuscation` and `--id-prefix`.
- *
- * The prefix reaches further than the page — pandoc puts it on DocBook ids and
- * on markdown footnote numbers as well — but it is only worth asking for where
- * a document is going into a page beside another, so it is asked for here.
- */
+/** `--section-divs`, `--email-obfuscation` and `--id-prefix`. */
 export const supportsHtmlOptions = supportedBy(HTML_PAGE_WRITERS);
 
 /** `--embed-resources`: "only works with HTML output formats", chunked aside. */
@@ -472,12 +408,7 @@ export const supportsEmbedResources = supportedBy(HTML_PAGE_WRITERS.filter(w => 
 /** `--dpi`: the writers that have to put a real size on an image in pixels. */
 export const supportsDpi = supportedBy(['latex', 'beamer', 'pdf', 'context', 'typst', 'docx', 'odt', 'icml', 'ms', 'rtf', 'texinfo']);
 
-/*
- * The families a filter can be written for. A filter that reaches for
- * `custom-style` is for the word processors whatever the exact writer is
- * called, and one that emits raw LaTeX is no use to any of them — so what a
- * filter declares is a family, not a list of writer names.
- */
+/* The families a filter can be written for. */
 export const FORMAT_FAMILIES = ['latex', 'docx', 'odt', 'html', 'slides', 'markdown', 'typst'] as const;
 
 export type FormatFamily = (typeof FORMAT_FAMILIES)[number];
@@ -514,12 +445,7 @@ export const familiesOf = (writer?: string): string[] => {
   return families.includes(writer as FormatFamily) ? families : [writer, ...families];
 };
 
-/**
- * Whether a filter declaring `formats` can do anything for this writer. A
- * filter that declares none works on the document rather than on the output,
- * so it is offered whatever is being written — and a template whose writer
- * cannot be made out is not narrowed down at all.
- */
+/** Whether a filter declaring `formats` can do anything for this writer. */
 export const runsInFormat = (formats: readonly string[] | undefined, writer?: string): boolean => {
   if (!formats?.length || !writer) {
     return true;

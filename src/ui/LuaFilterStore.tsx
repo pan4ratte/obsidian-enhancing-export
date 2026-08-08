@@ -337,7 +337,11 @@ export default (props: {
           </Match>
           <Match when={rows().length === 0}>
             <p class="ex-lua-status">
-              {allEntries().length === 0 ? t.STORE_EMPTY : chip() === 'installed' && !search() ? t.STORE_NONE_INSTALLED : t.STORE_NO_RESULTS}
+              {allEntries().length === 0
+                ? t.STORE_EMPTY
+                : chip() === 'installed' && !search()
+                  ? t.STORE_NONE_INSTALLED
+                  : t.STORE_NO_RESULTS}
             </p>
           </Match>
           <Match when={rows().length > 0}>

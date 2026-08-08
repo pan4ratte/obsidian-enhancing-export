@@ -1,13 +1,6 @@
 import { For, Show } from 'solid-js';
 
-/**
- * A bordered card holding a grid of checkboxes.
- *
- * Everything on offer is on screen at once, ticked or not — which a dropdown
- * cannot do: it hides what has not been chosen behind a click, and hides what
- * *has* been chosen behind its own prompt. The grid reflows to however many
- * columns the row is wide enough for.
- */
+/** A bordered card holding a grid of checkboxes. */
 export default (props: {
   items: { value: string; label: string; checked: boolean; title?: string }[];
   onToggle: (value: string, checked: boolean) => void;

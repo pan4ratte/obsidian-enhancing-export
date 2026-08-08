@@ -376,12 +376,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
   /** The whole of one template. Every field writes straight through, so there is nothing to save. */
   const EditCommandTemplateModal = () => (
     <>
-      <Modal
-        app={app}
-        title={t.TEMPLATE_EDITOR_TITLE}
-        classList={{ 'ex-template-modal': true }}
-        onClose={() => setModal(undefined)}
-      >
+      <Modal app={app} title={t.TEMPLATE_EDITOR_TITLE} classList={{ 'ex-template-modal': true }} onClose={() => setModal(undefined)}>
         {/* Name and output format share a row: they are one answer. */}
         <Setting name={t.TEMPLATE_NAME} class="ex-template-modal-name">
           <Text value={currentEditCommandTemplate()?.name ?? ''} onChange={renameCurrentCommandTemplate} />
@@ -576,16 +571,10 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
       )
     );
 
-    const mathOptions = [
-      { name: t.MATH_DEFAULT, value: '' },
-      ...MATH_METHODS.map(m => ({ name: t.MATH_METHOD_LABELS[m], value: m })),
-    ];
+    const mathOptions = [{ name: t.MATH_DEFAULT, value: '' }, ...MATH_METHODS.map(m => ({ name: t.MATH_METHOD_LABELS[m], value: m }))];
 
     const engineOptions = createMemo(() =>
-      withCurrent(
-        [{ name: t.PDF_ENGINE_DEFAULT, value: '' }, ...PDF_ENGINES.map(e => ({ name: e, value: e }))],
-        pdfEngine(args())
-      )
+      withCurrent([{ name: t.PDF_ENGINE_DEFAULT, value: '' }, ...PDF_ENGINES.map(e => ({ name: e, value: e }))], pdfEngine(args()))
     );
 
     /** The curated variables this writer was measured to read, and no others. */
@@ -607,10 +596,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
     // hand-written value none of them names, such as `--wrap=auto`.
     const wrapOptions = createMemo(() =>
       withCurrent(
-        [
-          { name: t.WRAP_DEFAULT, value: '' },
-          ...WRAP_MODES.map(mode => ({ name: t.WRAP_MODE_LABELS[mode], value: mode })),
-        ],
+        [{ name: t.WRAP_DEFAULT, value: '' }, ...WRAP_MODES.map(mode => ({ name: t.WRAP_MODE_LABELS[mode], value: mode }))],
         wrap(args())
       )
     );
@@ -655,10 +641,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
 
     const splitLevelOptions = createMemo(() =>
       withCurrent(
-        [
-          { name: t.SPLIT_LEVEL_DEFAULT, value: '' },
-          ...SPLIT_LEVELS.map(level => ({ name: t.TOC_LEVEL(Number(level)), value: level })),
-        ],
+        [{ name: t.SPLIT_LEVEL_DEFAULT, value: '' }, ...SPLIT_LEVELS.map(level => ({ name: t.TOC_LEVEL(Number(level)), value: level }))],
         splitLevel(args())
       )
     );
@@ -685,10 +668,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
 
     const eolOptions = createMemo(() =>
       withCurrent(
-        [
-          { name: t.LINE_ENDINGS_DEFAULT, value: '' },
-          ...EOL_MODES.map(mode => ({ name: t.LINE_ENDING_LABELS[mode], value: mode })),
-        ],
+        [{ name: t.LINE_ENDINGS_DEFAULT, value: '' }, ...EOL_MODES.map(mode => ({ name: t.LINE_ENDING_LABELS[mode], value: mode }))],
         eol(args())
       )
     );
@@ -743,11 +723,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         {/* A word processor is laid out by a reference document, everything else by a
             template — the same question two ways, so exactly one row stands here. */}
         <Show when={supportsReferenceDoc(format())}>
-          <Setting
-            name={t.REFERENCE_DOC}
-            description={t.REFERENCE_DOC_DESC}
-            class="ex-template-modal-reference-doc"
-          >
+          <Setting name={t.REFERENCE_DOC} description={t.REFERENCE_DOC_DESC} class="ex-template-modal-reference-doc">
             <FileInput
               value={referenceDoc(args())}
               filters={referenceDocFiles()}
@@ -818,11 +794,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         </Show>
 
         <Show when={supportsTemplate(format())}>
-          <Setting
-            name={t.OUTPUT_TEMPLATE}
-            description={t.OUTPUT_TEMPLATE_DESC}
-            class="ex-template-modal-output-template"
-          >
+          <Setting name={t.OUTPUT_TEMPLATE} description={t.OUTPUT_TEMPLATE_DESC} class="ex-template-modal-output-template">
             <FileInput
               value={templateFile(args())}
               filters={[ANY_FILE]}
@@ -848,7 +820,6 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         {/* Adding a filter appends its `--lua-filter` flag to the extra arguments. */}
         <Setting name={t.LUA_FILTERS} class="ex-template-modal-filters">
           <TemplateLuaFilters
-           
             installed={settings.installedLuaFilters ?? []}
             format={format()}
             args={template()?.customArguments}
@@ -873,11 +844,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
 
           {/* Only once there is numbering to offset, and only where pandoc reaches. */}
           <Collapsible when={supportsNumberOffset(format()) && numberSections(args())} class="ex-template-modal-offset-panel">
-            <Setting
-              name={t.NUMBER_OFFSET}
-              description={t.NUMBER_OFFSET_DESC}
-              class="ex-template-modal-number-offset"
-            >
+            <Setting name={t.NUMBER_OFFSET} description={t.NUMBER_OFFSET_DESC} class="ex-template-modal-number-offset">
               <Text value={numberOffset(args()) ?? ''} placeholder="0" onChange={value => writeArgs(a => setNumberOffset(a, value))} />
             </Setting>
           </Collapsible>
@@ -900,11 +867,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
               <Text value={tabStop(args()) ?? ''} placeholder="4" onChange={value => writeArgs(a => setTabStop(a, value))} />
             </Setting>
 
-            <Setting
-              name={t.STRIP_COMMENTS}
-              description={t.STRIP_COMMENTS_DESC}
-              class="ex-template-modal-strip-comments"
-            >
+            <Setting name={t.STRIP_COMMENTS} description={t.STRIP_COMMENTS_DESC} class="ex-template-modal-strip-comments">
               <Toggle checked={stripComments(args())} onChange={checked => writeArgs(a => setStripComments(a, checked))} />
             </Setting>
 
@@ -937,11 +900,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
           </div>
 
           <Show when={supportsTopLevelDivision(format())}>
-            <Setting
-              name={t.TOP_LEVEL_DIVISION}
-              description={t.TOP_LEVEL_DIVISION_DESC}
-              class="ex-template-modal-division"
-            >
+            <Setting name={t.TOP_LEVEL_DIVISION} description={t.TOP_LEVEL_DIVISION_DESC} class="ex-template-modal-division">
               <DropDown
                 options={divisionOptions}
                 selected={topLevelDivision(args()) ?? ''}
@@ -954,11 +913,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
           {/* Colours and language definition share a card: both need a writer that highlights. */}
           <Show when={supportsHighlighting(format())}>
             <div class="ex-card ex-template-modal-highlight">
-              <Setting
-                name={t.HIGHLIGHT}
-                description={t.HIGHLIGHT_DESC}
-                class="ex-template-modal-highlight-style"
-              >
+              <Setting name={t.HIGHLIGHT} description={t.HIGHLIGHT_DESC} class="ex-template-modal-highlight-style">
                 <DropDown
                   options={highlightOptions()}
                   selected={highlightStyle(args()) ?? ''}
@@ -966,11 +921,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
                   onChange={value => writeArgs(a => setHighlightStyle(a, value))}
                 />
               </Setting>
-              <Setting
-                name={t.SYNTAX_DEFINITION}
-                description={t.SYNTAX_DEFINITION_DESC}
-                class="ex-template-modal-syntax-definition"
-              >
+              <Setting name={t.SYNTAX_DEFINITION} description={t.SYNTAX_DEFINITION_DESC} class="ex-template-modal-syntax-definition">
                 <FileInput
                   value={syntaxDefinition(args())}
                   filters={SYNTAX_FILES}
@@ -1017,11 +968,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
 
           {/* Citeproc reads the document rather than writing it, so no format gate. */}
           <div class="ex-card ex-template-modal-citations">
-            <Setting
-              name={t.CITATIONS}
-              description={t.CITATIONS_DESC}
-              class="ex-template-modal-citations-toggle"
-            >
+            <Setting name={t.CITATIONS} description={t.CITATIONS_DESC} class="ex-template-modal-citations-toggle">
               <Toggle checked={citeproc(args())} onChange={checked => writeArgs(a => setCiteproc(a, checked))} />
             </Setting>
             <Collapsible when={citeproc(args())} class="ex-template-modal-citations-panel">
@@ -1178,11 +1125,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
 
           {/* Its own row: an EPUB collects footnotes but writes no source anybody reads. */}
           <Show when={supportsReferenceLocation(format())}>
-            <Setting
-              name={t.REFERENCE_LOCATION}
-              description={t.REFERENCE_LOCATION_DESC}
-              class="ex-template-modal-reference-location"
-            >
+            <Setting name={t.REFERENCE_LOCATION} description={t.REFERENCE_LOCATION_DESC} class="ex-template-modal-reference-location">
               <DropDown
                 options={referenceLocationOptions()}
                 selected={referenceLocation(args()) ?? ''}
@@ -1344,11 +1287,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
               </div>
             </Setting>
 
-            <Setting
-              name={t.USER_ARGS}
-              description={t.USER_ARGS_DESC}
-              class="ex-template-modal-user-arguments"
-            >
+            <Setting name={t.USER_ARGS} description={t.USER_ARGS_DESC} class="ex-template-modal-user-arguments">
               <Text
                 style="width: 100%"
                 value={template()?.userArguments ?? ''}
@@ -1424,7 +1363,6 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
   return (
     <>
       <PandocDashboard
-       
         version={pandocVersion()}
         markdownLinks={app.vault.config.useMarkdownLinks}
         path={getPlatformValue(settings.pandocPath) ?? ''}
@@ -1477,7 +1415,6 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
       <TemplateActions onAdd={addCommandTemplate} onBrowseLuaFilters={() => setModal(() => LuaFilterStoreModal)} />
 
       <TemplateTable
-       
         templates={settings.items}
         sort={settings.lastTemplateSort}
         onSort={sort => setSettings('lastTemplateSort', sort)}

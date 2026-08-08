@@ -1,14 +1,7 @@
 import { FileFilter, remote } from 'electron';
 import { Text, ExtraButton } from './Setting';
 
-/**
- * A path, typed or chosen — to a file, or to a folder where `folder` says so.
- *
- * The field stays writable rather than being filled only by the dialog: a
- * template's paths are as often written with the plugin's own `${currentDir}`
- * and `${luaDir}` as they are picked off a disk, and a read-only field would
- * make those unsayable.
- */
+/** A path, typed or chosen — to a file, or to a folder where `folder` says so. */
 export default (props: {
   value?: string;
   placeholder?: string;
@@ -22,8 +15,8 @@ export default (props: {
 }) => {
   const choosePath = async () => {
     const retval = await remote.dialog.showOpenDialog({
-      // A path with `${...}` in it names nothing until an export resolves it,
-      // so the dialog is left to open wherever it opened last.
+      // A path with `${...}` in it names nothing until an export resolves it, so the dialog is left to open wherever
+      // it opened last.
       defaultPath: props.value && !props.value.includes('${') ? props.value : undefined,
       properties: props.folder ? ['createDirectory', 'openDirectory'] : ['openFile'],
       filters: props.folder ? undefined : props.filters,
