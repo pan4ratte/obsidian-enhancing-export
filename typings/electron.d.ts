@@ -33,15 +33,23 @@ declare module 'electron' {
     filePath: string;
   }
 
+  /** Opaque: it is only ever handed straight back to a dialog as its parent. */
+  export interface BrowserWindow {
+    readonly id: number;
+  }
+
   export const remote: {
     app: {
       getPath(
         name: 'home' | 'appData' | 'userData' | 'temp' | 'desktop' | 'documents' | 'downloads'
       ): string;
     };
+    getCurrentWindow(): BrowserWindow;
+    // The parent is not optional here, though electron makes it so: unparented, macOS opens a free-floating panel
+    // that lands behind a full-screen Obsidian, and the button that asked for it reads as dead.
     dialog: {
-      showOpenDialog(options: OpenDialogOptions): Promise<OpenDialogReturnValue>;
-      showSaveDialog(options: SaveDialogOptions): Promise<SaveDialogReturnValue>;
+      showOpenDialog(parent: BrowserWindow, options: OpenDialogOptions): Promise<OpenDialogReturnValue>;
+      showSaveDialog(parent: BrowserWindow, options: SaveDialogOptions): Promise<SaveDialogReturnValue>;
     };
     shell: {
       openExternal(url: string): Promise<void>;

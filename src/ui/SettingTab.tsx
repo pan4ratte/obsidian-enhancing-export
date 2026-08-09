@@ -1357,7 +1357,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
   };
 
   const chooseCustomDefaultExportDirectory = async () => {
-    const retval = await ct.remote.dialog.showOpenDialog({
+    const retval = await ct.remote.dialog.showOpenDialog(ct.remote.getCurrentWindow(), {
       defaultPath: customDefaultExportDirectory() ?? ct.remote.app.getPath('documents'),
       properties: ['createDirectory', 'openDirectory'],
     });
@@ -1368,7 +1368,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
   };
 
   const choosePandocPath = async () => {
-    const retval = await ct.remote.dialog.showOpenDialog({
+    const retval = await ct.remote.dialog.showOpenDialog(ct.remote.getCurrentWindow(), {
       filters: process.platform == 'win32' ? [{ extensions: ['exe'], name: 'pandoc' }] : undefined,
       properties: ['openFile'],
     });

@@ -3,7 +3,7 @@ import { Text, ExtraButton } from './Setting';
 
 /** Ask for a path, and answer with it — or with nothing, where the dialog was closed. */
 export const choosePath = async (options: { value?: string; folder?: boolean; filters?: FileFilter[] }) => {
-  const retval = await remote.dialog.showOpenDialog({
+  const retval = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
     // A path with `${...}` in it names nothing until an export resolves it, so the dialog is left to open wherever it
     // opened last.
     defaultPath: options.value && !options.value.includes('${') ? options.value : undefined,

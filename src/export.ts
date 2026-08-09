@@ -145,7 +145,7 @@ export async function exportNote(
   const openExportedFile = setting.openExportedFile ?? globalSetting.openExportedFile;
 
   if (showOverwriteConfirmation && fs.existsSync(outputPath)) {
-    const result = await ct.remote.dialog.showSaveDialog({
+    const result = await ct.remote.dialog.showSaveDialog(ct.remote.getCurrentWindow(), {
       title: t.OVERWRITE_TITLE(outputFileFullName),
       defaultPath: outputPath,
       properties: ['showOverwriteConfirmation', 'createDirectory'],

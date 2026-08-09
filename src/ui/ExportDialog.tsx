@@ -46,7 +46,7 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
   }
 
   const chooseFolder = async () => {
-    const retval = await ct.remote.dialog.showOpenDialog({
+    const retval = await ct.remote.dialog.showOpenDialog(ct.remote.getCurrentWindow(), {
       title: t.EXPORT_DIALOG_SELECT_FOLDER,
       defaultPath: candidateOutputDirectory(),
       properties: ['createDirectory', 'openDirectory'],

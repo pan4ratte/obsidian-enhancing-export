@@ -34,7 +34,7 @@ const editors = {
     const [filePath, setFilePath] = createSignal<string>(getDefaultValue(props.meta));
 
     const chooseFile = async () => {
-      const retval = await remote.dialog.showOpenDialog({
+      const retval = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
         properties: ['openFile'],
         filters: props.meta.filters,
       });
