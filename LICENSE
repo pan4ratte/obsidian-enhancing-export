@@ -20,13 +20,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-This plugin is a fork of Enhancing Export
-(https://github.com/mokeyish/obsidian-enhancing-export) by YISH, used and
-redistributed under the MIT licence above.
-
-The lua filters in lua-filters/ are other people's work, vendored unmodified
-with their own licence headers intact. Each entry in lua-filters/index.json
-names its author and the licence it is offered under; all of them are MIT.
