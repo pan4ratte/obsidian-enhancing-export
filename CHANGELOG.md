@@ -1,6 +1,15 @@
 # Changelog
 
 
+## 1.1.0
+
+### UI/UX enhancements and bug fixes
+
+* Fixed file dialogs on macOS. Every file/folder picker now opens attached to the Obsidian window, as a sheet. Unattached, macOS draws a free-floating panel that follows neither full screen nor the window's Space, so the dialog opened out of sight and the button that asked for it looked as though it had done nothing.
+* Fixed the output file a command names. `-o` and `--output` are now read from the assembled command line directly, so `--output=path`, `-o"path"` and a short flag written as part of a cluster all name the file they say. Where a template and a hand-written argument both give one, the later wins, which is both what Pandoc does and what the command is assembled to expect.
+* Smaller download, quicker load. Two dependencies the plugin used a fraction of were replaced with the part it needed.
+
+
 ## 1.0.0
 
 ### First release
