@@ -1,5 +1,7 @@
 # Pandoc GUI plugin
 
+English | [Русский](https://github.com/pan4ratte/obsidian-pandoc-gui/blob/main/README_RU.md)
+
 Export notes with Pandoc without writing a command line. Every option Pandoc offers for the format you are exporting to is an ordinary Obsidian setting — page size, PDF engine, table of contents, citations, Word styles — and the command it builds is shown to you before it runs. Templates for Word, PDF, LaTeX, HTML, EPUB, slides, Markdown and a dozen more formats come ready to use, Obsidian's own syntax survives the trip, and a store of lua filters covers the rest.
 
 
@@ -9,17 +11,17 @@ Export notes with Pandoc without writing a command line. Every option Pandoc off
 
 The template editor lays out what Pandoc can do for the chosen output format as ordinary settings: table of contents and its depth, section numbering, heading shifts, tab width, top-level divisions, PDF engine, syntax highlighting, maths rendering, paper size and fonts, footnote placement, slide levels, EPUB cover and split level, HTML resource embedding, line endings, include files. A row appears only for the formats whose writer would actually read it, so a Word template is never asked which slide level to break on.
 
-At the foot of the editor sits the whole command as it will be handed to Pandoc, to be read rather than typed, with a button to copy it. Anything with no row of its own goes in a field of its own — *Options of your own* — written last, so it always has the final word.
+At the foot of the editor sits the whole command as it will be handed to Pandoc, to be read rather than typed, with a button to copy it. Anything with no row of its own goes in a field of its own — *Extra commands* — written last, so it always has the final word.
 
 ### 2. Templates for the formats you export to
 
 Word, OpenOffice, PDF, LaTeX (whole document or a fragment to paste into an existing project), HTML, EPUB, Beamer and reveal.js slides, PowerPoint, Markdown in CommonMark, GFM or Hugo flavours, Typst, TextBundle, RTF, MediaWiki, reStructuredText, Textile, OPML, plain text and a BibTeX bibliography of everything a note cites. Each one is a template you can copy, rename or rewrite, and *Custom* runs any command you like with the note's paths filled in.
 
-Export from the command palette, from the file's context menu, or with **Export with previous**, which reuses the last template and folder without opening a dialog at all.
+Export from the command palette, from the file's context menu, or with **Export with previous settings**, which reuses the last template and folder without opening a dialog at all.
 
 ### 3. Obsidian's own syntax, exported as it reads
 
-`![[Another note]]` is a transclusion, not a missing image: the plugin resolves the link — which only Obsidian can do — and writes that note's text into the document, a single `![[note#heading]]` section included. Attachments are found wherever your vault keeps them, including the per-note attachment folders Pandoc has no way to know about. `==Highlights==` survive, `$$…$$` blocks are put back together, and every `$today` in the note becomes today's date in Obsidian's own language. A *Markdown extensions* row switches on the rest of the syntax Pandoc will not read unless asked — callouts, emoji shortcodes, bare URLs, hard line breaks and more.
+`![[Another note]]` is a transclusion, not a missing image: the plugin resolves the link — which only Obsidian can do — and writes that note's text into the document, a single `![[note#heading]]` section included. Attachments are found wherever your vault keeps them, including the per-note attachment folders Pandoc has no way to know about. `==Highlights==` survive, `$$…$$` blocks are put back together, and every `$today` in the note becomes today's date in Obsidian's own language. An *Extensions* row switches on the rest of the syntax Pandoc will not read unless asked — callouts, emoji shortcodes, bare URLs, hard line breaks and more.
 
 ### 4. Word and ODT that obey your reference document
 

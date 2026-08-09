@@ -2,7 +2,7 @@ import * as ct from 'electron';
 import * as fs from 'fs';
 import process from 'process';
 import path from 'path';
-import argsParser from 'yargs-parser';
+import argsParser from 'yargs-parser/browser';
 import { Variables, ExportSetting, extractDefaultExtension as extractExtension, createEnv, today } from './settings';
 import { MessageBox } from './ui/message_box';
 import { Notice, TFile, getLinkpath, moment, type EmbedCache } from 'obsidian';

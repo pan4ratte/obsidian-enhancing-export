@@ -102,11 +102,11 @@ export default {
   COMMAND_COPY: 'Copy command',
   COMMAND_COPIED: 'Command copied.',
   COMMAND_COPY_FAILED: 'Could not copy the command.',
-  USER_ARGS: 'Options of your own',
-  USER_ARGS_DESC: 'Anything pandoc takes that has no row above. Written at the end of the command, so it has the last word.',
+  USER_ARGS: 'Extra commands',
+  USER_ARGS_DESC: 'Add something if needed.',
 
   // ─── Markdown extensions ─────────────────────────────────────────────────────
-  EXTENSIONS: 'Markdown extensions',
+  EXTENSIONS: 'Extensions',
   EXTENSIONS_DESC: 'Syntax pandoc does not read unless asked. Cleared is pandoc’s own behaviour.',
   EXTENSION_LABELS: {
     alerts: 'Callouts (> [!note])',
@@ -157,14 +157,14 @@ export default {
   EMBED_NOTES: 'Write in embedded notes',
   EMBED_NOTES_DESC:
     'Replace ![[a note]] with what that note says, and ![[a note#heading]] with that section. Without this, pandoc reads an embedded note as a missing image.',
-  TODAY: 'Write today’s date for $today',
-  TODAY_DESC: 'Every $today in the note — body, headings, properties — becomes today’s date, in Obsidian’s language.',
-  TODAY_NONE: 'Leave $today alone',
+  TODAY: 'Insert today’s date instead of $today on export',
+  TODAY_DESC: 'Every $today in any place of the note becomes will become today’s date.',
+  TODAY_NONE: 'Select date formatting…',
   KEYWORDS: 'Print the keywords property',
-  KEYWORDS_DESC: 'Write the note’s keywords into the document itself, instead of leaving them in the file’s properties.',
+  KEYWORDS_DESC: 'Write the note’s keywords into the document itself, instead of leaving them in the metadata.',
   KEYWORDS_LABEL: 'Keywords label',
   KEYWORDS_LABEL_PLACEHOLDER: 'Keywords:',
-  KEYWORDS_LABEL_DESC: 'What the line is labelled. Left empty, it reads “Keywords:”.',
+  KEYWORDS_LABEL_DESC: 'Keywords section title. If empty, will be set to “Keywords:”',
 
   // ─── Document structure ──────────────────────────────────────────────────────
   TOP_LEVEL_DIVISION: 'Top-level headings',
