@@ -147,16 +147,18 @@ const serializeIndex = index =>
 // ── The README tables, derived from the index ─────────────────────────────────
 
 // Make a cell safe inside a Markdown table: escape backslashes and pipes, and
-// entity-escape HTML comment markers. Backslashes go first — a backslash is the
-// escape character for the pipes below, so a description with one right before a
-// `|` would otherwise emit `\\|`, a literal backslash followed by a live cell
-// delimiter, splitting the row.
+// entity-escape the two literal sequences that would read as an HTML comment.
+// Backslashes go first — a backslash is the escape character for the pipes
+// below, so a description with one right before a `|` would otherwise emit
+// `\\|`, a literal backslash followed by a live cell delimiter, splitting the
+// row. The comment markers are matched as strings, not patterns: this escapes
+// exactly what Obsidian's linter looks for, and is not an HTML sanitiser.
 const cell = s =>
   s
     .replace(/\\/g, '\\\\')
     .replace(/\|/g, '\\|')
-    .replace(/<!--/g, '&lt;!--')
-    .replace(/-->/g, '--&gt;');
+    .replaceAll('<!--', '&lt;!--')
+    .replaceAll('-->', '--&gt;');
 
 // A filter's name, linked to where it came from, and what it is used under.
 const name = entry => (entry.homepage ? `[${cell(entry.storeName)}](${entry.homepage})` : cell(entry.storeName));

@@ -2,8 +2,14 @@
 
 # Mirrors the npm "overrides" field in package.json — keep the two in sync.
 # babel-plugin-istanbul <8 drags in the deprecated glob@7/inflight chain.
+#
+# js-yaml is the exception: @istanbuljs/load-nyc-config asks for ^3.13.1, npm
+# resolves that to the patched 3.15.1 on its own, and pnpm keeps pinning 3.14.1
+# — the version three advisories are open against. Scoped to the 3.x line so
+# anything on js-yaml 4 is left alone.
 overrides:
   babel-plugin-istanbul: ^8.0.0
+  js-yaml@3: ^3.15.1
 
 # Added by pnpm so its release-age policy does not hold back a freshly published
 # version that package.json already asks for.
