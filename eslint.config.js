@@ -69,9 +69,9 @@ export default tseslint.config(
     rules: { '@typescript-eslint/unbound-method': 'off' },
   },
   {
-    // Jest's globals.
+    // vitest leaves `describe`/`test`/`expect` global, and the specs read fixtures off disk.
     files: ['tests/**/*.ts'],
-    languageOptions: { globals: globals.jest },
+    languageOptions: { globals: { ...globals.vitest, ...globals.node } },
   },
   {
     // The build and lint config are plain JS, outside the TypeScript project,

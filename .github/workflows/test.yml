@@ -26,26 +26,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
-      # package-lock.json has to be generated on Linux. `npm install` on Windows
-      # drops top-level @emnapi/core and @emnapi/runtime — optional transitive
-      # deps of the native @unrs/resolver binding — and `npm ci` then fails with
-      # "package.json and package-lock.json are not in sync". The remedy npm
-      # suggests is a trap: re-running `npm install` on Windows silently restores
-      # the broken lockfile. Checked before the install so the failure names the
-      # fix instead of the symptom.
-      - name: Verify lockfile was generated on Linux
-        run: |
-          node -e '
-            const lock = require("./package-lock.json");
-            const need = ["node_modules/@emnapi/core", "node_modules/@emnapi/runtime"];
-            const missing = need.filter((k) => !(k in lock.packages));
-            if (missing.length > 0) {
-              console.error("::error title=Lockfile generated on Windows::" + missing.join(", ") + " missing from package-lock.json. Regenerate it on Linux (under WSL: npm install) and commit that file. Running npm install on Windows will NOT fix this.");
-              process.exit(1);
-            }
-            console.log("Lockfile carries the Linux-hoisted native resolver deps.");
-          '
-
       - name: Install Pandoc
         run: | 
           wget https://github.com/jgm/pandoc/releases/download/3.1.11.1/pandoc-3.1.11.1-1-amd64.deb

@@ -38,9 +38,9 @@ export default defineConfig(({ mode }) => {
         ]
       }) : undefined,
       loader({
-        '.lua': 'binary',
-        '.tex': 'binary',
-        '.sty': 'binary'
+        '.lua': 'text',
+        '.tex': 'text',
+        '.sty': 'text'
       }), // src/resources.ts
       prod ? undefined : inject(['src/hmr.ts']),
     ],
@@ -113,20 +113,18 @@ const silence = (pattern: RegExp) => {
 };
 
 
-const loader = (config: { [extention: string]: 'binary' }): Plugin => {
+// The embedded resources are all UTF-8 text, so they go in as string literals: base64 would cost a third again in
+// bundle size, plus an atob pass on every load.
+const loader = (config: { [extention: string]: 'text' }): Plugin => {
   const { extname } = path;
   return {
-    name: 'binary-boader',
+    name: 'text-loader',
     enforce: 'pre',
     async load(id) {
       const format = config[extname(id)];
-      if (format) {
-        if (format === 'binary') {
-          const buffer = await fsp.readFile(id);
-          return {
-            code: `export default Uint8Array.from(atob('${buffer.toString('base64')}'), c => c.charCodeAt(0));`
-          };
-        }
+      if (format === 'text') {
+        const text = await fsp.readFile(id, 'utf-8');
+        return { code: `export default ${JSON.stringify(text)};` };
       }
     },
   };

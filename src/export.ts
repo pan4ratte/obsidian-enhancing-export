@@ -2,7 +2,6 @@ import * as ct from 'electron';
 import * as fs from 'fs';
 import process from 'process';
 import path from 'path';
-import argsParser from 'yargs-parser/browser';
 import { Variables, ExportSetting, extractDefaultExtension as extractExtension, createEnv, today } from './settings';
 import { MessageBox } from './ui/message_box';
 import { Notice, TFile, getLinkpath, moment, type EmbedCache } from 'obsidian';
@@ -13,6 +12,7 @@ import { describeExportFailure } from './export_error';
 import type PandocGuiPlugin from './main';
 import pandoc from './pandoc';
 import { orderLuaFilters } from './lua_filters';
+import { outputArg } from './output_arg';
 
 export async function exportNote(
   plugin: PandocGuiPlugin,
@@ -221,15 +221,8 @@ export async function exportNote(
         : setting.command;
 
     cmd = renderTemplate(cmdTpl, variables);
-    const args = argsParser(cmd.match(/(?:[^\s"]+|"[^"]*")+/g), {
-      alias: {
-        output: ['o'],
-      },
-    });
-
-    // yargs-parser types every argument as `any`; `-o` is the one this needs, and it is a path or nothing.
-    const output: unknown = args.output;
-    if (typeof output !== 'string') {
+    const output = outputArg(cmd);
+    if (output === undefined) {
       throw new Error('The command names no output file — check -o in the template.');
     }
     const actualOutputPath = path.normalize(trimQuotes(output));

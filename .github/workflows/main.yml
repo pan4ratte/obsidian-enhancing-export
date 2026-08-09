@@ -40,22 +40,6 @@ jobs:
           fi
           echo "Versions match: $MANIFEST_VERSION"
 
-      # package-lock.json has to be generated on Linux — see the same check in
-      # test.yml. Gated here rather than in build-and-release so a Windows-written
-      # lockfile stops the release before the tag is cut, not halfway through it.
-      - name: Verify lockfile was generated on Linux
-        run: |
-          node -e '
-            const lock = require("./package-lock.json");
-            const need = ["node_modules/@emnapi/core", "node_modules/@emnapi/runtime"];
-            const missing = need.filter((k) => !(k in lock.packages));
-            if (missing.length > 0) {
-              console.error("::error title=Lockfile generated on Windows::" + missing.join(", ") + " missing from package-lock.json. Regenerate it on Linux (under WSL: npm install) and commit that file. Running npm install on Windows will NOT fix this.");
-              process.exit(1);
-            }
-            console.log("Lockfile carries the Linux-hoisted native resolver deps.");
-          '
-
       # Skip if this version already has a release, so re-runs and unrelated
       # manifest.json edits (e.g. a description tweak) never attempt a duplicate.
       - name: Check for existing release

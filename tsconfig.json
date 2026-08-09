@@ -36,8 +36,10 @@
       "ES2021"
     ],
     "typeRoots": [ "./typings", "./node_modules/@types"],
-    // TypeScript 6 no longer pulls in every @types package automatically.
-    "types": [ "jest", "node"]
+    // TypeScript 6 no longer pulls in every @types package automatically. vitest's globals are not named here:
+    // `typeRoots` is explicit, so an entry has to sit in one of those folders, and `vitest/globals` is a package
+    // subpath. typings/vitest.d.ts references it instead.
+    "types": [ "node"]
   },
   "include": [
     "**/*.ts",  "**/*.tsx"

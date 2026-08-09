@@ -27,16 +27,15 @@ pasted into an issue tells us almost everything.
 
 ## A note on `package-lock.json`
 
-Regenerate it on Linux only — under WSL on a Windows machine, using a native
-`node`, not the one `/mnt/c` interop puts on `PATH`. `npm install` on Windows
-resolves two fewer entries, dropping top-level `@emnapi/core` and
-`@emnapi/runtime`: optional transitive deps of the native `@unrs/resolver`
-binding. `npm ci` then fails on Linux with "package.json and package-lock.json
-are not in sync", and npm's suggested remedy is a trap — re-running
-`npm install` on Windows silently restores the broken lockfile.
+It used to have to be regenerated on Linux: `npm install` on Windows resolved
+two fewer entries, dropping top-level `@emnapi/core` and `@emnapi/runtime` —
+optional transitive deps of the native `@unrs/resolver` binding — and `npm ci`
+then failed on Linux with "package.json and package-lock.json are not in sync".
 
-It is invisible locally: install, lint, tests and build all pass on Windows
-with the short lockfile. CI checks for the two entries before installing.
+`@unrs/resolver` came in through jest, and left with it. Windows and Linux now
+resolve the same 467 packages at the same versions, so regenerating the lockfile
+on either produces the same file. The CI step that checked for the two entries
+has been removed along with them; it could only ever have failed.
 
 ## Running it in a vault
 
@@ -89,7 +88,7 @@ npm run typecheck             # tsc --noEmit
 npm run lint                  # eslint, including the obsidianmd plugin rules
 npm run format-check          # prettier over src/ and tests/
 npm run docs:catalogue:check  # the lua-filter catalogue is generated, not hand-edited
-npm test                      # jest
+npm test                      # vitest
 ```
 
 `npm run lint-fix` and `npm run format-fix` apply what the first two can fix on
@@ -109,7 +108,7 @@ their own. Anything else `package.json`'s `scripts` offers is fair game too.
 | `lua-filters/` | The filters: `bundled/` is what the plugin ships, the rest is the store's catalogue. See its [readme](lua-filters/README.md). |
 | `textemplate/` | LaTeX templates embedded into the build alongside the bundled filters. |
 | `scripts/` | `gen-catalogue.js`, which writes the catalogue table in the readme. |
-| `tests/` | Jest specs. Some shell out to the real Pandoc. |
+| `tests/` | Vitest specs. Some shell out to the real Pandoc. |
 | `styles.css` | The stylesheet, edited by hand. |
 
 ## Adding an export template

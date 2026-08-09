@@ -151,9 +151,9 @@ export default class PandocGuiPlugin extends Plugin {
     for (const [dir, res] of resources) {
       const resDir = path.join(this.manifest.dir, dir);
       await adapter.mkdir(resDir);
-      for (const [fileName, bytes] of res) {
+      for (const [fileName, text] of res) {
         const filePath = path.join(resDir, fileName);
-        await adapter.writeBinary(filePath, bytes.buffer);
+        await adapter.write(filePath, text);
       }
     }
     resources.length = 0;

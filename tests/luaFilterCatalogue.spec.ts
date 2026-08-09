@@ -1,8 +1,10 @@
 /* The store reads one catalogue, and every filter it offers is vendored beside it in `lua-filters/`. */
 
-const requestUrlMock = jest.fn<Promise<{ json: unknown }>, [{ url: string }]>();
+import { vi } from 'vitest';
 
-jest.mock('obsidian', () => ({
+const requestUrlMock = vi.fn<(options: { url: string }) => Promise<{ json: unknown }>>();
+
+vi.mock('obsidian', () => ({
   requestUrl: (options: { url: string }) => requestUrlMock(options),
 }));
 
@@ -82,7 +84,7 @@ describe('the catalogue in this repository', () => {
   const entries = catalogue.filters as LuaFilterEntry[];
 
   test('every entry points at a file that is actually vendored here', () => {
-    const missing = entries.filter(e => !existsSync(path.join(__dirname, '..', 'lua-filters', e.path)));
+    const missing = entries.filter(e => !existsSync(path.join(import.meta.dirname, '..', 'lua-filters', e.path)));
     expect(missing.map(e => e.path)).toEqual([]);
   });
 
@@ -131,7 +133,7 @@ describe('the catalogue in this repository', () => {
   test('nothing offered answers to the name of a filter the plugin ships', () => {
     // `bundled/` is written over the plugin's `lua/` on every load, so an entry taking one of those names could never
     // stay installed.
-    const bundled = readdirSync(path.join(__dirname, '..', 'lua-filters', 'bundled')).filter(f => f.endsWith('.lua'));
+    const bundled = readdirSync(path.join(import.meta.dirname, '..', 'lua-filters', 'bundled')).filter(f => f.endsWith('.lua'));
     expect(bundled.length).toBeGreaterThan(0);
     const clashing = entries.filter(e => bundled.includes(e.fileName));
     expect(clashing.map(e => e.id)).toEqual([]);

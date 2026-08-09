@@ -137,7 +137,7 @@ describe('the corrections these presets carry', () => {
   test('the lua filters named are ones the plugin still ships', () => {
     // Read off the folder rather than listed here: a preset naming a filter that is not written to `lua/` fails every
     // export it is used for, and a list in a test is one more thing to forget to update.
-    const shipped = readdirSync(path.join(__dirname, '..', 'lua-filters', 'bundled'));
+    const shipped = readdirSync(path.join(import.meta.dirname, '..', 'lua-filters', 'bundled'));
     for (const preset of pandocPresets) {
       for (const [, file] of render(preset).matchAll(/--lua-filter="[^"]*\/([^"/]+)"/g)) {
         expect(shipped).toContain(file);

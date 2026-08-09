@@ -1,6 +1,8 @@
 import { requestUrl } from 'obsidian';
 import { exec } from './utils';
-import semver from 'semver/preload';
+// `parse` is the only entry point used — it returns a SemVer, whose `compare` covers the rest. The package root
+// re-exports ranges, comparators and coercion too, none of which this plugin needs.
+import semverParse from 'semver/functions/parse';
 import type { SemVer } from 'semver';
 
 export const normalizePandocPath = (path?: string) => (path?.includes(' ') ? `"${path}"` : `${path ?? 'pandoc'}`);
@@ -17,7 +19,7 @@ export function parsePandocVersion(version: string) {
       dotCount -= 1;
     }
   }
-  return semver.parse(version, true);
+  return semverParse(version, true);
 }
 
 export async function getPandocVersion(path?: string, env?: Record<string, string>) {

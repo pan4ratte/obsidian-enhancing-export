@@ -5,10 +5,12 @@
  * pandoc is not told it is missing for the rest of the session.
  */
 
-const execMock = jest.fn<Promise<string>, [string, unknown?]>();
+import { vi } from 'vitest';
 
-jest.mock('../src/utils', () => ({
-  ...jest.requireActual<Record<string, unknown>>('../src/utils'),
+const execMock = vi.fn<(cmd: string, options?: unknown) => Promise<string>>();
+
+vi.mock('../src/utils', async () => ({
+  ...(await vi.importActual<Record<string, unknown>>('../src/utils')),
   exec: (cmd: string, options?: unknown) => execMock(cmd, options),
 }));
 

@@ -1,6 +1,5 @@
-// The loader in <root>/vite.config.ts emits `Uint8Array.from(atob(...))`, so every embedded resource is backed by a
-// plain ArrayBuffer it owns in full.
-type Resource = { default: Uint8Array<ArrayBuffer> };
+// The loader in <root>/vite.config.ts inlines each file as a string literal — they are all UTF-8 text.
+type Resource = { default: string };
 
 /**
  * `dir` is where the files are written inside the plugin folder, which is not where they are kept in the repository:
