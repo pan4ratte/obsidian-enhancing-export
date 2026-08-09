@@ -4,9 +4,8 @@ import obsidianmd from 'eslint-plugin-obsidianmd';
 import globals from 'globals';
 
 export default tseslint.config(
-  // `main.js` is built output and `typings/electron.d.ts` is a vendored upstream
-  // dump — 670k of declarations that are not ours to bring into line.
-  { ignores: ['main.js', 'coverage/', 'typings/electron.d.ts'] },
+  // `main.js` is built output.
+  { ignores: ['main.js', 'coverage/'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   // Obsidian's own ruleset, which checks what a plugin is reviewed against
