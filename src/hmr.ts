@@ -16,8 +16,6 @@ Window.prototype.hmr = function (plugin: Plugin, options?: HmrOptions): void {
     return;
   }
 
-  console.log(`[hmr: ${plugin.manifest.name}]`, new Date());
-
   options ??= {};
   options.watchFiles ??= ['main.js', 'manifest.json', 'styles.css'];
   const { watchFiles } = options;
@@ -33,20 +31,12 @@ Window.prototype.hmr = function (plugin: Plugin, options?: HmrOptions): void {
     app: { vault },
   } = plugin;
 
+  // The reload used to switch Obsidian's own `debug-plugin` flag on around it, to keep a plugin that throws on load
+  // from failing quietly. That is a one-off setting rather than something a reload should write, so it is set by hand
+  // now — see CONTRIBUTING.md.
   const restartPlugin = async () => {
-    const dbgKey = 'debug-plugin';
-    const oldDebug = localStorage.getItem(dbgKey);
-    try {
-      localStorage.setItem(dbgKey, '1');
-      await plugins.disablePlugin(id);
-      await plugins.enablePlugin(id);
-    } finally {
-      if (oldDebug) {
-        localStorage.setItem(dbgKey, oldDebug);
-      } else {
-        localStorage.removeItem(dbgKey);
-      }
-    }
+    await plugins.disablePlugin(id);
+    await plugins.enablePlugin(id);
   };
 
   const entry = normalize(join(pluginDir, 'main.js'));

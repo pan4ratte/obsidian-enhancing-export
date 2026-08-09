@@ -69,8 +69,9 @@ Obsidian reloads a plugin when its folder changes if you have the
 [Hot Reload](https://github.com/pjeby/hot-reload) plugin installed, which is
 worth having for `npm run dev`.
 
-To see the plugin's own debug output, open DevTools with `Ctrl+Shift+I` (or
-`F12`) and run this once in the Console tab:
+To see the plugin's own debug output — and to keep a plugin that throws while
+loading from failing quietly on each reload — open DevTools with `Ctrl+Shift+I`
+(or `F12`) and run this once in the Console tab:
 
 ```shell
 localStorage.setItem('debug-plugin', '1')

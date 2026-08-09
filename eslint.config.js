@@ -53,16 +53,6 @@ export default tseslint.config(
     },
   },
   {
-    // The dev-only hot-reload shim. It is not shipped — `main.ts` only calls it
-    // under `import.meta.env.DEV` — so the guidelines about what a released
-    // plugin may touch do not apply to it.
-    files: ['src/hmr.ts'],
-    rules: {
-      'no-restricted-globals': 'off',
-      'obsidianmd/rule-custom-message': 'off',
-    },
-  },
-  {
     files: ['**/*.tsx'],
     rules: {
       // `let el!: HTMLDivElement` is assigned by solid through `ref={el}`, which
