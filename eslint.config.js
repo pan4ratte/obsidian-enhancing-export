@@ -51,21 +51,6 @@ export default tseslint.config(
       // `declare global`, which this rule does not. Turning it off for typed
       // files is typescript-eslint's own advice.
       'no-undef': 'off',
-
-      /*
-       * Deferred, not dismissed. Obsidian's preset brings typescript-eslint's
-       * type-checked rules with it, and this codebase predates them: what is
-       * left is ten reports of solid's store and `JSON.parse` returning `any`
-       * and spreading from there. Clearing them means typing those boundaries
-       * properly, which is a change worth making on its own rather than
-       * smuggling in behind a lint config. `no-unsafe-argument` and
-       * `no-misused-promises` are done and enforced again.
-       */
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/unbound-method': 'off',
     },
   },
   {
@@ -74,8 +59,7 @@ export default tseslint.config(
      * as a real template literal, which is what the Function constructor is for —
      * the code is the plugin's own and the only names in scope are the variables
      * handed in. `isVarName` builds one purely to ask the engine whether a string
-     * is a legal identifier, and never calls it. The console line and the raw
-     * localStorage read are a developer's debug switch, off in normal use.
+     * is a legal identifier, and never calls it.
      *
      * These are exemptions the preset does not allow inline — `eslint-comments/
      * no-restricted-disable` blocks suppressing its safety rules from the source,
@@ -85,8 +69,8 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-implied-eval': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
+      // Reports `no-new-func` against the two Function constructors above.
       'obsidianmd/rule-custom-message': 'off',
-      'no-restricted-globals': 'off',
     },
   },
   {
@@ -107,6 +91,13 @@ export default tseslint.config(
       // components is that pattern.
       'no-unassigned-vars': 'off',
     },
+  },
+  {
+    // The build config, which pulls methods off objects on purpose: vite's own
+    // logger is called back through `warn.call(logger, …)`, which supplies the
+    // receiver the rule cannot see, and node's `path` methods never read `this`.
+    files: ['vite.config.ts'],
+    rules: { '@typescript-eslint/unbound-method': 'off' },
   },
   {
     // Jest's globals.

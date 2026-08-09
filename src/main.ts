@@ -2,7 +2,7 @@ import { App, Menu, Plugin, PluginManifest, TFile, Notice, debounce } from 'obsi
 import { PandocGuiSettings, ExportSetting, DEFAULT_SETTINGS, DEFAULT_ENV } from './settings';
 import { ExportSettingTab, ExportDialog } from './ui';
 import { exportNote } from './export';
-import { getPlatformValue, PlatformKey } from './utils';
+import { getPlatformValue, PlatformKey, clone } from './utils';
 import { t } from './lang/helpers';
 import path from 'path';
 import resources, { BUNDLED_LUA_FILES } from './resources';
@@ -13,9 +13,7 @@ export default class PandocGuiPlugin extends Plugin {
 
   constructor(app: App, manifest: PluginManifest) {
     super(app, manifest);
-    // Annotated because `strict` is off, which leaves `Function#bind` returning `any`.
-    const save: () => Promise<void> = this.saveSettings.bind(this);
-    this.saveSettings = debounce(save, 1000, true) as unknown as typeof this.saveSettings;
+    this.saveSettings = debounce(this.saveSettings.bind(this), 1000, true) as unknown as typeof this.saveSettings;
   }
 
   async onload() {
@@ -82,14 +80,16 @@ export default class PandocGuiPlugin extends Plugin {
 
   public async resetSettings(): Promise<void> {
     this.settings = {
-      ...JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
+      ...clone(DEFAULT_SETTINGS),
       lastExportDirectory: this.settings.lastExportDirectory,
     };
     await this.saveSettings();
   }
 
   public async loadSettings(): Promise<void> {
-    const settings: PandocGuiSettings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    // `loadData` reads whatever the vault has on disk, which is `any` as far as the type system is concerned.
+    const saved = (await this.loadData()) as Partial<PandocGuiSettings> | null;
+    const settings: PandocGuiSettings = Object.assign({}, DEFAULT_SETTINGS, saved);
     settings.items.forEach(v => {
       Object.assign(v, Object.assign({}, DEFAULT_SETTINGS.items.find(o => o.name === v.name) ?? {}, v));
     });
@@ -114,7 +114,7 @@ export default class PandocGuiPlugin extends Plugin {
   }
 
   public async saveSettings(): Promise<void> {
-    const settings: PandocGuiSettings = JSON.parse(JSON.stringify(this.settings)) as PandocGuiSettings;
+    const settings = clone(this.settings);
     settings.items.forEach(v => {
       const def = DEFAULT_SETTINGS.items.find(o => o.name === v.name);
       if (def) {

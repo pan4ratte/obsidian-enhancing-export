@@ -8,7 +8,7 @@
 const execMock = jest.fn<Promise<string>, [string, unknown?]>();
 
 jest.mock('../src/utils', () => ({
-  ...jest.requireActual('../src/utils'),
+  ...jest.requireActual<Record<string, unknown>>('../src/utils'),
   exec: (cmd: string, options?: unknown) => execMock(cmd, options),
 }));
 

@@ -46,10 +46,6 @@ export function exec(cmd: string, options?: ExecOptions): Promise<string> {
         console.error(stdout, error);
         return;
       }
-      // A developer's switch, not vault data — raw localStorage, not `App#saveLocalStorage`.
-      if (stdout?.trim().length === 0 && '1' === localStorage.getItem('debug-plugin')) {
-        console.log(stdout);
-      }
       resolve(stdout);
     });
   });
@@ -73,7 +69,13 @@ export function renderTemplate(template: string, variables: Record<string, unkno
     try {
       const keys = Object.keys(variables).filter(isVarName);
       const values = keys.map(k => variables[k]);
-      return new Function(...keys, `{ return \`${template.replaceAll('\\', '\\\\')}\` }`).bind(variables)(...values) as string;
+      // The constructor answers with a bare `Function`; the call signature is this one, and saying so keeps the
+      // result a string rather than `any`.
+      const render = new Function(...keys, `{ return \`${template.replaceAll('\\', '\\\\')}\` }`) as (
+        this: Record<string, unknown>,
+        ...args: unknown[]
+      ) => string;
+      return render.apply(variables, values);
     } catch (e: unknown) {
       if (e instanceof ReferenceError && e.message.endsWith('is not defined')) {
         const name = e.message.substring(0, e.message.indexOf(' '));

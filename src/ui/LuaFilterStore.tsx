@@ -336,7 +336,7 @@ export default (props: {
           <Match when={catalogue.loading}>
             <p class="ex-lua-status">{t.STORE_LOADING}</p>
           </Match>
-          <Match when={catalogue.error}>
+          <Match when={Boolean(catalogue.error)}>
             <p class="ex-lua-status">{t.STORE_LOAD_ERROR}</p>
             <button class="mod-cta ex-lua-retry" onClick={() => void refetch()}>
               {t.STORE_RETRY}

@@ -10,6 +10,9 @@
     // strict-clean, so keep the previous behaviour explicit.
     "strict": false,
     "noImplicitAny": true,
+    // Without this, `bind`/`call`/`apply` return `any` and leak it into whatever
+    // they are assigned to — the only reason `saveSettings` needed annotating.
+    "strictBindCallApply": true,
     "moduleResolution": "bundler",
     "esModuleInterop": true,
     // The lua-filter catalogue is JSON, and its test reads it directly.
