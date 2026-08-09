@@ -27,17 +27,17 @@ export default {
     fileInUse: 'The file may be open in another program — a PDF viewer, Word, or a preview pane. Close it and export again.',
     outputFolder: 'The export folder could not be written to. Pick a folder that exists, or create it first.',
     pdfEngine:
-      'The PDF engine is not installed. Install a LaTeX distribution (MiKTeX or TeX Live), or choose another engine under Advanced in the template.',
+      'The PDF engine is not installed. Install a LaTeX distribution (MiKTeX, TeX Live or TinyTeX), or choose another engine under Advanced in the template.',
     pandocNotFound: 'Pandoc could not be run. Install it, or set the Pandoc folder in this plugin’s settings.',
     latexUnicode: 'pdfLaTeX cannot write these characters. Switch the template’s PDF engine to XeLaTeX or LuaLaTeX under Advanced.',
     latexPackage: 'A LaTeX package is missing. Install it with your TeX distribution’s package manager, then export again.',
-    luaFilter: 'A Lua filter failed. Check what it needs in its readme, or remove it from the template’s Lua filters.',
+    luaFilter: 'A Lua filter failed. Check what it requires, or remove it from the template’s Lua filters.',
     missingDataFile:
       'A file the template points at could not be read. Check the paths under Advanced — layout template, reference document, stylesheet.',
     missingResource: 'An image or attachment the note links to could not be found. Check that the file is still in the vault.',
-    frontMatter: 'The note’s frontmatter could not be read. Check the YAML block at the top of the note.',
+    frontMatter: 'The note’s properties could not be read. Check the YAML block at the top of the note.',
     citations: 'The bibliography or citation style could not be used. Check those files under Citations in the template.',
-    unknownOption: 'Pandoc did not recognise one of the options. Check “Options of your own” in the template.',
+    unknownOption: 'Pandoc did not recognise one of the options. Check “Extra commands” in the template.',
   },
 
   // ─── Buttons ─────────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ export default {
   PANDOC_CHECKING: 'Checking for updates…',
   PANDOC_UP_TO_DATE: 'Up to date',
   PANDOC_UPDATE_AVAILABLE: (version: string) => `Version ${version} is available`,
-  PANDOC_UPDATE_CHECK_FAILED: 'Could not check for updates.',
+  PANDOC_UPDATE_CHECK_FAILED: 'Could not check for updates',
   PANDOC_UPGRADE_REQUIRED: (version: string) => `This vault uses Markdown links, which require Pandoc ${version} or newer.`,
   PANDOC_UPDATE: 'Update',
   PANDOC_CHANGELOG: 'Changelog',
@@ -98,7 +98,7 @@ export default {
 
   // ─── Resulting command ───────────────────────────────────────────────────────
   COMMAND_RESULT: 'Resulting command',
-  COMMAND_RESULT_DESC: 'Everything above, as it is handed to pandoc. ${…} are filled in when a note is exported.',
+  COMMAND_RESULT_DESC: 'The command as it will be handed to pandoc.',
   COMMAND_COPY: 'Copy command',
   COMMAND_COPIED: 'Command copied.',
   COMMAND_COPY_FAILED: 'Could not copy the command.',
@@ -129,7 +129,7 @@ export default {
   // ─── Table of contents ───────────────────────────────────────────────────────
   SECTION_ADVANCED: 'Advanced',
   TOC: 'Table of contents',
-  TOC_DESC: 'Headings down to the level chosen, and every level above it.',
+  TOC_DESC: 'Set the depth of the generated table of contents.',
   TOC_LEVEL: (level: number) => `Level ${level}`,
   TOC_NONE: 'None',
 
@@ -144,9 +144,9 @@ export default {
 
   // ─── Reading the note ────────────────────────────────────────────────────────
   READING: 'Reading the note',
-  READING_DESC: 'What pandoc makes of the note itself, whatever it goes on to write.',
+  READING_DESC: 'How pandoc should read the note.',
   SHIFT_HEADINGS: 'Shift heading levels',
-  SHIFT_HEADINGS_DESC: 'Where the note’s headings land in the written document. Promoting a lone top heading makes it the title.',
+  SHIFT_HEADINGS_DESC: 'Where the note’s headings land in the written document.',
   SHIFT_HEADINGS_NONE: 'Keep as written',
   SHIFT_HEADINGS_DOWN: (levels: number) => `${levels} level deeper`,
   SHIFT_HEADINGS_UP: (levels: number) => `${levels} level higher`,
@@ -155,10 +155,9 @@ export default {
   STRIP_COMMENTS: 'Drop HTML comments',
   STRIP_COMMENTS_DESC: 'Leave <!-- … --> out of the written document rather than passing it through.',
   EMBED_NOTES: 'Write in embedded notes',
-  EMBED_NOTES_DESC:
-    'Replace ![[a note]] with what that note says, and ![[a note#heading]] with that section. Without this, pandoc reads an embedded note as a missing image.',
+  EMBED_NOTES_DESC: 'Replace ![[a note]] with what that note says, and ![[a note#heading]] with that section.',
   TODAY: 'Insert today’s date instead of $today on export',
-  TODAY_DESC: 'Every $today in any place of the note becomes will become today’s date.',
+  TODAY_DESC: 'Every $today anywhere in the note, properties included, becomes today’s date.',
   TODAY_NONE: 'Select date formatting…',
   KEYWORDS: 'Print the keywords property',
   KEYWORDS_DESC: 'Write the note’s keywords into the document itself, instead of leaving them in the metadata.',
@@ -211,7 +210,7 @@ export default {
 
   // ─── PDF ─────────────────────────────────────────────────────────────────────
   PDF_ENGINE: 'PDF engine',
-  PDF_ENGINE_DESC: 'The program that turns the document into a PDF. XeLaTeX and LuaLaTeX handle system fonts and non-Latin scripts.',
+  PDF_ENGINE_DESC: 'The program that turns the document into a PDF. XeLaTeX and LuaLaTeX handle non-Latin scripts.',
   PDF_ENGINE_DEFAULT: 'Default (pdfLaTeX)',
 
   // ─── Citations ───────────────────────────────────────────────────────────────
@@ -224,9 +223,9 @@ export default {
 
   // ─── Word and ODT styles ─────────────────────────────────────────────────────
   REFERENCE_DOC: 'Reference document',
-  REFERENCE_DOC_DESC: 'A document of your own to take styles, fonts and page setup from.',
+  REFERENCE_DOC_DESC: 'A template to take the document’s styles from.',
   WORD_STYLES: 'Styles tweaks',
-  WORD_STYLES_DESC: 'Use these options to customize how the styles applied by the reference document.',
+  WORD_STYLES_DESC: 'Customise how the reference document’s styles are applied.',
   FIGURE_STYLE: 'Apply figures style to images',
   FIGURE_STYLE_DESC: 'Gives an image with no caption a figure style, which fixes pandoc behavior.',
   FIGURE_STYLE_NAME: 'Specify figure style name',
@@ -239,10 +238,10 @@ export default {
   TABLE_HEAD_STYLE_PLACEHOLDER: 'Same as cells',
   LIST_STYLES: 'Use Word’s list styles',
   LIST_STYLES_DESC:
-    'Let List Bullet draw the bullets and indents, instead of pandoc’s own numbering painting over them. Needs a reference document whose List Bullet carries its own numbering, as Word’s built-in one does — without it the bullets come out blank.',
+    'Fixes pandoc’s behaviour by giving bulleted lists the standard List Bullet style. The reference document must define List Bullet.',
   FLATTEN_ORDERED: 'Flatten numbered lists',
   FLATTEN_ORDERED_DESC:
-    'Off, pandoc numbers them and every list restarts at 1, with List Number setting only the font and spacing. On, List Number draws the numbers exactly as it defines them — and separate lists carry on counting instead of restarting.',
+    'Off, every list restarts at 1 and List Number sets only the font and spacing. On, List Number defines the style in full, but separate lists carry on counting.',
 
   // ─── Layout template and includes ────────────────────────────────────────────
   OUTPUT_TEMPLATE: 'Layout template',

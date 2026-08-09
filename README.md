@@ -1,60 +1,44 @@
-# Pandoc GUI plugin
+![Pandoc GUI for Obsidian](https://shieldcn.dev/header/graph.svg?title=Pandoc+GUI+for+Obsidian&subtitle=Obsidian+%2B+Pandoc+%2B+GUI+%3D+%E2%9D%A4%EF%B8%8F&logo=pandoc&mode=dark)
 
-English | [Русский](https://github.com/pan4ratte/obsidian-pandoc-gui/blob/main/README_RU.md)
+<p align="center">
+  English | <a href="https://github.com/pan4ratte/obsidian-pandoc-gui/blob/main/README_RU.md">Русский</a>
+</p>
 
-Export notes with Pandoc without writing a command line. Every option Pandoc offers for the format you are exporting to is an ordinary Obsidian setting — page size, PDF engine, table of contents, citations, Word styles — and the command it builds is shown to you before it runs. Templates for Word, PDF, LaTeX, HTML, EPUB, slides, Markdown and a dozen more formats come ready to use, Obsidian's own syntax survives the trip, and a store of lua filters covers the rest.
+Export notes with Pandoc without touching the command line: every option Pandoc offers is available right in the Obsidian interface. Build export templates for Word, PDF, LaTeX, HTML, EPUB and many other formats, and install extra lua filters straight from the store inside the plugin.
 
 
 ## Features
 
-### 1. Every Pandoc option as a row
+### 1. Every Pandoc feature in a graphical interface
 
-The template editor lays out what Pandoc can do for the chosen output format as ordinary settings: table of contents and its depth, section numbering, heading shifts, tab width, top-level divisions, PDF engine, syntax highlighting, maths rendering, paper size and fonts, footnote placement, slide levels, EPUB cover and split level, HTML resource embedding, line endings, include files. A row appears only for the formats whose writer would actually read it, so a Word template is never asked which slide level to break on.
+A flexible template editor lets you set up how notes are exported without using the command line. Everything is configurable: the table of contents and its depth, section numbering, the PDF engine, syntax highlighting, maths rendering, paper and font size, footnote placement and much more.
 
-At the foot of the editor sits the whole command as it will be handed to Pandoc, to be read rather than typed, with a button to copy it. Anything with no row of its own goes in a field of its own — *Extra commands* — written last, so it always has the final word.
+### 2. Dozens of export formats
 
-### 2. Templates for the formats you export to
+Word, OpenOffice, PDF, LaTeX (a whole document or a fragment to paste into an existing project), HTML, EPUB, Beamer and reveal.js slides, PowerPoint, Markdown in CommonMark, GFM or Hugo flavours, Typst, TextBundle, RTF, MediaWiki, reStructuredText, Textile, OPML, plain text and a BibTeX bibliography of everything a note cites.
 
-Word, OpenOffice, PDF, LaTeX (whole document or a fragment to paste into an existing project), HTML, EPUB, Beamer and reveal.js slides, PowerPoint, Markdown in CommonMark, GFM or Hugo flavours, Typst, TextBundle, RTF, MediaWiki, reStructuredText, Textile, OPML, plain text and a BibTeX bibliography of everything a note cites. Each one is a template you can copy, rename or rewrite, and *Custom* runs any command you like with the note's paths filled in.
+### 3. Exports that respect Obsidian's syntax
 
-Export from the command palette, from the file's context menu, or with **Export with previous settings**, which reuses the last template and folder without opening a dialog at all.
+The plugin works around many of the problems of Pandoc itself and of other export plugins for Obsidian. Embedding `![[notes]]` and `![[notes#sections]]`, for one, works in full. `==Highlights==` survive, `$$…$$` blocks are put back together, and every `$today` in the note becomes today's date. Advanced settings and tweaks switch on the rest of the syntax — callouts, emoji shortcodes, bare URLs, hard line breaks and more.
 
-### 3. Obsidian's own syntax, exported as it reads
+### 4. A store of lua filters
 
-`![[Another note]]` is a transclusion, not a missing image: the plugin resolves the link — which only Obsidian can do — and writes that note's text into the document, a single `![[note#heading]]` section included. Attachments are found wherever your vault keeps them, including the per-note attachment folders Pandoc has no way to know about. `==Highlights==` survive, `$$…$$` blocks are put back together, and every `$today` in the note becomes today's date in Obsidian's own language. An *Extensions* row switches on the rest of the syntax Pandoc will not read unless asked — callouts, emoji shortcodes, bare URLs, hard line breaks and more.
+A lua filter is a small script Pandoc applies to the document on export, which lets you tune the document more finely still: page breaks in Word, diagrams from Mermaid code blocks, embedded notes, chemical formulas or sheet music. The filter store offers more than three dozen of them, grouped by the problem they solve, each naming what it requires.
 
-### 4. Word and ODT that obey your reference document
+### 5. Pandoc, watched over
 
-Point a template at a `.docx` or `.odt` of your own and its styles, fonts and page setup govern the export. Three rows then undo what Pandoc otherwise settles for you: captionless images get a paragraph style of their own instead of landing in body text, table cells stop being stamped with Pandoc's "Compact" style — which outranks the table style in Word — and Word's own *List Bullet* and *List Number* styles draw the bullets and indents, instead of Pandoc's direct formatting painting over them.
-
-### 5. Citations from the vault you already keep
-
-Give a template a bibliography — `.bib`, `.json`, `.yaml` or `.ris` — and a `.csl` style, and `[@citekey]` becomes a rendered citation with a bibliography at the end, in any output format. A Bibliography template exports just the entries a note cites, and the catalogue adds live Zotero citations, per-chapter bibliographies, several bibliographies at once, DOI lookups and citation intent.
-
-### 6. A store of lua filters
-
-A lua filter is a small script Pandoc runs over the document on its way out — it is how you get real page breaks in Word, diagrams from Mermaid code blocks, included notes, chemical formulas or sheet music. **Browse lua-filters** in the settings opens a store of thirty-odd of them, grouped by the problem they solve, each naming its author, its licence and anything it needs installed *before* you install it rather than after a failed export.
-
-Every filter offered is committed in this repository and served from it: browsing is one request and installing is one more, nothing is read from the GitHub API or from anyone else's branch, and what you install is the file that was reviewed when it was vendored. Installing only puts the file in place — a filter runs when a template asks for it, in that template's *Lua filters* row.
-
-### 7. Exports that fail out loud
-
-A failed export ends in a box naming the template and the file, the error itself, and one suggestion said as the next thing to try: the PDF is open in a viewer, the PDF engine is not installed, pdfLaTeX cannot set these characters so switch to XeLaTeX, a LaTeX package is missing, an image the note links to has moved, the frontmatter will not parse, Pandoc did not recognise one of your own options.
-
-### 8. Pandoc, watched over
-
-The settings open on the installed Pandoc: its version, whether it is the newest release, and links to the update, the changelog and the manual. If your vault writes Markdown links rather than wikilinks and the installed Pandoc is too old to resolve them, it says so there rather than at export time.
-
----
-
-**Every row in the template editor carries its own description, so what an option does is answered where you set it.**
+Your Pandoc stays at the current version, because the plugin tracks releases and offers to install a new one when it finds it. The manual and the changelog can be opened straight from the plugin too.
 
 
 ## Installation
 
 ### First of all, install Pandoc
 
-This plugin drives Pandoc; it does not contain it. Install Pandoc 3.1.9 or newer from [https://pandoc.org/installing.html](https://pandoc.org/installing.html) and either add it to your `PATH` or point the plugin at its folder in the settings. Exporting to PDF additionally needs a LaTeX distribution — MiKTeX or TeX Live — or one of Pandoc's other PDF engines.
+1. The plugin drives Pandoc, but Pandoc has to be installed first, from the official site: [https://pandoc.org/installing.html](https://pandoc.org/installing.html).
+
+2. Then either add it to your system `PATH`, or point the plugin at the installed program in its settings.
+
+3. Exporting straight to PDF additionally needs a LaTeX distribution — MiKTeX, TeX Live, the [TinyTeX](https://github.com/rstudio/tinytex-releases) I recommend, or any other engine Pandoc supports.
 
 ### Option 1: Obsidian plugin store
 
@@ -79,7 +63,7 @@ If you want to test beta-versions of the plugin or use previous versions, you ca
 
 ## The lua-filter catalogue
 
-Everything below is offered by **Browse lua-filters** in the plugin settings, and everything below is vendored in [`lua-filters/`](lua-filters/README.md) — where the entry schema, the provenance of each folder and the filters the plugin ships with are documented. A filter's name links to its own readme; the *Needs* column is what has to exist before it can do anything.
+The filters listed below can be found in the filter store in the plugin settings, or in the [`lua-filters/`](lua-filters/README.md) folder of this repository.
 
 The catalogue currently offers:
 
@@ -156,11 +140,11 @@ Want to add a filter of your own? The folder's [readme](lua-filters/README.md) s
 
 ## Custom export commands
 
-Choose the `Custom` template when adding a new one, and write whatever command you like — a Pandoc invocation the rows do not cover, or another program entirely. The variables below are filled in before it runs.
+Choose `Custom` when creating an export template, and write whatever command you like — a Pandoc invocation the setting rows do not cover, or another program entirely. The variables below are filled in before it runs.
 
 ## Variables
 
-You can use `${variables}` in a custom export command, their values are:
+You can use `${variables}` in your export command, their values are:
 
 | Key                       | Value                                                        |
 | ------------------------- | ------------------------------------------------------------ |
@@ -186,19 +170,17 @@ My name is Mark Ingram (Ingrem), I am a Religious Studies scholar. Apart from my
 
 Hello to every student that came across this page!
 
-I also recommend my other plugins: [Advanced Word Count](https://community.obsidian.md/plugins/advanced-word-count), which counts words the way your publisher or your supervisor does rather than the way Obsidian does, and [Publish to Telegram](https://community.obsidian.md/plugins/publish-to-telegram), which posts notes straight to Telegram channels and chats.
-
 
 ## Credits
 
-This plugin began as a fork of [Enhancing Export](https://github.com/mokeyish/obsidian-enhancing-export) by **YISH ([@mokeyish](https://github.com/mokeyish))**, whose work is what made exporting from Obsidian with Pandoc possible in the first place, and whose export engine still sits under everything above. It is used and redistributed here under the MIT licence, and the original copyright notice is kept in [LICENSE](LICENSE).
+This plugin began as a fork of [Enhancing Export](https://github.com/mokeyish/obsidian-enhancing-export) by **YISH ([@mokeyish](https://github.com/mokeyish))** — the quick start of this project was possible thanks to him.
 
 Thanks are also owed to:
 
-- **[John MacFarlane](https://johnmacfarlane.net/) and the Pandoc contributors** for Pandoc itself, which does all of the actual converting.
-- **The [pandoc-ext](https://github.com/pandoc-ext) organisation** and the retired **[pandoc/lua-filters](https://github.com/pandoc/lua-filters)** collection, whose filters the catalogue vendors — each entry names its author and its licence, and every vendored copy keeps its original headers.
-- **[Better BibTeX](https://retorque.re/zotero-better-bibtex/)** for the Zotero filter the catalogue offers.
+- **[John MacFarlane](https://johnmacfarlane.net/) and the other Pandoc contributors** for the best document converter in the world.
+- **The [pandoc-ext](https://github.com/pandoc-ext) organisation** and the retired **[pandoc/lua-filters](https://github.com/pandoc/lua-filters)** collection.
+- **[Better BibTeX](https://retorque.re/zotero-better-bibtex/)** for the Zotero filter the catalogue also offers.
 
 ---
 
-In compliance with the Obsidian community guidelines, all external network calls should be disclosed in the plugin README and only made with user knowledge. This plugin makes network calls to [api.github.com](https://api.github.com) — to look up the latest Pandoc release for the version check in the settings — and to [raw.githubusercontent.com](https://raw.githubusercontent.com), to read the lua-filter catalogue when you open the store and to download a filter when you install one. Nothing else is fetched, and none of your notes leave your machine: exporting runs Pandoc locally. Templates you configure yourself may of course reach the network on their own — the HTML template loads MathJax from a CDN so that maths renders in a browser, and some catalogue filters fetch what they need at export time, which each of them says in its *Needs*.
+In compliance with the Obsidian community guidelines, all external network calls should be disclosed in the plugin README and only made with user knowledge. This plugin makes network calls to [api.github.com](https://api.github.com) — to look up the latest Pandoc release for the version check in the settings — and to [raw.githubusercontent.com](https://raw.githubusercontent.com), to read the lua-filter catalogue when you open the store and to download a filter when you install one.

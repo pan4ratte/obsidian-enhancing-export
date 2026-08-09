@@ -97,7 +97,7 @@ their own. Anything else `package.json`'s `scripts` offers is fair game too.
 | `src/pandoc_format.ts` | What each output format is and which rows it can answer — the format families a row and a filter are narrowed by. |
 | `src/lua_filters.ts` | The store: reading the catalogue, installing, uninstalling, and the `--lua-filter` argument a template runs one through. |
 | `src/ui/` | The settings tab, the export dialog and the filter store, in Solid. |
-| `src/lang/` | Every string the user sees. `en-US.ts` is the only locale today, and the type of every other. |
+| `src/lang/` | Every string the user sees. `en.ts` is the type every other locale satisfies; `ru.ts` is the Russian one. |
 | `lua-filters/` | The filters: `bundled/` is what the plugin ships, the rest is the store's catalogue. See its [readme](lua-filters/README.md). |
 | `textemplate/` | LaTeX templates embedded into the build alongside the bundled filters. |
 | `scripts/` | `gen-catalogue.js`, which writes the catalogue table in the readme. |
@@ -120,11 +120,11 @@ Please export something real with a new template before proposing it.
 
 A row is three things: the argument it reads and writes (in `writer_args.ts`,
 or `filter_args.ts` for the rows that run a bundled filter), the formats it is
-shown for (`pandoc_format.ts`), and its strings (`src/lang/en-US.ts`). Rows are
+shown for (`pandoc_format.ts`), and its strings (`src/lang/en.ts`). Rows are
 offered only to the writers that would do something with them, so a row with no
 format restriction should genuinely apply everywhere.
 
-Two rules the editor depends on: a row never writes into *Options of your own*,
+Two rules the editor depends on: a row never writes into *Extra commands*,
 which belongs to the user, and a row's argument must survive a round trip —
 written into a template, read back out, and shown as the same value.
 
@@ -154,10 +154,10 @@ licence header in the file. Every entry has to name its author and licence.
 
 ## Translations
 
-`src/lang/en-US.ts` is the only locale at the moment, and its shape is the type
-every other locale must satisfy — so a new one is a file beside it, exporting
-the same keys, registered in `src/lang/index.ts`. Nothing user-visible should be
-written as a literal outside that folder.
+`src/lang/en.ts` is the shape every other locale must satisfy — `ru.ts` is one,
+and a new one is a file beside them, exporting the same keys, registered in the
+`localeMap` of `src/lang/helpers.ts`. Nothing user-visible should be written as
+a literal outside that folder.
 
 ## Pull requests
 

@@ -36,7 +36,7 @@ const readmePath = path.join(root, 'README.md');
 
 // The shelves, in the order the store shows them. Kept in step with
 // `LUA_FILTER_CATEGORIES` in src/lua_filters.ts and with the `category` labels
-// in src/lang/en-US.ts — an entry on a shelf that is not here is an error
+// in src/lang/en.ts — an entry on a shelf that is not here is an error
 // rather than a row quietly dropped from the tables.
 const CATEGORIES = [
   ['structure', 'Structure'],
