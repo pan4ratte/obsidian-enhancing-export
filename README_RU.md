@@ -1,4 +1,4 @@
-![Pandoc GUI for Obsidian](https://shieldcn.dev/header/graph.svg?title=Pandoc+GUI+for+Obsidian&subtitle=Obsidian+%2B+Pandoc+%2B+GUI+%3D+%E2%9D%A4%EF%B8%8F&logo=pandoc&mode=dark)
+<img alt="Pandoc GUI" src="https://shieldcn.dev/header/graph.svg?title=Pandoc+GUI&subtitle=Obsidian+%2B+Pandoc+%2B+GUI+%3D+%E2%9D%A4%EF%B8%8F&logo=pandoc&size=wide&mode=dark">
 
 <p align="center">
   <a href="https://github.com/pan4ratte/obsidian-pandoc-gui/blob/main/README.md">English</a> | Русский
