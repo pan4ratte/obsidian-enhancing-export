@@ -13,23 +13,30 @@ pasted into an issue tells us almost everything.
 1. **Node.js** — version 24 or newer, as in CI.
    [https://nodejs.org/en/download](https://nodejs.org/en/download)
 
-2. **pnpm**
-
-   ```shell
-   npm install -g pnpm
-   ```
-
-3. **Pandoc** — the plugin drives it and part of the test suite runs it, so it
+2. **Pandoc** — the plugin drives it and part of the test suite runs it, so it
    has to be on your `PATH`. Version 3.1.9 or newer.
    [https://pandoc.org/installing.html](https://pandoc.org/installing.html)
 
-4. **The repository**
+3. **The repository**
 
    ```shell
    git clone https://github.com/pan4ratte/obsidian-pandoc-gui.git
    cd obsidian-pandoc-gui
-   pnpm install
+   npm ci
    ```
+
+## A note on `package-lock.json`
+
+Regenerate it on Linux only — under WSL on a Windows machine, using a native
+`node`, not the one `/mnt/c` interop puts on `PATH`. `npm install` on Windows
+resolves two fewer entries, dropping top-level `@emnapi/core` and
+`@emnapi/runtime`: optional transitive deps of the native `@unrs/resolver`
+binding. `npm ci` then fails on Linux with "package.json and package-lock.json
+are not in sync", and npm's suggested remedy is a trap — re-running
+`npm install` on Windows silently restores the broken lockfile.
+
+It is invisible locally: install, lint, tests and build all pass on Windows
+with the short lockfile. CI checks for the two entries before installing.
 
 ## Running it in a vault
 

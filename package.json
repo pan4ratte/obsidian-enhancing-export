@@ -22,7 +22,7 @@
   "license": "MIT",
   "repository": "https://github.com/pan4ratte/obsidian-pandoc-gui",
   "type": "module",
-  "//overrides": "babel-plugin-istanbul <8 drags in the deprecated glob@7/inflight chain. The pnpm equivalent lives in pnpm-workspace.yaml.",
+  "//overrides": "babel-plugin-istanbul <8 drags in the deprecated glob@7/inflight chain.",
   "overrides": {
     "babel-plugin-istanbul": "^8.0.0"
   },
