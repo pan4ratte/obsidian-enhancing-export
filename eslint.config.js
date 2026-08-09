@@ -54,18 +54,17 @@ export default tseslint.config(
 
       /*
        * Deferred, not dismissed. Obsidian's preset brings typescript-eslint's
-       * type-checked rules with it, and this codebase predates them: roughly
-       * forty reports, nearly all of them `JSON.parse` and solid's store
-       * returning `any` and spreading from there. Clearing them means typing
-       * those boundaries properly, which is a change worth making on its own
-       * rather than smuggling in behind a lint config.
+       * type-checked rules with it, and this codebase predates them: what is
+       * left is ten reports of solid's store and `JSON.parse` returning `any`
+       * and spreading from there. Clearing them means typing those boundaries
+       * properly, which is a change worth making on its own rather than
+       * smuggling in behind a lint config. `no-unsafe-argument` and
+       * `no-misused-promises` are done and enforced again.
        */
-      '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/no-misused-promises': 'off',
       '@typescript-eslint/unbound-method': 'off',
     },
   },
@@ -89,12 +88,6 @@ export default tseslint.config(
       'obsidianmd/rule-custom-message': 'off',
       'no-restricted-globals': 'off',
     },
-  },
-  {
-    // The auto-sizing textarea sets a height it has just measured — however tall
-    // the text currently is. A stylesheet cannot express that.
-    files: ['src/ui/components/Setting.tsx'],
-    rules: { 'obsidianmd/no-static-styles-assignment': 'off' },
   },
   {
     // The dev-only hot-reload shim. It is not shipped — `main.ts` only calls it

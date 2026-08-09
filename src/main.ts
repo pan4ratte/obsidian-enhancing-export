@@ -13,7 +13,9 @@ export default class PandocGuiPlugin extends Plugin {
 
   constructor(app: App, manifest: PluginManifest) {
     super(app, manifest);
-    this.saveSettings = debounce(this.saveSettings.bind(this), 1000, true) as unknown as typeof this.saveSettings;
+    // Annotated because `strict` is off, which leaves `Function#bind` returning `any`.
+    const save: () => Promise<void> = this.saveSettings.bind(this);
+    this.saveSettings = debounce(save, 1000, true) as unknown as typeof this.saveSettings;
   }
 
   async onload() {

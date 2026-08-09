@@ -126,15 +126,15 @@ export const TextArea = (props: {
     }
     // Nothing rendered has a height to read.
     if (el.getClientRects().length === 0) {
-      el.style.height = '';
+      el.setCssStyles({ height: '' });
       return;
     }
     // Measured with nothing of its own in the way; `scrollHeight` is content and padding, and a border-box height has
     // to carry the border as well.
-    el.style.height = 'auto';
+    el.setCssStyles({ height: 'auto' });
     const style = getComputedStyle(el);
     const border = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
-    el.style.height = `${el.scrollHeight + border}px`;
+    el.setCssStyles({ height: `${el.scrollHeight + border}px` });
   };
 
   // Every way it can change: typed into, written from the settings, or brought on screen where it can finally be

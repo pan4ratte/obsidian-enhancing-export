@@ -49,7 +49,7 @@ const editors = {
       <>
         <Setting name={props.meta.title} description={props.meta.description}>
           <Text value={filePath() ?? ''} readOnly={true} />
-          <ExtraButton icon="folder" onClick={chooseFile} />
+          <ExtraButton icon="folder" onClick={() => void chooseFile()} />
         </Setting>
       </>
     );

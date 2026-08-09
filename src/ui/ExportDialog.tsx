@@ -58,6 +58,15 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
 
   const doExport = async () => {
     const plugin = props.plugin;
+    // What the dialog remembers of an export that worked, saved before it closes.
+    const remember = async () => {
+      globalSetting.showOverwriteConfirmation = untrack(showOverwriteConfirmation);
+      globalSetting.lastExportDirectory = setPlatformValue(globalSetting.lastExportDirectory, untrack(candidateOutputDirectory));
+
+      globalSetting.lastExportType = untrack(setting).name;
+      await plugin.saveSettings();
+      props.onClose?.();
+    };
     // Every template can be deleted, and then there is nothing to export with.
     if (!untrack(setting)) {
       new Notice(t.TEMPLATES_EMPTY, 2000);
@@ -73,14 +82,7 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
       untrack(showOverwriteConfirmation),
       // The dialog asks for no options of its own, so `${options.…}` reads as unset.
       {},
-      async () => {
-        globalSetting.showOverwriteConfirmation = untrack(showOverwriteConfirmation);
-        globalSetting.lastExportDirectory = setPlatformValue(globalSetting.lastExportDirectory, untrack(candidateOutputDirectory));
-
-        globalSetting.lastExportType = untrack(setting).name;
-        await plugin.saveSettings();
-        props.onClose?.();
-      },
+      () => void remember(),
       () => {
         setHidden(false);
       }
@@ -100,7 +102,7 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
 
         <Setting name={t.EXPORT_DIALOG_LOCATION}>
           <Text title={candidateOutputDirectory()} value={candidateOutputDirectory()} disabled />
-          <ExtraButton icon="folder" onClick={chooseFolder} />
+          <ExtraButton icon="folder" onClick={() => void chooseFolder()} />
         </Setting>
 
         <Setting name={t.EXPORT_DIALOG_OVERWRITE} class="mod-toggle">
@@ -108,7 +110,7 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
         </Setting>
 
         <div class="modal-button-container">
-          <Button cta={true} onClick={doExport}>
+          <Button cta={true} onClick={() => void doExport()}>
             {t.EXPORT_DIALOG_SUBMIT}
           </Button>
         </div>

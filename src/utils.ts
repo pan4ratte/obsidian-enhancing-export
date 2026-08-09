@@ -55,6 +55,14 @@ export function exec(cmd: string, options?: ExecOptions): Promise<string> {
   });
 }
 
+/**
+ * A deep copy of plain data, typed as what went in. `JSON.parse` returns `any`,
+ * and spreading that hands `any` on to everything downstream.
+ */
+export function clone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
 export function trimQuotes(s: string) {
   return (s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'")) ? s.substring(1, s.length - 1) : s;
 }

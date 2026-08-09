@@ -223,7 +223,12 @@ export async function exportNote(
   });
 
   try {
-    const actualOutputPath = path.normalize(trimQuotes(args.output));
+    // yargs-parser types every argument as `any`; `-o` is the one this needs, and it is a path or nothing.
+    const output: unknown = args.output;
+    if (typeof output !== 'string') {
+      throw new Error('The command names no output file — check -o in the template.');
+    }
+    const actualOutputPath = path.normalize(trimQuotes(output));
 
     const actualOutputDir = path.dirname(actualOutputPath);
     if (!fs.existsSync(actualOutputDir)) {
@@ -247,7 +252,7 @@ export async function exportNote(
 
     if (showCommandLineOutput) {
       const box = new MessageBox(plugin.app, t.EXPORT_COMMAND_OUTPUT(cmd));
-      box.onClose = next;
+      box.onClose = () => void next();
       box.open();
     } else {
       new Notice(t.NOTICE_EXPORT_SUCCESS(variables.outputFileFullName), 1500);

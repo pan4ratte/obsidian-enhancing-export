@@ -5,7 +5,7 @@ import type { SettingDefinitionItem } from 'obsidian';
 import type { SemVer } from 'semver';
 import type PandocGuiPlugin from '../main';
 import { CustomExportSetting, ExportSetting, PandocExportSetting, createEnv, today, DEFAULT_ENV } from '../settings';
-import { setPlatformValue, getPlatformValue } from '../utils';
+import { setPlatformValue, getPlatformValue, clone } from '../utils';
 
 import { createSignal, createRoot, onCleanup, createMemo, createEffect, For, Index, Show, batch, Match, Switch, JSX } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
@@ -351,7 +351,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
     const idx = settings.items.findIndex(v => v.name === template.name);
     batch(() => {
       setSettings('items', idx === -1 ? 0 : idx, {
-        ...JSON.parse(JSON.stringify(preset)),
+        ...clone(preset),
         ...carried,
         openExportedFile: template.openExportedFile,
         openExportedFileLocation: template.openExportedFileLocation,
@@ -364,7 +364,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
 
   const addCommandTemplate = () => {
     const key = Object.keys(export_templates)[0];
-    const template = JSON.parse(JSON.stringify(export_templates[key]));
+    const template = clone(export_templates[key]);
     template.preset = key;
     template.name = uniqueTemplateName(template.name);
     batch(() => {
@@ -1396,7 +1396,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         markdownLinks={app.vault.config.useMarkdownLinks}
         path={getPlatformValue(settings.pandocPath) ?? ''}
         onPathChange={value => setSettings('pandocPath', v => setPlatformValue(v, value))}
-        onChoosePath={choosePandocPath}
+        onChoosePath={() => void choosePandocPath()}
       />
 
       <Setting name={t.SECTION_DEFAULTS} heading={true} />
@@ -1416,7 +1416,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         <Collapsible when={settings.defaultExportDirectoryMode === 'Custom'}>
           <Setting class="ex-export-destination-path">
             <Text style="width: 100%" value={customDefaultExportDirectory() ?? ''} title={customDefaultExportDirectory()} />
-            <ExtraButton icon="folder" onClick={chooseCustomDefaultExportDirectory} />
+            <ExtraButton icon="folder" onClick={() => void chooseCustomDefaultExportDirectory()} />
           </Setting>
         </Collapsible>
 
