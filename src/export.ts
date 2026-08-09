@@ -165,64 +165,68 @@ export async function exportNote(
   beforeExport?.();
   const progressBarHide = ProgressBar.show(t.NOTICE_EXPORTING(variables.outputFileFullName));
 
-  const env = (variables.env = createEnv(getPlatformValue(globalSetting.env) ?? {}, variables));
-
-  // The embed map goes to `embeds.lua` in the environment, not on the command line: a link is whatever someone typed.
-  const EMBED_ENV_LIMIT = 30000;
-  let embedLines = '';
-  for (const [link, file] of noteEmbeds) {
-    const line = `${link}\t${file}\n`;
-    if (embedLines.length + line.length > EMBED_ENV_LIMIT) {
-      console.warn(`Too many embedded notes to pass to pandoc; ${link} and any after it are left as they are.`);
-      break;
-    }
-    embedLines += line;
-  }
-  env['OBSIDIAN_EMBEDS'] = embedLines;
-
-  let pandocPath = pandoc.normalizePath(getPlatformValue(globalSetting.pandocPath));
-
-  if (process.platform === 'win32') {
-    // https://github.com/mokeyish/obsidian-enhancing-export/issues/153
-    pandocPath = pandocPath.replaceAll('\\', '/');
-    const pathKeys: Array<keyof Variables> = [
-      'pluginDir',
-      'luaDir',
-      'outputDir',
-      'outputPath',
-      'currentDir',
-      'currentPath',
-      'attachmentFolderPath',
-      'vaultDir',
-      'embedDirs',
-    ];
-
-    for (const pathKey of pathKeys) {
-      const path = variables[pathKey] as string;
-      variables[pathKey] = path.replaceAll('\\', '/');
-    }
-  }
-
-  // Later options win, so least specific first: preset, editor rows, then hand-typed. Filters are the exception —
-  // they run where they stand, so `orderLuaFilters` has the last word on the one whose place is not negotiable.
-  const cmdTpl =
-    setting.type === 'pandoc'
-      ? orderLuaFilters(
-          [pandocPath, '"${currentPath}"', setting.arguments, setting.customArguments, setting.userArguments]
-            .map(part => part?.trim())
-            .filter(Boolean)
-            .join(' ')
-        )
-      : setting.command;
-
-  const cmd = renderTemplate(cmdTpl, variables);
-  const args = argsParser(cmd.match(/(?:[^\s"]+|"[^"]*")+/g), {
-    alias: {
-      output: ['o'],
-    },
-  });
+  // Rendering a `${...}` can fail on a template the editor let through, and the bar is already up by here — so
+  // everything from the environment onwards reports through the one handler rather than escaping past it.
+  let cmd = '';
 
   try {
+    const env = (variables.env = createEnv(getPlatformValue(globalSetting.env) ?? {}, variables));
+
+    // The embed map goes to `embeds.lua` in the environment, not on the command line: a link is whatever someone typed.
+    const EMBED_ENV_LIMIT = 30000;
+    let embedLines = '';
+    for (const [link, file] of noteEmbeds) {
+      const line = `${link}\t${file}\n`;
+      if (embedLines.length + line.length > EMBED_ENV_LIMIT) {
+        console.warn(`Too many embedded notes to pass to pandoc; ${link} and any after it are left as they are.`);
+        break;
+      }
+      embedLines += line;
+    }
+    env['OBSIDIAN_EMBEDS'] = embedLines;
+
+    let pandocPath = pandoc.normalizePath(getPlatformValue(globalSetting.pandocPath));
+
+    if (process.platform === 'win32') {
+      // https://github.com/mokeyish/obsidian-enhancing-export/issues/153
+      pandocPath = pandocPath.replaceAll('\\', '/');
+      const pathKeys: Array<keyof Variables> = [
+        'pluginDir',
+        'luaDir',
+        'outputDir',
+        'outputPath',
+        'currentDir',
+        'currentPath',
+        'attachmentFolderPath',
+        'vaultDir',
+        'embedDirs',
+      ];
+
+      for (const pathKey of pathKeys) {
+        const path = variables[pathKey] as string;
+        variables[pathKey] = path.replaceAll('\\', '/');
+      }
+    }
+
+    // Later options win, so least specific first: preset, editor rows, then hand-typed. Filters are the exception —
+    // they run where they stand, so `orderLuaFilters` has the last word on the one whose place is not negotiable.
+    const cmdTpl =
+      setting.type === 'pandoc'
+        ? orderLuaFilters(
+            [pandocPath, '"${currentPath}"', setting.arguments, setting.customArguments, setting.userArguments]
+              .map(part => part?.trim())
+              .filter(Boolean)
+              .join(' ')
+          )
+        : setting.command;
+
+    cmd = renderTemplate(cmdTpl, variables);
+    const args = argsParser(cmd.match(/(?:[^\s"]+|"[^"]*")+/g), {
+      alias: {
+        output: ['o'],
+      },
+    });
+
     // yargs-parser types every argument as `any`; `-o` is the one this needs, and it is a path or nothing.
     const output: unknown = args.output;
     if (typeof output !== 'string') {

@@ -1,4 +1,5 @@
 import { t } from './lang/helpers';
+import { TemplateError } from './template';
 
 /** A failed export, with the command line stripped out and a suggestion where one is known. */
 export interface ExportFailure {
@@ -82,6 +83,11 @@ function extractDetail(err: unknown, cmd: string): string {
 
 export function describeExportFailure(err: unknown, cmd: string): ExportFailure {
   const detail = extractDetail(err, cmd) || t.ERROR_NO_OUTPUT;
+  // Recognised by type rather than by pattern: this one is the plugin's own, and
+  // nothing pandoc writes should be able to claim it.
+  if (err instanceof TemplateError) {
+    return { detail, recommendation: t.ERROR_HINTS.template };
+  }
   const matched = RECOMMENDATIONS.find(([pattern]) => pattern.test(detail));
   return { detail, recommendation: matched && t.ERROR_HINTS[matched[1]] };
 }

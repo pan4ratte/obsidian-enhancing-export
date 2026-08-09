@@ -53,26 +53,6 @@ export default tseslint.config(
     },
   },
   {
-    /*
-     * The template engine. `renderTemplate` evaluates `${outputPath}` and the rest
-     * as a real template literal, which is what the Function constructor is for —
-     * the code is the plugin's own and the only names in scope are the variables
-     * handed in. `isVarName` builds one purely to ask the engine whether a string
-     * is a legal identifier, and never calls it.
-     *
-     * These are exemptions the preset does not allow inline — `eslint-comments/
-     * no-restricted-disable` blocks suppressing its safety rules from the source,
-     * so the argument for them has to live here.
-     */
-    files: ['src/utils.ts'],
-    rules: {
-      '@typescript-eslint/no-implied-eval': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      // Reports `no-new-func` against the two Function constructors above.
-      'obsidianmd/rule-custom-message': 'off',
-    },
-  },
-  {
     // The dev-only hot-reload shim. It is not shipped — `main.ts` only calls it
     // under `import.meta.env.DEV` — so the guidelines about what a released
     // plugin may touch do not apply to it.

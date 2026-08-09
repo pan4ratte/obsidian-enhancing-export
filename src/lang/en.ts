@@ -38,6 +38,8 @@ export default {
     frontMatter: 'The note’s properties could not be read. Check the YAML block at the top of the note.',
     citations: 'The bibliography or citation style could not be used. Check those files under Citations in the template.',
     unknownOption: 'Pandoc did not recognise one of the options. Check “Extra commands” in the template.',
+    template:
+      'A ${...} expression in the template could not be read. Templates take variables, field access, strings, comparison and “? :”, but not function calls — write ${outputFileName} rather than ${outputFileName.toUpperCase()}.',
   },
 
   // ─── Buttons ─────────────────────────────────────────────────────────────────

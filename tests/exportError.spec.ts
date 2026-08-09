@@ -1,4 +1,5 @@
 import { describeExportFailure } from '../src/export_error';
+import { TemplateError } from '../src/utils';
 import { t } from '../src/lang/helpers';
 
 // Two things are tested: that the command line never reaches the box, and that the errors people actually hit are
@@ -91,5 +92,13 @@ describe('what to try', () => {
 
   test('an error nobody has an answer for is left without one', () => {
     expect(describe_(execError('pandoc: internal error: something went wrong')).recommendation).toBeUndefined();
+  });
+
+  test('a template the evaluator refused is recognised by its type', () => {
+    expect(describe_(new TemplateError('calls are not allowed in a template')).recommendation).toBe(hint.template);
+  });
+
+  test('pandoc cannot claim the template hint by writing the same words', () => {
+    expect(describe_(execError('calls are not allowed in a template')).recommendation).not.toBe(hint.template);
   });
 });

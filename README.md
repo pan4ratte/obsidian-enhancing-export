@@ -163,6 +163,19 @@ You can use `${variables}` in your export command, their values are:
 | `${embedDirs}`            | The folders of the files the note embeds, for `--resource-path`. |
 | Other variables           | Write `keyword: value` in the note's [YAML front matter](https://jekyllrb.com/docs/front-matter/) and use it as `${metadata.keyword}`. |
 
+### What can go inside `${...}`
+
+Besides a variable name, `${...}` takes a small set of expressions — enough to let an option appear in the command only when it is wanted:
+
+| Written | What it does |
+| ------- | ------------ |
+| `${metadata.keyword}`, `${today.iso}` | Field access; `${options["key"]}` is the same thing in brackets. |
+| `` ${ x ? `--opt="${x}"` : `` } `` | A condition. Nested template literals work inside the branches. |
+| `${x ?? "default"}`, `${x \|\| "fallback"}`, `${x && "…"}`, `${!x}` | Defaults and logic. |
+| `${fmt === "pdf" ? "…" : "…"}` | Comparison: `===`, `!==`, `==`, `!=`. |
+
+A name that is not among the variables stays in the command as written: `${user}` prints as `${user}`, so a typo shows up in the *Resulting command* line.
+
 
 # About the Author
 

@@ -63,48 +63,4 @@ export function trimQuotes(s: string) {
   return (s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'")) ? s.substring(1, s.length - 1) : s;
 }
 
-/** `renderTemplate('Hi, ${name}', { name: 'John' })` returns `'Hi, John'`. */
-export function renderTemplate(template: string, variables: Record<string, unknown> = {}): string {
-  while (true) {
-    try {
-      const keys = Object.keys(variables).filter(isVarName);
-      const values = keys.map(k => variables[k]);
-      // The constructor answers with a bare `Function`; the call signature is this one, and saying so keeps the
-      // result a string rather than `any`.
-      const render = new Function(...keys, `{ return \`${template.replaceAll('\\', '\\\\')}\` }`) as (
-        this: Record<string, unknown>,
-        ...args: unknown[]
-      ) => string;
-      return render.apply(variables, values);
-    } catch (e: unknown) {
-      if (e instanceof ReferenceError && e.message.endsWith('is not defined')) {
-        const name = e.message.substring(0, e.message.indexOf(' '));
-        const value =
-          Object.keys(variables)
-            .filter(n => n.toLowerCase() === name.toLowerCase())
-            .map(n => variables[n])[0] ?? `\${${name}}`;
-        variables[name] = value;
-      } else {
-        throw e;
-      }
-    }
-  }
-}
-
-const isVarName = (str: string) => {
-  if (typeof str !== 'string') {
-    return false;
-  }
-
-  if (str.trim() !== str) {
-    return false;
-  }
-
-  try {
-    // Only the engine knows for certain what a legal identifier is. This is never called.
-    new Function(str, 'var ' + str);
-  } catch {
-    return false;
-  }
-  return true;
-};
+export { renderTemplate, TemplateError } from './template';
