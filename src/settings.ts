@@ -1,5 +1,5 @@
 import export_templates from './export_templates';
-import { setPlatformValue, PlatformValue, renderTemplate, getPlatformValue } from './utils';
+import { setPlatformValue, PlatformValue, renderTemplate, getPlatformValue, clone } from './utils';
 import type { PropertyGridMeta } from './ui/components/PropertyGrid';
 import type { InstalledLuaFilter } from './lua_filters';
 import type { TodayFormat } from './filter_args';
@@ -68,6 +68,12 @@ export interface PandocGuiSettings {
 
   /** How the templates table was last ordered. */
   lastTemplateSort?: { column: 'name' | 'output'; ascending: boolean };
+
+  /**
+   * Names of the default templates this vault has already been given. One missing from `items` but named here was
+   * deleted and is not seeded again; one named nowhere is new in this release and is.
+   */
+  seededTemplates?: string[];
 
   /** Lua filters downloaded through the store, in `lua/` beside the bundled ones. */
   installedLuaFilters?: InstalledLuaFilter[];
@@ -175,14 +181,47 @@ export const DEFAULT_TEMPLATE_PRESETS: readonly string[] = [
   'PowerPoint (.pptx)',
 ];
 
+// Each default is an instance of the preset it is named for, so it carries the key it came from.
+const DEFAULT_ITEMS: ExportSetting[] = DEFAULT_TEMPLATE_PRESETS.filter(preset => export_templates[preset]).map(preset => ({
+  ...export_templates[preset],
+  preset,
+}));
+
 export const DEFAULT_SETTINGS: PandocGuiSettings = {
-  // Each default is an instance of the preset it is named for, so it carries the key it came from.
-  items: DEFAULT_TEMPLATE_PRESETS.filter(preset => export_templates[preset]).map(preset => ({ ...export_templates[preset], preset })),
+  items: DEFAULT_ITEMS,
+  seededTemplates: DEFAULT_ITEMS.map(o => o.name),
   pandocPath: undefined,
   defaultExportDirectoryMode: 'Same',
   openExportedFile: true,
   env: DEFAULT_ENV,
 };
+
+/**
+ * The templates a load starts from: the saved ones filled back out from the defaults they are stored as a diff from,
+ * plus every default this vault has never been given. A default missing from the saved items but named in
+ * `seededTemplates` was deleted, and deleting is final — that is what keeps it from coming back on the next start.
+ */
+export function restoreTemplates(saved: Partial<PandocGuiSettings> | null): Pick<PandocGuiSettings, 'items' | 'seededTemplates'> {
+  const items = clone(saved?.items ?? DEFAULT_SETTINGS.items);
+  items.forEach(v => {
+    Object.assign(v, Object.assign({}, DEFAULT_SETTINGS.items.find(o => o.name === v.name) ?? {}, v));
+  });
+  // A bundled template is stored as only its diff from the default, so one no longer seeded leaves a husk with
+  // nothing to run.
+  const restored = items.filter(v => v.type);
+  // A vault from before the list was written has been given everything this release has: only a later release's
+  // additions are new to it.
+  const seeded = new Set(saved?.seededTemplates ?? DEFAULT_SETTINGS.seededTemplates);
+  for (const item of DEFAULT_SETTINGS.items) {
+    if (!seeded.has(item.name)) {
+      seeded.add(item.name);
+      if (restored.every(o => o.name !== item.name)) {
+        restored.push(clone(item));
+      }
+    }
+  }
+  return { items: restored, seededTemplates: [...seeded] };
+}
 
 export function extractDefaultExtension(s: ExportSetting): string {
   if (s.type === 'pandoc') {

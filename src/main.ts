@@ -1,5 +1,5 @@
 import { App, Menu, Plugin, PluginManifest, TFile, Notice, debounce } from 'obsidian';
-import { PandocGuiSettings, ExportSetting, DEFAULT_SETTINGS, DEFAULT_ENV } from './settings';
+import { PandocGuiSettings, ExportSetting, DEFAULT_SETTINGS, DEFAULT_ENV, restoreTemplates } from './settings';
 import { ExportSettingTab, ExportDialog } from './ui';
 import { exportNote } from './export';
 import { getPlatformValue, PlatformKey, clone } from './utils';
@@ -89,28 +89,22 @@ export default class PandocGuiPlugin extends Plugin {
   public async loadSettings(): Promise<void> {
     // `loadData` reads whatever the vault has on disk, which is `any` as far as the type system is concerned.
     const saved = (await this.loadData()) as Partial<PandocGuiSettings> | null;
-    const settings: PandocGuiSettings = Object.assign({}, DEFAULT_SETTINGS, saved);
-    settings.items.forEach(v => {
-      Object.assign(v, Object.assign({}, DEFAULT_SETTINGS.items.find(o => o.name === v.name) ?? {}, v));
-    });
-    // A bundled template is stored as only its diff from the default, so one no longer seeded leaves a husk with
-    // nothing to run.
-    settings.items = settings.items.filter(v => v.type);
+    const settings: PandocGuiSettings = Object.assign({}, DEFAULT_SETTINGS, saved, restoreTemplates(saved));
     // A filter that used to come from the store and now ships with the plugin: drop the claim that the user installed
     // it, which would list it as theirs to uninstall.
     if (settings.installedLuaFilters?.some(f => BUNDLED_LUA_FILES.includes(f.fileName))) {
       settings.installedLuaFilters = settings.installedLuaFilters.filter(f => !BUNDLED_LUA_FILES.includes(f.fileName));
-    }
-    for (const item of DEFAULT_SETTINGS.items) {
-      if (settings.items.every(o => o.name !== item.name)) {
-        settings.items.push(item);
-      }
     }
     // The last-exported template is remembered by name; drop a name nothing answers to.
     if (settings.lastExportType && settings.items.every(o => o.name !== settings.lastExportType)) {
       delete settings.lastExportType;
     }
     this.settings = settings;
+    // A vault that has never written the list needs it on disk now: without it the next release cannot tell a
+    // template the user deleted from one it has just added.
+    if (!saved?.seededTemplates) {
+      await this.saveSettings();
+    }
   }
 
   public async saveSettings(): Promise<void> {

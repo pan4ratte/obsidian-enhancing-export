@@ -1,6 +1,13 @@
 # Changelog
 
 
+## 1.1.1
+
+### Bug fixes
+
+* Deleted default templates no longer come back on restart.
+
+
 ## 1.1.0
 
 ### UI/UX enhancements and bug fixes
