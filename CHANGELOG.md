@@ -3,18 +3,12 @@
 
 ## 1.2.2
 
-### Hotfix for MacOS
-
-* Buttons, toggles and every other control answer clicks again when the settings open in a popout window.
-* File dialogs open on the window that asked for them.
-
-### Export progress
+### UI/UX enhancements and bug fixes
 
 * An export runs behind a notice that names the file, shows a progress bar, and turns green when the file is written.
-
-### Template editor
-
 * The resulting command scrolls sideways instead of wrapping, so a line is an option and a long path no longer folds over several.
+* On MacOS: Fixed a big, buttons, toggles and every other control answer clicks again when the settings open in a popout window.
+* On MacOS: Fixed a big, file dialogs open on the window that asked for them.
 
 
 ## 1.2.1
