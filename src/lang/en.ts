@@ -26,20 +26,17 @@ export default {
   ERROR_HINTS: {
     fileInUse: 'The file may be open in another program — a PDF viewer, Word, or a preview pane. Close it and export again.',
     outputFolder: 'The export folder could not be written to. Pick a folder that exists, or create it first.',
-    pdfEngine:
-      'The PDF engine is not installed. Install a LaTeX distribution (MiKTeX, TeX Live or TinyTeX), or choose another engine under Advanced in the template.',
+    pdfEngine: 'The PDF engine is not installed. Install a LaTeX distribution (MiKTeX, TeX Live or TinyTeX), or choose another engine under Advanced in the template.',
     pandocNotFound: 'Pandoc could not be run. Install it, or set the Pandoc folder in this plugin’s settings.',
     latexUnicode: 'pdfLaTeX cannot write these characters. Switch the template’s PDF engine to XeLaTeX or LuaLaTeX under Advanced.',
     latexPackage: 'A LaTeX package is missing. Install it with your TeX distribution’s package manager, then export again.',
     luaFilter: 'A Lua filter failed. Check what it requires, or remove it from the template’s Lua filters.',
-    missingDataFile:
-      'A file the template points at could not be read. Check the paths under Advanced — layout template, reference document, stylesheet.',
+    missingDataFile: 'A file the template points at could not be read. Check the paths under Advanced — layout template, reference document, stylesheet.',
     missingResource: 'An image or attachment the note links to could not be found. Check that the file is still in the vault.',
     frontMatter: 'The note’s properties could not be read. Check the YAML block at the top of the note.',
     citations: 'The bibliography or citation style could not be used. Check those files under Citations in the template.',
     unknownOption: 'Pandoc did not recognise one of the options. Check “Extra commands” in the template.',
-    template:
-      'A ${...} expression in the template could not be read. Templates take variables, field access, strings, comparison and “? :”, but not function calls — write ${outputFileName} rather than ${outputFileName.toUpperCase()}.',
+    template: 'A ${...} expression in the template could not be read. Templates take variables, field access, strings, comparison and “? :”, but not function calls — write ${outputFileName} rather than ${outputFileName.toUpperCase()}.',
   },
 
   // ─── Buttons ─────────────────────────────────────────────────────────────────
@@ -87,7 +84,7 @@ export default {
 
   // ─── Export templates ────────────────────────────────────────────────────────
   SECTION_TEMPLATES: 'Export templates',
-  ACTION_BROWSE_FILTERS: 'Browse lua-filters',
+  ACTION_BROWSE_FILTERS: 'Lua-filter store',
   ACTION_NEW_TEMPLATE: 'New template',
   TEMPLATES_EMPTY: 'No export templates yet.',
   TEMPLATE_NAME: 'Template name',
@@ -105,11 +102,11 @@ export default {
   COMMAND_COPIED: 'Command copied.',
   COMMAND_COPY_FAILED: 'Could not copy the command.',
   USER_ARGS: 'Extra commands',
-  USER_ARGS_DESC: 'Add something if needed.',
+  USER_ARGS_DESC: 'Add if needed.',
 
   // ─── Markdown extensions ─────────────────────────────────────────────────────
   EXTENSIONS: 'Extensions',
-  EXTENSIONS_DESC: 'Syntax pandoc does not read unless asked. Cleared is pandoc’s own behaviour.',
+  EXTENSIONS_DESC: 'Syntax pandoc does not read unless asked.',
   EXTENSION_LABELS: {
     alerts: 'Callouts (> [!note])',
     mark: 'Highlights (==text==)',
@@ -125,8 +122,8 @@ export default {
 
   // ─── Lua filters ─────────────────────────────────────────────────────────────
   LUA_FILTERS: 'Lua filters',
-  LUA_FILTERS_NONE_INSTALLED: 'No filters installed. Add some from Browse lua-filters.',
-  LUA_FILTERS_NONE_FOR_FORMAT: 'None of the installed filters are written for this output format.',
+  LUA_FILTERS_NONE_INSTALLED: 'No filters installed yet: add some from the lua-filter store.',
+  LUA_FILTERS_NONE_FOR_FORMAT: 'None of the installed filters are meant for the selected output format.',
 
   // ─── Table of contents ───────────────────────────────────────────────────────
   SECTION_ADVANCED: 'Advanced',
@@ -227,7 +224,7 @@ export default {
   REFERENCE_DOC: 'Reference document',
   REFERENCE_DOC_DESC: 'A template to take the document’s styles from.',
   WORD_STYLES: 'Styles tweaks',
-  WORD_STYLES_DESC: 'Customise how the reference document’s styles are applied.',
+  WORD_STYLES_DESC: 'Fixes for pandoc’s problems with assigning styles.',
   FIGURE_STYLE: 'Apply figures style to images',
   FIGURE_STYLE_DESC: 'Gives an image with no caption a figure style, which fixes pandoc behavior.',
   FIGURE_STYLE_NAME: 'Specify figure style name',
@@ -239,11 +236,9 @@ export default {
   TABLE_HEAD_STYLE_DESC: 'Left empty, header cells take the same style as the rest.',
   TABLE_HEAD_STYLE_PLACEHOLDER: 'Same as cells',
   LIST_STYLES: 'Use Word’s list styles',
-  LIST_STYLES_DESC:
-    'Fixes pandoc’s behaviour by giving bulleted lists the standard List Bullet style. The reference document must define List Bullet.',
+  LIST_STYLES_DESC: 'Fixes pandoc’s behaviour by giving bulleted lists the standard List Bullet style. The reference document must define List Bullet.',
   FLATTEN_ORDERED: 'Flatten numbered lists',
-  FLATTEN_ORDERED_DESC:
-    'Off, every list restarts at 1 and List Number sets only the font and spacing. On, List Number defines the style in full, but separate lists carry on counting.',
+  FLATTEN_ORDERED_DESC: 'Off, every list restarts at 1 and List Number sets only the font and spacing. On, List Number defines the style in full, but separate lists carry on counting.',
 
   // ─── Layout template and includes ────────────────────────────────────────────
   OUTPUT_TEMPLATE: 'Layout template',

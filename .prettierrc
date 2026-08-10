@@ -6,3 +6,10 @@ quoteProps: preserve
 trailingComma: es5
 arrowParens: avoid
 
+# One string, one line, however long the translation: the locales are read side by side, and
+# wrapping one of them and not the other puts every key below it on a different line.
+overrides:
+  - files: ['src/lang/en.ts', 'src/lang/ru.ts']
+    options:
+      printWidth: 1000
+
