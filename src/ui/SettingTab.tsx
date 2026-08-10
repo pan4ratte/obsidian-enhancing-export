@@ -6,6 +6,7 @@ import type { SemVer } from 'semver';
 import type PandocGuiPlugin from '../main';
 import { CustomExportSetting, ExportSetting, PandocExportSetting, createEnv, today, DEFAULT_ENV } from '../settings';
 import { setPlatformValue, getPlatformValue, clone } from '../utils';
+import { dialogWindow } from '../dialog';
 
 import { createSignal, createRoot, onCleanup, createMemo, createEffect, For, Index, Show, batch, Match, Switch, JSX } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
@@ -1368,7 +1369,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
   };
 
   const chooseCustomDefaultExportDirectory = async () => {
-    const retval = await ct.remote.dialog.showOpenDialog(ct.remote.getCurrentWindow(), {
+    const retval = await ct.remote.dialog.showOpenDialog(dialogWindow(), {
       defaultPath: customDefaultExportDirectory() ?? ct.remote.app.getPath('documents'),
       properties: ['createDirectory', 'openDirectory'],
     });
@@ -1379,7 +1380,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
   };
 
   const choosePandocPath = async () => {
-    const retval = await ct.remote.dialog.showOpenDialog(ct.remote.getCurrentWindow(), {
+    const retval = await ct.remote.dialog.showOpenDialog(dialogWindow(), {
       filters: process.platform == 'win32' ? [{ extensions: ['exe'], name: 'pandoc' }] : undefined,
       properties: ['openFile'],
     });

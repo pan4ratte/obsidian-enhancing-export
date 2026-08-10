@@ -28,10 +28,12 @@ const show = (message: string) =>
       dispose();
     };
     let el: HTMLDivElement;
-    insert(document.body, () => <ProgressBar ref={el} message={message} />);
+    // The window the export was asked for from, which is not the main one where a popout asked.
+    const body = activeDocument.body;
+    insert(body, () => <ProgressBar ref={el} message={message} />);
     onCleanup(() => {
-      if (el?.instanceOf(Node) && document.body.contains(el)) {
-        document.body.removeChild(el);
+      if (el?.instanceOf(Node) && body.contains(el)) {
+        body.removeChild(el);
       }
     });
     return cleanup;

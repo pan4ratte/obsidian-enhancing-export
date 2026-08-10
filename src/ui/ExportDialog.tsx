@@ -7,6 +7,7 @@ import { t } from '../lang/helpers';
 import { extractDefaultExtension as extractExtension } from '../settings';
 import { setPlatformValue, getPlatformValue } from '../utils';
 import { exportNote } from '../export';
+import { dialogWindow } from '../dialog';
 import Modal from './components/Modal';
 import Button from './components/Button';
 import Setting, { Text, DropDown, ExtraButton, Toggle } from './components/Setting';
@@ -46,7 +47,7 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
   }
 
   const chooseFolder = async () => {
-    const retval = await ct.remote.dialog.showOpenDialog(ct.remote.getCurrentWindow(), {
+    const retval = await ct.remote.dialog.showOpenDialog(dialogWindow(), {
       title: t.EXPORT_DIALOG_SELECT_FOLDER,
       defaultPath: candidateOutputDirectory(),
       properties: ['createDirectory', 'openDirectory'],

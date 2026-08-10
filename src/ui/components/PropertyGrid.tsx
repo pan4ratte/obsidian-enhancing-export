@@ -1,5 +1,6 @@
 import { FileFilter, remote } from 'electron';
 import { For, JSX, createEffect, createSignal, untrack } from 'solid-js';
+import { dialogWindow } from '../../dialog';
 import Setting, { Toggle, DropDown, Text, ExtraButton } from './Setting';
 
 const editors = {
@@ -34,7 +35,7 @@ const editors = {
     const [filePath, setFilePath] = createSignal<string>(getDefaultValue(props.meta));
 
     const chooseFile = async () => {
-      const retval = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
+      const retval = await remote.dialog.showOpenDialog(dialogWindow(), {
         properties: ['openFile'],
         filters: props.meta.filters,
       });

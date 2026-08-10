@@ -1,6 +1,15 @@
 # Changelog
 
 
+## 1.2.2
+
+### Hotfix for MacOS
+
+* Buttons, toggles and every other control answer clicks again when the settings open in a popout window.
+* File dialogs open on the window that asked for them.
+* The export progress bar shows in the window the export was started from.
+
+
 ## 1.2.1
 
 ### Hotfix

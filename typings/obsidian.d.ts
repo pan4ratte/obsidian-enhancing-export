@@ -1,6 +1,15 @@
 
 import  'obsidian';
 import type { EventRef } from 'obsidian';
+import type { BrowserWindow } from 'electron';
+
+
+declare global {
+  interface Window {
+    /** Set by Obsidian on every window it owns, main and popout alike. */
+    electronWindow?: BrowserWindow;
+  }
+}
 
 
 declare module 'obsidian' {

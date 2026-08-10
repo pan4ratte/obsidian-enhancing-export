@@ -15,6 +15,7 @@ import pandoc from './pandoc';
 import { orderLuaFilters } from './lua_filters';
 import { renameHighlightFlags } from './writer_args';
 import { outputArg } from './output_arg';
+import { dialogWindow } from './dialog';
 
 export async function exportNote(
   plugin: PandocGuiPlugin,
@@ -147,7 +148,7 @@ export async function exportNote(
   const openExportedFile = setting.openExportedFile ?? globalSetting.openExportedFile;
 
   if (showOverwriteConfirmation && fs.existsSync(outputPath)) {
-    const result = await ct.remote.dialog.showSaveDialog(ct.remote.getCurrentWindow(), {
+    const result = await ct.remote.dialog.showSaveDialog(dialogWindow(), {
       title: t.OVERWRITE_TITLE(outputFileFullName),
       defaultPath: outputPath,
       properties: ['showOverwriteConfirmation', 'createDirectory'],

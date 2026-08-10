@@ -30,7 +30,11 @@ export default defineConfig(({ mode }) => {
     // Vite warns about `outDir` being the root, which is intended here (`emptyOutDir` is off).
     customLogger: silence(/build\.outDir must not be the same directory of root/),
     plugins: [
-      solidPlugin(),
+      // Solid delegates `click` and friends to a single listener on the document the plugin was loaded in.
+      // Obsidian opens a modal in `activeWindow`, so settings and dialogs raised from a popout live in that
+      // window's document instead, where the listener is not — every handler dies while natively bound ones
+      // (`change` on a dropdown) go on working. Bound to the element, they follow it into any window.
+      solidPlugin({ solid: { delegateEvents: false } }),
       copyAssets ? viteStaticCopy({
         targets: [
           { src: 'manifest.json', dest: '.' },

@@ -44,6 +44,7 @@ declare module 'electron' {
         name: 'home' | 'appData' | 'userData' | 'temp' | 'desktop' | 'documents' | 'downloads'
       ): string;
     };
+    /** The main window, whichever one is asking — see `dialogWindow` in src/dialog.ts. */
     getCurrentWindow(): BrowserWindow;
     // The parent is not optional here, though electron makes it so: unparented, macOS opens a free-floating panel
     // that lands behind a full-screen Obsidian, and the button that asked for it reads as dead.
