@@ -46,6 +46,7 @@ export default {
   BUTTON_OK: 'OK',
   BUTTON_CANCEL: 'Cancel',
   ACTION_EDIT: 'Edit',
+  ACTION_DUPLICATE: 'Duplicate',
   ACTION_SAVE: 'Save',
   ACTION_REMOVE: 'Remove',
   CHOOSE_FILE: 'Choose file',

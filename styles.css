@@ -464,6 +464,7 @@
 .ex-template-table-heading {
   cursor: var(--cursor);
   user-select: none;
+  transition: color 100ms ease-in-out;
   color: var(--text-muted);
   font-size: var(--font-ui-smaller);
   font-weight: var(--font-semibold);
@@ -472,7 +473,7 @@
 }
 
 .ex-template-table-heading:hover {
-  color: var(--text-normal);
+  color: var(--text-accent);
 }
 
 /* Inline, not on the cell itself: a `display` of its own would stop the header
@@ -486,6 +487,8 @@
 /* The arrow keeps its space whether or not this is the column being sorted by,
    so the header does not jump as the order moves between columns. */
 .ex-template-table-sort {
+  display: flex;
+  align-items: center;
   opacity: 0;
   transition: opacity 100ms ease-in-out;
 }
@@ -499,9 +502,14 @@
   opacity: 1;
 }
 
+/* Block, so the arrow is a box of its own height rather than a letter standing
+   on a baseline with the descender space left under it — that space is what was
+   pushing it above the middle of the heading. */
 .ex-template-table-sort .svg-icon {
+  display: block;
   width: var(--icon-xs);
   height: var(--icon-xs);
+  stroke-width: 2px;
 }
 
 .ex-template-table-name {
@@ -524,11 +532,35 @@
   text-align: right;
 }
 
-/* Wide enough apart that the trash is never the one hit by mistake. */
+/*
+ * Wide enough apart that the trash is never the one hit by mistake, and only on
+ * the row under the pointer: a table read for its names is quieter without an
+ * icon on every line of it.
+ */
 .ex-template-table-row-actions {
   display: flex;
   justify-content: flex-end;
   gap: var(--size-4-4);
+  opacity: 0;
+  transition: opacity 150ms ease-in-out;
+}
+
+.ex-template-table-row-actions > * {
+  transition: color 100ms ease-in-out;
+}
+
+.ex-template-table tbody tr:hover .ex-template-table-row-actions {
+  opacity: 1;
+}
+
+/* The accent for what edits the template, the error colour for what ends it. */
+.ex-template-table-row-actions .ex-template-table-edit:hover,
+.ex-template-table-row-actions .ex-template-table-duplicate:hover {
+  color: var(--text-accent);
+}
+
+.ex-template-table-row-actions .ex-template-table-remove:hover {
+  color: var(--text-error);
 }
 
 .ex-template-table-empty td {

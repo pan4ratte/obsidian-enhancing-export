@@ -3,6 +3,11 @@
 
 ## 1.2.1
 
+### UI/UX enhancements
+
+* A template can be duplicated from its row in the templates table.
+* Row actions fade in on the row under the pointer, each in its own colour.
+
 ### Bug fixes
 
 * Pandoc 3.7 and later are given `--syntax-highlighting`, so code highlighting no longer warns that `--no-highlight` is deprecated.

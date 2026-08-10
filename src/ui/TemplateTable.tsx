@@ -39,6 +39,7 @@ export default (props: {
   sort?: { column: Column; ascending: boolean };
   onSort?: (sort: { column: Column; ascending: boolean }) => void;
   onEdit?: (name: string) => void;
+  onDuplicate?: (name: string) => void;
   onRemove?: (name: string) => void;
 }) => {
   const column = () => props.sort?.column ?? 'name';
@@ -98,8 +99,19 @@ export default (props: {
               <td class="ex-template-table-output">{row.output}</td>
               <td class="ex-template-table-actions">
                 <div class="ex-template-table-row-actions">
-                  <Icon name="pencil" tooltip={t.ACTION_EDIT} onClick={() => props.onEdit?.(row.name)} />
-                  <Icon name="trash" tooltip={t.ACTION_REMOVE} onClick={() => props.onRemove?.(row.name)} />
+                  <Icon class="ex-template-table-edit" name="pencil" tooltip={t.ACTION_EDIT} onClick={() => props.onEdit?.(row.name)} />
+                  <Icon
+                    class="ex-template-table-duplicate"
+                    name="copy"
+                    tooltip={t.ACTION_DUPLICATE}
+                    onClick={() => props.onDuplicate?.(row.name)}
+                  />
+                  <Icon
+                    class="ex-template-table-remove"
+                    name="trash"
+                    tooltip={t.ACTION_REMOVE}
+                    onClick={() => props.onRemove?.(row.name)}
+                  />
                 </div>
               </td>
             </tr>

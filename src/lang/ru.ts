@@ -46,6 +46,7 @@ export default {
   BUTTON_OK: 'ОК',
   BUTTON_CANCEL: 'Отмена',
   ACTION_EDIT: 'Изменить',
+  ACTION_DUPLICATE: 'Дублировать',
   ACTION_SAVE: 'Сохранить',
   ACTION_REMOVE: 'Удалить',
   CHOOSE_FILE: 'Выбрать файл',

@@ -427,6 +427,17 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
     setModal(() => EditCommandTemplateModal);
   };
 
+  /** The template again under a name of its own. It lands in the table; nothing is opened. */
+  const duplicateCommandTemplate = (name: string) => {
+    const template = settings.items.find(v => v.name === name);
+    if (!template) {
+      return;
+    }
+    const copy = clone(template);
+    copy.name = uniqueTemplateName(name);
+    setSettings('items', items => [...items, copy]);
+  };
+
   const removeCommandTemplate = (name: string) => {
     new MessageBox(app, {
       title: t.ACTION_REMOVE,
@@ -1481,6 +1492,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         sort={settings.lastTemplateSort}
         onSort={sort => setSettings('lastTemplateSort', sort)}
         onEdit={editCommandTemplate}
+        onDuplicate={duplicateCommandTemplate}
         onRemove={removeCommandTemplate}
       />
 
