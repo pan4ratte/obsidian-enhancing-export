@@ -24,7 +24,6 @@ Chagelog for the 1.2.0 release:
 > * Wording corrections in both locales.
 
 
-
 ## 1.2.0
 
 ### UI/UX enhancements and bug fixes
