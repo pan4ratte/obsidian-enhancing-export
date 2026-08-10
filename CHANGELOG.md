@@ -1,6 +1,15 @@
 # Changelog
 
 
+## 1.2.1
+
+### Bug fixes
+
+* Pandoc 3.7 and later are given `--syntax-highlighting`, so code highlighting no longer warns that `--no-highlight` is deprecated.
+* A warning from Pandoc no longer reports the export as failed; the file is exported and the warning is shown as a notice.
+* A hand-written `--syntax-highlighting` is no longer read as the syntax definition file.
+
+
 ## 1.2.0
 
 ### UI/UX enhancements and bug fixes

@@ -5,6 +5,7 @@ import path from 'path';
 import { Variables, ExportSetting, extractDefaultExtension as extractExtension, createEnv, today } from './settings';
 import { MessageBox } from './ui/message_box';
 import { Notice, TFile, getLinkpath, moment, type EmbedCache } from 'obsidian';
+import type { SemVer } from 'semver';
 import { exec, renderTemplate, getPlatformValue, trimQuotes } from './utils';
 import { t } from './lang/helpers';
 import ProgressBar from './ui/components/ProgressBar';
@@ -12,6 +13,7 @@ import { describeExportFailure } from './export_error';
 import type PandocGuiPlugin from './main';
 import pandoc from './pandoc';
 import { orderLuaFilters } from './lua_filters';
+import { renameHighlightFlags } from './writer_args';
 import { outputArg } from './output_arg';
 
 export async function exportNote(
@@ -210,7 +212,7 @@ export async function exportNote(
 
     // Later options win, so least specific first: preset, editor rows, then hand-typed. Filters are the exception —
     // they run where they stand, so `orderLuaFilters` has the last word on the one whose place is not negotiable.
-    const cmdTpl =
+    let cmdTpl =
       setting.type === 'pandoc'
         ? orderLuaFilters(
             [pandocPath, '"${currentPath}"', setting.arguments, setting.customArguments, setting.userArguments]
@@ -219,6 +221,20 @@ export async function exportNote(
               .join(' ')
           )
         : setting.command;
+
+    if (setting.type === 'pandoc') {
+      // A pandoc that has renamed the highlighting options warns about the old names on every single run.
+      let installed: SemVer;
+      try {
+        installed = await pandoc.getCachedVersion(getPlatformValue(globalSetting.pandocPath), env);
+      } catch (e) {
+        // Not knowing the version is no reason to stop: the old spelling is the one every version takes.
+        console.warn(e);
+      }
+      if (pandoc.takesSyntaxHighlighting(installed)) {
+        cmdTpl = renameHighlightFlags(cmdTpl);
+      }
+    }
 
     cmd = renderTemplate(cmdTpl, variables);
     const output = outputArg(cmd);
@@ -232,8 +248,14 @@ export async function exportNote(
       fs.mkdirSync(actualOutputDir);
     }
 
-    await exec(cmd, { cwd: variables.currentDir, env });
+    const { stderr } = await exec(cmd, { cwd: variables.currentDir, env });
     progressBarHide();
+
+    // Pandoc writes its warnings here and exports the file all the same, so they are reported rather than thrown.
+    const warnings = stderr.trim();
+    if (warnings) {
+      console.warn(cmd, warnings);
+    }
 
     const next = async () => {
       if (openExportedFileLocation) {
@@ -248,9 +270,13 @@ export async function exportNote(
     };
 
     if (showCommandLineOutput) {
-      const box = new MessageBox(plugin.app, t.EXPORT_COMMAND_OUTPUT(cmd));
+      const message = [t.EXPORT_COMMAND_OUTPUT(cmd), warnings].filter(Boolean).join('\n\n');
+      const box = new MessageBox(plugin.app, message);
       box.onClose = () => void next();
       box.open();
+    } else if (warnings) {
+      new Notice(t.NOTICE_EXPORT_WARNINGS(variables.outputFileFullName), 5000);
+      await next();
     } else {
       new Notice(t.NOTICE_EXPORT_SUCCESS(variables.outputFileFullName), 1500);
       await next();

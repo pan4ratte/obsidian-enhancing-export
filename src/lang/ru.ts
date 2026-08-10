@@ -5,6 +5,7 @@ export default {
   NOTICE_NO_FILE: 'Сначала откройте заметку.',
   NOTICE_EXPORTING: (file: string) => `Создаётся «${file}»…`,
   NOTICE_EXPORT_SUCCESS: (file: string) => `Экспортировано «${file}».`,
+  NOTICE_EXPORT_WARNINGS: (file: string) => `Экспортировано «${file}», но Pandoc предупреждает — подробности в консоли.`,
   EXPORT_COMMAND_OUTPUT: (cmd: string) => `Команда: ${cmd}`,
 
   // ─── Export dialog ───────────────────────────────────────────────────────────

@@ -7,7 +7,7 @@
 
 import { vi } from 'vitest';
 
-const execMock = vi.fn<(cmd: string, options?: unknown) => Promise<string>>();
+const execMock = vi.fn<(cmd: string, options?: unknown) => Promise<{ stdout: string; stderr: string }>>();
 
 vi.mock('../src/utils', async () => ({
   ...(await vi.importActual<Record<string, unknown>>('../src/utils')),
@@ -16,7 +16,7 @@ vi.mock('../src/utils', async () => ({
 
 import { getCachedPandocVersion } from '../src/pandoc';
 
-const VERSION_OUTPUT = 'pandoc 3.1.11\nFeatures: +server +lua\n';
+const VERSION_OUTPUT = { stdout: 'pandoc 3.1.11\nFeatures: +server +lua\n', stderr: '' };
 
 beforeEach(() => {
   execMock.mockReset();
@@ -69,7 +69,7 @@ test('a failed lookup is not cached, so the next open retries', async () => {
 });
 
 test('output with no version to parse is not cached either', async () => {
-  execMock.mockResolvedValue('some other program\n');
+  execMock.mockResolvedValue({ stdout: 'some other program\n', stderr: '' });
 
   expect(await getCachedPandocVersion('/six/pandoc')).toBeNull();
   expect(await getCachedPandocVersion('/six/pandoc')).toBeNull();

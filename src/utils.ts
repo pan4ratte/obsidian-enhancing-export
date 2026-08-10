@@ -32,21 +32,22 @@ export function getPlatformValue<T>(obj: PlatformValue<T>, platform?: PlatformKe
   return val ?? all;
 }
 
-export function exec(cmd: string, options?: ExecOptions): Promise<string> {
+export interface ExecResult {
+  stdout: string;
+  /** What the program said on the side. Pandoc warns there and still writes the file, so it is not a failure. */
+  stderr: string;
+}
+
+export function exec(cmd: string, options?: ExecOptions): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
     // Naming the encoding picks the overload that returns text rather than a Buffer.
     node_exec(cmd, { ...options, encoding: 'utf8' }, (error, stdout, stderr) => {
       if (error) {
+        console.error(stdout, stderr, error);
         reject(error);
-        console.error(stdout, error);
         return;
       }
-      if (stderr && stderr !== '') {
-        reject(new Error(stderr));
-        console.error(stdout, error);
-        return;
-      }
-      resolve(stdout);
+      resolve({ stdout, stderr });
     });
   });
 }

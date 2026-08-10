@@ -35,6 +35,7 @@ import {
   referenceDoc,
   referenceLinks,
   referenceLocation,
+  renameHighlightFlags,
   sectionDivs,
   setAscii,
   setBibliography,
@@ -212,6 +213,22 @@ describe('code highlighting', () => {
     expect(setHighlightStyle('--syntax-highlighting=zenburn', HIGHLIGHT_NONE)).toBe('--no-highlight');
     expect(setHighlightStyle(`${FILTER} --highlight-style kate`, '')).toBe(FILTER);
   });
+
+  test('a pandoc that renamed the options is given the new names', () => {
+    expect(renameHighlightFlags('pandoc a.md -o a.docx --no-highlight')).toBe('pandoc a.md -o a.docx --syntax-highlighting=none');
+    expect(renameHighlightFlags('pandoc --highlight-style=kate a.md')).toBe('pandoc --syntax-highlighting=kate a.md');
+    expect(renameHighlightFlags('pandoc --highlight-style tango a.md')).toBe('pandoc --syntax-highlighting=tango a.md');
+    expect(renameHighlightFlags('pandoc --highlight-style="C:/My Themes/dracula.theme"')).toBe(
+      'pandoc --syntax-highlighting="C:/My Themes/dracula.theme"'
+    );
+  });
+
+  test('nothing else on the command line is touched', () => {
+    const cmd = `pandoc a.md -o a.docx --syntax-highlighting=none --syntax-definition=obsidian.xml ${FILTER}`;
+    expect(renameHighlightFlags(cmd)).toBe(cmd);
+    // A word that merely ends in the old name is not the old name.
+    expect(renameHighlightFlags('pandoc --my-no-highlight')).toBe('pandoc --my-no-highlight');
+  });
 });
 
 describe('math', () => {
@@ -291,10 +308,11 @@ describe('the output template', () => {
 });
 
 describe('the syntax definition', () => {
-  test('both of pandoc’s spellings name the same file', () => {
+  test('the file is read and written under its own option', () => {
     expect(syntaxDefinition('--syntax-definition=obsidian.xml')).toBe('obsidian.xml');
-    expect(syntaxDefinition('--syntax-highlighting=obsidian.xml')).toBe('obsidian.xml');
-    expect(setSyntaxDefinition('--syntax-highlighting=old.xml', 'new.xml')).toBe('--syntax-definition=new.xml');
+    expect(setSyntaxDefinition('--syntax-definition=old.xml', 'new.xml')).toBe('--syntax-definition=new.xml');
+    // `--syntax-highlighting` is the new name of `--highlight-style`, not of this one.
+    expect(syntaxDefinition('--syntax-highlighting=kate')).toBeUndefined();
   });
 });
 

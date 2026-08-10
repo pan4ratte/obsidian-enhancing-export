@@ -214,6 +214,19 @@ export const setHighlightStyle = (args: string | undefined, style: string): stri
   return append(stripped, style === HIGHLIGHT_NONE ? '--no-highlight' : `--highlight-style=${quote(style)}`);
 };
 
+/** The two spellings pandoc 3.7 renamed, both of which it now warns about on every run. */
+const LEGACY_HIGHLIGHT = String.raw`(^|\s)(?:--no-highlight|--highlight-style[= ]${VALUE})(?=\s|$)`;
+
+/**
+ * The command line in the spelling pandoc 3.7 and later ask for. Templates keep the old one, which every version the
+ * plugin supports takes; only the command that runs is brought up to date, and only where the binary is new enough.
+ */
+export const renameHighlightFlags = (cmd: string): string =>
+  cmd.replace(
+    new RegExp(LEGACY_HIGHLIGHT, 'g'),
+    (_match, lead: string, style?: string) => `${lead}--syntax-highlighting=${style ?? 'none'}`
+  );
+
 /* -- Math ----------------------------------------------------------------- */
 
 /**
@@ -266,7 +279,7 @@ export const setTemplateFile = (args: string | undefined, file: string): string 
 
 /* -- Syntax definition ---------------------------------------------------- */
 
-const SYNTAX_DEFINITION = ['--syntax-definition', '--syntax-highlighting'] as const;
+const SYNTAX_DEFINITION = '--syntax-definition';
 
 /** A KDE XML syntax file, teaching the highlighter a language it does not know. */
 export const syntaxDefinition = (args?: string): string | undefined => valueOf(args, SYNTAX_DEFINITION);

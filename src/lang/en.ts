@@ -5,6 +5,7 @@ export default {
   NOTICE_NO_FILE: 'Open a note first.',
   NOTICE_EXPORTING: (file: string) => `Generating “${file}”…`,
   NOTICE_EXPORT_SUCCESS: (file: string) => `Exported “${file}”.`,
+  NOTICE_EXPORT_WARNINGS: (file: string) => `Exported “${file}”, but Pandoc had warnings — see the console.`,
   EXPORT_COMMAND_OUTPUT: (cmd: string) => `Command: ${cmd}`,
 
   // ─── Export dialog ───────────────────────────────────────────────────────────

@@ -24,7 +24,7 @@ export function parsePandocVersion(version: string) {
 
 export async function getPandocVersion(path?: string, env?: Record<string, string>) {
   path = normalizePandocPath(path);
-  let version = await exec(`${path} --version`, { env });
+  let { stdout: version } = await exec(`${path} --version`, { env });
   version = version.substring(0, version.indexOf('\n')).replace('pandoc.exe', '').replace('pandoc', '').trim();
   return parsePandocVersion(version);
 }
@@ -51,6 +51,12 @@ export async function getCachedPandocVersion(path?: string, env?: Record<string,
 }
 
 export const PANDOC_REQUIRED_VERSION = '3.1.7';
+
+/** Where `--syntax-highlighting` arrived, and `--no-highlight` and `--highlight-style` began to warn. */
+export const PANDOC_SYNTAX_HIGHLIGHTING_VERSION = '3.7.0';
+
+export const takesSyntaxHighlighting = (version?: SemVer | null): boolean =>
+  !!version && version.compare(PANDOC_SYNTAX_HIGHLIGHTING_VERSION) >= 0;
 
 export const PANDOC_MANUAL_URL = 'https://pandoc.org/MANUAL.html';
 
@@ -109,6 +115,7 @@ export default {
   getCachedVersion: getCachedPandocVersion,
   parseVersion: parsePandocVersion,
   getLatestRelease: getLatestPandocRelease,
+  takesSyntaxHighlighting,
   requiredVersion: PANDOC_REQUIRED_VERSION,
   manualUrl: PANDOC_MANUAL_URL,
   latestReleaseUrl: PANDOC_LATEST_RELEASE_URL,
