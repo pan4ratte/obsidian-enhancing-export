@@ -761,6 +761,41 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
           </Setting>
         </Show>
 
+        <Show when={supportsTemplate(format())}>
+          <Setting name={t.OUTPUT_TEMPLATE} description={t.OUTPUT_TEMPLATE_DESC} class="ex-template-modal-output-template">
+            <FileInput
+              value={templateFile(args())}
+              filters={[ANY_FILE]}
+              tooltip={t.CHOOSE_FILE}
+              onChange={value => writeArgs(a => setTemplateFile(a, value.trim()))}
+            />
+          </Setting>
+        </Show>
+
+        {/* Only for the writers that would do something with it. */}
+        <Show when={supportsToc(format())}>
+          <Setting name={t.TOC} description={t.TOC_DESC} class="ex-template-modal-toc">
+            <StepSlider
+              labels={tocLabels}
+              min={TOC_NONE}
+              value={tocDepth(template()?.customArguments)}
+              // The step is the depth; `setTocDepth` removes the flags at `TOC_NONE`.
+              onChange={depth => updateTemplate(v => (v.customArguments = setTocDepth(v.customArguments, depth)))}
+            />
+          </Setting>
+        </Show>
+
+        {/* Adding a filter appends its `--lua-filter` flag to the extra arguments. */}
+        <Setting name={t.LUA_FILTERS} class="ex-template-modal-filters">
+          <TemplateLuaFilters
+            installed={settings.installedLuaFilters ?? []}
+            format={format()}
+            args={template()?.customArguments}
+            onAdd={fileName => setLuaFilterOnCurrentTemplate(fileName, true)}
+            onRemove={fileName => setLuaFilterOnCurrentTemplate(fileName, false)}
+          />
+        </Setting>
+
         {/* Every style named here has to exist in that document. Each row runs a bundled
             filter — pandoc has no option for any of this. */}
         <Show when={supportsCustomStyle(format())}>
@@ -821,41 +856,6 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
             </Show>
           </div>
         </Show>
-
-        <Show when={supportsTemplate(format())}>
-          <Setting name={t.OUTPUT_TEMPLATE} description={t.OUTPUT_TEMPLATE_DESC} class="ex-template-modal-output-template">
-            <FileInput
-              value={templateFile(args())}
-              filters={[ANY_FILE]}
-              tooltip={t.CHOOSE_FILE}
-              onChange={value => writeArgs(a => setTemplateFile(a, value.trim()))}
-            />
-          </Setting>
-        </Show>
-
-        {/* Only for the writers that would do something with it. */}
-        <Show when={supportsToc(format())}>
-          <Setting name={t.TOC} description={t.TOC_DESC} class="ex-template-modal-toc">
-            <StepSlider
-              labels={tocLabels}
-              min={TOC_NONE}
-              value={tocDepth(template()?.customArguments)}
-              // The step is the depth; `setTocDepth` removes the flags at `TOC_NONE`.
-              onChange={depth => updateTemplate(v => (v.customArguments = setTocDepth(v.customArguments, depth)))}
-            />
-          </Setting>
-        </Show>
-
-        {/* Adding a filter appends its `--lua-filter` flag to the extra arguments. */}
-        <Setting name={t.LUA_FILTERS} class="ex-template-modal-filters">
-          <TemplateLuaFilters
-            installed={settings.installedLuaFilters ?? []}
-            format={format()}
-            args={template()?.customArguments}
-            onAdd={fileName => setLuaFilterOnCurrentTemplate(fileName, true)}
-            onRemove={fileName => setLuaFilterOnCurrentTemplate(fileName, false)}
-          />
-        </Setting>
 
         {/* Ticking a box writes the extension into `-f`. Every one offered is a
             pandoc default-off, so a cleared box is the reader's own behaviour. */}
