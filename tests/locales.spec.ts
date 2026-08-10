@@ -10,15 +10,10 @@ import ru from '../src/lang/ru';
 
 const read = (locale: string) => readFileSync(path.join(import.meta.dirname, '..', 'src', 'lang', `${locale}.ts`), 'utf8').split(/\r?\n/);
 
-/** What a line holds, ignoring the value: an indented key, a comment, or nothing. */
+/** What a line holds, ignoring the value: an indented key, a comment, or nothing — a blank line trims to nothing. */
 const shape = (line: string) => {
   const key = /^(\s*)([A-Za-z0-9_]+):/.exec(line);
-  return key
-    ? `${key[1].length}:${key[2]}`
-    : line
-        .trim()
-        .replace(/^\/\/.*/, '//')
-        .replace(/^$/, '');
+  return key ? `${key[1].length}:${key[2]}` : line.trim().replace(/^\/\/.*/, '//');
 };
 
 const keys = (o: Record<string, unknown>): string[] =>
