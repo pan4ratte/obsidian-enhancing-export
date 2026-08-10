@@ -226,7 +226,11 @@ export default (props: {
     const isBusy = () => busy().has(entry().id);
     // An orphan has nothing left to fetch, so it can only be removed.
     const installable = () => !!entry().url || !!entry().path;
-    const credit = () => (entry().license ? t.STORE_BY_AUTHOR_LICENSE(entry().author, entry().license) : t.STORE_BY_AUTHOR(entry().author));
+    // Whose work this is, in the short form the card has room for; the whole of it is the tooltip, since a credit
+    // that fits in a footer is not one that says what it is for.
+    const credit = () =>
+      entry().license ? t.STORE_ATTRIBUTION_LICENSE(entry().author, entry().license) : t.STORE_ATTRIBUTION(entry().author);
+    const creditInFull = () => (entry().license ? t.STORE_ATTRIBUTION_FULL(entry().author, entry().license) : undefined);
     /** What the filter needs, a bullet each. The catalogue writes them as one field, so the ways a list is written
         into it are what they are split on. */
     const requirements = () =>
@@ -242,9 +246,6 @@ export default (props: {
             <span class="ex-lua-name">{entry().storeName}</span>
             <Icon class="ex-lua-category-icon" name={CATEGORY_ICON[entry().category]} tooltip={t.STORE_CATEGORY_LABELS[entry().category]} />
           </div>
-          <Show when={entry().author}>
-            <span class="ex-lua-author">{credit()}</span>
-          </Show>
           <Show when={entry().description}>
             <p class="ex-lua-desc">{entry().description}</p>
           </Show>
@@ -261,6 +262,12 @@ export default (props: {
         </div>
 
         <div class="ex-lua-actions">
+          {/* The credit stands in the same row as the buttons, at the end the row is read from. */}
+          <Show when={entry().author}>
+            <span class="ex-lua-author" ref={el => tooltip(el, creditInFull)}>
+              {credit()}
+            </span>
+          </Show>
           <Show when={entry().homepage}>
             <button class="ex-lua-readme" ref={el => tooltip(el, () => t.STORE_README)} onClick={() => openExternal(entry().homepage)}>
               <Icon name="book-open" />
