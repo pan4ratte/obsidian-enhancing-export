@@ -3,6 +3,7 @@ export default {
   CMD_EXPORT: 'Экспортировать заметку',
   CMD_EXPORT_WITH_PREVIOUS: 'Экспортировать с предыдущими настройками',
   NOTICE_NO_FILE: 'Сначала откройте заметку.',
+  NOTICE_EXPORT_PREPARING: 'Подготовка…',
   NOTICE_EXPORTING: (file: string) => `Создаётся «${file}»…`,
   NOTICE_EXPORT_SUCCESS: (file: string) => `Экспортировано «${file}».`,
   NOTICE_EXPORT_WARNINGS: (file: string) => `Экспортировано «${file}», но Pandoc предупреждает — подробности в консоли.`,

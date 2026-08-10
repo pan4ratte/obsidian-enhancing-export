@@ -1728,6 +1728,102 @@
   color: var(--text-normal);
 }
 
+/*
+ * Export progress notice. Borrowed from the Classy PDF Extractor.
+ */
+
+/* Obsidian lays a notice out as a column on the desktop and a row on a phone, and this is the item in either. Left
+   alone, the row leaves it as wide as its text and the bar sits short of the notice. */
+.ex-progress-message {
+  flex: 1;
+}
+
+.ex-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  /* A notice is as wide as its message, and the bar would otherwise be as short as the word above it. Well inside
+     the 300px a notice is capped at. */
+  min-width: 14em;
+}
+
+/* A file name can be longer than the notice, and one that grew to fit would jump as the export moved on. */
+.ex-progress-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The outcome is a sentence, not a name: nothing follows it, so it can take the lines it needs. */
+.ex-progress-label.is-final {
+  overflow: visible;
+  white-space: normal;
+}
+
+/* The accent under itself at 0.4, which is how Obsidian draws the track its own progress bar fills. Not a
+   `--background-modifier-*`: a notice is dark whatever the theme, and those resolve to a colour the track would
+   disappear into. */
+.ex-progress-track {
+  position: relative;
+  height: 4px;
+  border-radius: var(--radius-s);
+  background-color: hsla(var(--interactive-accent-hsl), 0.4);
+  overflow: hidden;
+}
+
+/* Placed from the inline start rather than the left, so it fills the way the interface is written. */
+.ex-progress-bar {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  height: 100%;
+  width: var(--ex-progress, 0%);
+  border-radius: inherit;
+  background-color: var(--interactive-accent);
+  transition: width 150ms ease-in-out;
+}
+
+/* Nothing to count — pandoc says nothing until it is done — so the bar sweeps instead of filling, which says the
+   export is still going where a bar standing still would not. The sweep is the one Obsidian's loading bar runs. */
+.ex-progress-bar.is-waiting {
+  width: 5%;
+  transition: none;
+  animation: ex-progress-sweep 2s infinite;
+}
+
+.ex-progress-bar.is-done {
+  background-color: var(--color-green);
+}
+
+.ex-progress-bar.is-warn {
+  background-color: var(--color-yellow);
+}
+
+@keyframes ex-progress-sweep {
+  from {
+    inset-inline-start: -5%;
+    width: 5%;
+  }
+  to {
+    inset-inline-start: 130%;
+    width: 100%;
+  }
+}
+
+/* The sweep is the one part of this that moves for its own sake, so it is the one part that goes. A full track still
+   says the step is running. */
+@media (prefers-reduced-motion: reduce) {
+  .ex-progress-bar {
+    transition: none;
+  }
+
+  .ex-progress-bar.is-waiting {
+    width: 100%;
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
 *[hidden] {
   display: none;
 }

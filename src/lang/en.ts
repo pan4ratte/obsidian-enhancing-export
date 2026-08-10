@@ -3,6 +3,7 @@ export default {
   CMD_EXPORT: 'Export note',
   CMD_EXPORT_WITH_PREVIOUS: 'Export with previous settings',
   NOTICE_NO_FILE: 'Open a note first.',
+  NOTICE_EXPORT_PREPARING: 'Preparing…',
   NOTICE_EXPORTING: (file: string) => `Generating “${file}”…`,
   NOTICE_EXPORT_SUCCESS: (file: string) => `Exported “${file}”.`,
   NOTICE_EXPORT_WARNINGS: (file: string) => `Exported “${file}”, but Pandoc had warnings — see the console.`,

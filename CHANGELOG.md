@@ -7,7 +7,10 @@
 
 * Buttons, toggles and every other control answer clicks again when the settings open in a popout window.
 * File dialogs open on the window that asked for them.
-* The export progress bar shows in the window the export was started from.
+
+### Export progress
+
+* An export runs behind a notice that names the file, shows a progress bar, and turns green when the file is written.
 
 
 ## 1.2.1

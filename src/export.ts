@@ -4,11 +4,11 @@ import process from 'process';
 import path from 'path';
 import { Variables, ExportSetting, extractDefaultExtension as extractExtension, createEnv, today } from './settings';
 import { MessageBox } from './ui/message_box';
-import { Notice, TFile, getLinkpath, moment, type EmbedCache } from 'obsidian';
+import { TFile, getLinkpath, moment, type EmbedCache } from 'obsidian';
 import type { SemVer } from 'semver';
 import { exec, renderTemplate, getPlatformValue, trimQuotes } from './utils';
 import { t } from './lang/helpers';
-import ProgressBar from './ui/components/ProgressBar';
+import { ExportProgress } from './ui/progress';
 import { describeExportFailure } from './export_error';
 import type PandocGuiPlugin from './main';
 import pandoc from './pandoc';
@@ -166,9 +166,9 @@ export async function exportNote(
 
   // Shown for every export: a PDF engine on a long note takes long enough to look stuck.
   beforeExport?.();
-  const progressBarHide = ProgressBar.show(t.NOTICE_EXPORTING(variables.outputFileFullName));
+  const progress = new ExportProgress();
 
-  // Rendering a `${...}` can fail on a template the editor let through, and the bar is already up by here — so
+  // Rendering a `${...}` can fail on a template the editor let through, and the notice is already up by here — so
   // everything from the environment onwards reports through the one handler rather than escaping past it.
   let cmd = '';
 
@@ -249,8 +249,8 @@ export async function exportNote(
       fs.mkdirSync(actualOutputDir);
     }
 
+    progress.running(variables.outputFileFullName);
     const { stderr } = await exec(cmd, { cwd: variables.currentDir, env });
-    progressBarHide();
 
     // Pandoc writes its warnings here and exports the file all the same, so they are reported rather than thrown.
     const warnings = stderr.trim();
@@ -271,19 +271,21 @@ export async function exportNote(
     };
 
     if (showCommandLineOutput) {
+      // The box says everything the notice would, and says it until it is closed.
+      progress.stop();
       const message = [t.EXPORT_COMMAND_OUTPUT(cmd), warnings].filter(Boolean).join('\n\n');
       const box = new MessageBox(plugin.app, message);
       box.onClose = () => void next();
       box.open();
     } else if (warnings) {
-      new Notice(t.NOTICE_EXPORT_WARNINGS(variables.outputFileFullName), 5000);
+      progress.warn(variables.outputFileFullName);
       await next();
     } else {
-      new Notice(t.NOTICE_EXPORT_SUCCESS(variables.outputFileFullName), 1500);
+      progress.succeed(variables.outputFileFullName);
       await next();
     }
   } catch (err) {
-    progressBarHide();
+    progress.stop();
     const { detail, recommendation } = describeExportFailure(err, cmd);
     // Only what the reader can act on. The command line stays in the console.
     console.error(cmd, err);
