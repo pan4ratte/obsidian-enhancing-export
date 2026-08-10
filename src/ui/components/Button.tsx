@@ -1,8 +1,9 @@
 import type { ParentProps } from 'solid-js';
+import { tooltip } from './tooltip';
 
-export default (props: ParentProps<{ cta?: boolean; class?: string; title?: string; onClick?: () => void }>) => {
+export default (props: ParentProps<{ cta?: boolean; class?: string; tooltip?: string; onClick?: () => void }>) => {
   return (
-    <button class={props.class} title={props.title} classList={{ 'mod-cta': props.cta }} onClick={props.onClick}>
+    <button ref={el => tooltip(el, () => props.tooltip)} class={props.class} classList={{ 'mod-cta': props.cta }} onClick={props.onClick}>
       {props.children}
     </button>
   );

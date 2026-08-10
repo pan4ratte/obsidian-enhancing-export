@@ -100,7 +100,7 @@ export default (props: {
           <Icon name="book-open" />
           {t.PANDOC_OPEN_MANUAL}
         </Button>
-        <Button class="ex-pandoc-dashboard-button" title={props.path || t.PANDOC_PATH_PLACEHOLDER} onClick={props.onChoosePath}>
+        <Button class="ex-pandoc-dashboard-button" tooltip={props.path || t.PANDOC_PATH_PLACEHOLDER} onClick={props.onChoosePath}>
           <Icon name="folder" />
           {t.PANDOC_FOLDER}
         </Button>

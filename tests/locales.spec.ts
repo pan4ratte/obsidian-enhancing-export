@@ -21,8 +21,10 @@ const shape = (line: string) => {
         .replace(/^$/, '');
 };
 
-const keys = (o: object): string[] =>
-  Object.entries(o).flatMap(([k, v]) => (v && typeof v === 'object' ? [k, ...keys(v).map(n => `${k}.${n}`)] : [k]));
+const keys = (o: Record<string, unknown>): string[] =>
+  Object.entries(o).flatMap(([k, v]) =>
+    v && typeof v === 'object' ? [k, ...keys(v as Record<string, unknown>).map(n => `${k}.${n}`)] : [k]
+  );
 
 describe('locales', () => {
   test('every key is on the same line in both files', () => {

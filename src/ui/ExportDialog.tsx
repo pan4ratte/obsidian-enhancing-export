@@ -97,11 +97,11 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
         </Setting>
 
         <Setting name={t.EXPORT_DIALOG_FILE_NAME} description={t.EXPORT_DIALOG_FILE_NAME_DESC(extension())}>
-          <Text title={outputFileFullName()} value={candidateOutputFileName()} onChange={value => setCandidateOutputFileName(value)} />
+          <Text tooltip={outputFileFullName()} value={candidateOutputFileName()} onChange={value => setCandidateOutputFileName(value)} />
         </Setting>
 
         <Setting name={t.EXPORT_DIALOG_LOCATION}>
-          <Text title={candidateOutputDirectory()} value={candidateOutputDirectory()} disabled />
+          <Text tooltip={candidateOutputDirectory()} value={candidateOutputDirectory()} disabled />
           <ExtraButton icon="folder" onClick={() => void chooseFolder()} />
         </Setting>
 

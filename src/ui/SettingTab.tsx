@@ -397,7 +397,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
           <DropDown
             options={outputOptions}
             selected={currentOutput()}
-            title={t.TEMPLATE_OUTPUT}
+            tooltip={t.TEMPLATE_OUTPUT}
             autofocus={false}
             onChange={setCurrentOutput}
           />
@@ -524,7 +524,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         value: id,
         label: t.EXTENSION_LABELS[id],
         // What the flag carries, as the filters' boxes do.
-        title: id,
+        tooltip: id,
         checked: on.includes(id),
       }));
     });
@@ -543,18 +543,18 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
 
     /** Three flags with nothing to say for themselves, so they share a card. */
     const numbering = createMemo(() => {
-      const items: { value: string; label: string; title: string; checked: boolean }[] = [];
+      const items: { value: string; label: string; tooltip: string; checked: boolean }[] = [];
       if (supportsNumberSections(format())) {
         items.push({
           value: 'sections',
           label: t.NUMBER_SECTIONS,
-          title: '--number-sections',
+          tooltip: '--number-sections',
           checked: numberSections(args()),
         });
       }
       if (supportsSectionLists(format())) {
-        items.push({ value: 'figures', label: t.LIST_OF_FIGURES, title: '--list-of-figures', checked: listOfFigures(args()) });
-        items.push({ value: 'tables', label: t.LIST_OF_TABLES, title: '--list-of-tables', checked: listOfTables(args()) });
+        items.push({ value: 'figures', label: t.LIST_OF_FIGURES, tooltip: '--list-of-figures', checked: listOfFigures(args()) });
+        items.push({ value: 'tables', label: t.LIST_OF_TABLES, tooltip: '--list-of-tables', checked: listOfTables(args()) });
       }
       return items;
     });
@@ -1320,7 +1320,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
               <Text
                 style="width: 100%"
                 value={template()?.userArguments ?? ''}
-                title={template()?.userArguments}
+                tooltip={template()?.userArguments}
                 placeholder="--defaults=my.yaml"
                 onChange={value => updateTemplate(v => (v.userArguments = value.trim() || undefined))}
               />
@@ -1415,7 +1415,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
 
         <Collapsible when={settings.defaultExportDirectoryMode === 'Custom'}>
           <Setting class="ex-export-destination-path">
-            <Text style="width: 100%" value={customDefaultExportDirectory() ?? ''} title={customDefaultExportDirectory()} />
+            <Text style="width: 100%" value={customDefaultExportDirectory() ?? ''} tooltip={customDefaultExportDirectory()} />
             <ExtraButton icon="folder" onClick={() => void chooseCustomDefaultExportDirectory()} />
           </Setting>
         </Collapsible>

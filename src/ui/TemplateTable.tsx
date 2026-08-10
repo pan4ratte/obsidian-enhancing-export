@@ -98,8 +98,8 @@ export default (props: {
               <td class="ex-template-table-output">{row.output}</td>
               <td class="ex-template-table-actions">
                 <div class="ex-template-table-row-actions">
-                  <Icon name="pencil" title={t.ACTION_EDIT} onClick={() => props.onEdit?.(row.name)} />
-                  <Icon name="trash" title={t.ACTION_REMOVE} onClick={() => props.onRemove?.(row.name)} />
+                  <Icon name="pencil" tooltip={t.ACTION_EDIT} onClick={() => props.onEdit?.(row.name)} />
+                  <Icon name="trash" tooltip={t.ACTION_REMOVE} onClick={() => props.onRemove?.(row.name)} />
                 </div>
               </td>
             </tr>

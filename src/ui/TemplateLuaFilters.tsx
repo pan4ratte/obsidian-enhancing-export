@@ -21,7 +21,7 @@ export default (props: {
         value: filter.fileName,
         label: filter.storeName,
         // The file name is what the flag carries; two filters can share a store name.
-        title: filter.fileName,
+        tooltip: filter.fileName,
         checked: hasLuaFilterArg(props.args, filter.fileName),
       }))
   );

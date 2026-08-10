@@ -35,7 +35,7 @@ export default (props: {
 
   return (
     <>
-      <Text style="width: 100%" value={props.value ?? ''} title={props.value} placeholder={props.placeholder} onChange={props.onChange} />
+      <Text style="width: 100%" value={props.value ?? ''} tooltip={props.value} placeholder={props.placeholder} onChange={props.onChange} />
       <ExtraButton icon={props.folder ? 'folder' : 'folder-open'} tooltip={props.tooltip} onClick={() => void pick()} />
     </>
   );

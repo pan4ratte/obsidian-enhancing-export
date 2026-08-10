@@ -1,5 +1,6 @@
 import { Index, JSX, createContext, createEffect, on, onCleanup, onMount, useContext } from 'solid-js';
 import * as Ob from 'obsidian';
+import { tooltip } from './tooltip';
 
 type SettingContext = {
   settingEl: HTMLDivElement;
@@ -67,10 +68,14 @@ export const Toggle = (props: { checked?: boolean; onChange?: (checked: boolean)
 export const ExtraButton = (props: { icon?: string; onClick?: () => void; tooltip?: string }) => {
   return (
     <div
-      ref={el => props.icon && Ob.setIcon(el, props.icon)}
+      ref={el => {
+        if (props.icon) {
+          Ob.setIcon(el, props.icon);
+        }
+        tooltip(el, () => props.tooltip);
+      }}
       class="setting-editor-extra-setting-button"
       classList={{ 'clickable-icon': props.icon && !!props.onClick }}
-      aria-label={props.tooltip}
       onClick={props.onClick}
     />
   );
@@ -78,7 +83,7 @@ export const ExtraButton = (props: { icon?: string; onClick?: () => void; toolti
 
 export const Text = (props: {
   placeholder?: string;
-  title?: string;
+  tooltip?: string;
   value?: string;
   style?: string;
   disabled?: boolean;
@@ -88,8 +93,8 @@ export const Text = (props: {
 }) => {
   return (
     <input
+      ref={el => tooltip(el, () => props.tooltip)}
       type="text"
-      title={props.title}
       readOnly={props.readOnly}
       placeholder={props.placeholder}
       spellcheck={props.spellcheck ?? false}
@@ -103,7 +108,6 @@ export const Text = (props: {
 
 export const TextArea = (props: {
   placeholder?: string;
-  title?: string;
   value?: string;
   style?: string;
   class?: string;
@@ -164,7 +168,7 @@ export const DropDown = (props: {
   options: { name?: string; value: string }[];
   selected?: string;
   /** Said where the row's own label asks for something else. */
-  title?: string;
+  tooltip?: string;
   /** A dropdown claims the focus by default — it is the one control a dialog opened for it is about. */
   autofocus?: boolean;
   onChange?: (value: string, index: number) => void;
@@ -184,9 +188,11 @@ export const DropDown = (props: {
   return (
     <>
       <select
-        ref={el}
+        ref={e => {
+          el = e;
+          tooltip(e, () => props.tooltip);
+        }}
         class="dropdown"
-        title={props.title}
         onChange={e => props.onChange?.(e.target.value, e.target.selectedIndex)}
         autofocus={props.autofocus ?? true}
       >

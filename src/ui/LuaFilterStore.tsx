@@ -12,6 +12,7 @@ import {
 } from '../lua_filters';
 import Modal from './components/Modal';
 import Icon from './components/Icon';
+import { tooltip } from './components/tooltip';
 
 /** The chips above the list: how a filter stands, then the shelf it sits on. */
 type Chip = LuaFilterCategory | 'all' | 'installed' | 'updatable' | 'nosetup';
@@ -239,7 +240,7 @@ export default (props: {
         <div class="ex-lua-card-main">
           <div class="ex-lua-card-head">
             <span class="ex-lua-name">{entry().storeName}</span>
-            <Icon class="ex-lua-category-icon" name={CATEGORY_ICON[entry().category]} title={t.STORE_CATEGORY_LABELS[entry().category]} />
+            <Icon class="ex-lua-category-icon" name={CATEGORY_ICON[entry().category]} tooltip={t.STORE_CATEGORY_LABELS[entry().category]} />
           </div>
           <Show when={entry().author}>
             <span class="ex-lua-author">{credit()}</span>
@@ -261,14 +262,14 @@ export default (props: {
 
         <div class="ex-lua-actions">
           <Show when={entry().homepage}>
-            <button class="ex-lua-readme" title={t.STORE_README} onClick={() => openExternal(entry().homepage)}>
+            <button class="ex-lua-readme" ref={el => tooltip(el, () => t.STORE_README)} onClick={() => openExternal(entry().homepage)}>
               <Icon name="book-open" />
             </button>
           </Show>
           <Show when={installable() && (!filter() || updatable())}>
             <button
               class="ex-lua-install"
-              title={isBusy() ? t.STORE_INSTALLING : updatable() ? t.STORE_UPDATE : t.STORE_INSTALL}
+              ref={el => tooltip(el, () => (isBusy() ? t.STORE_INSTALLING : updatable() ? t.STORE_UPDATE : t.STORE_INSTALL))}
               disabled={isBusy()}
               onClick={() => void install(entry())}
             >
@@ -276,7 +277,12 @@ export default (props: {
             </button>
           </Show>
           <Show when={filter()}>
-            <button class="ex-lua-uninstall" title={t.STORE_UNINSTALL} disabled={isBusy()} onClick={() => void uninstall(entry())}>
+            <button
+              class="ex-lua-uninstall"
+              ref={el => tooltip(el, () => t.STORE_UNINSTALL)}
+              disabled={isBusy()}
+              onClick={() => void uninstall(entry())}
+            >
               <Icon name="trash-2" />
             </button>
           </Show>
@@ -315,7 +321,7 @@ export default (props: {
           <button
             class="ex-lua-filters-less"
             classList={{ 'is-visible': overflow().left }}
-            title={t.STORE_MORE_FILTERS}
+            ref={el => tooltip(el, () => t.STORE_MORE_FILTERS)}
             onClick={() => row?.scrollTo({ left: 0, behavior: 'smooth' })}
           >
             <Icon name="chevron-left" />
@@ -323,7 +329,7 @@ export default (props: {
           <button
             class="ex-lua-filters-more"
             classList={{ 'is-visible': overflow().right }}
-            title={t.STORE_MORE_FILTERS}
+            ref={el => tooltip(el, () => t.STORE_MORE_FILTERS)}
             onClick={() => row?.scrollTo({ left: row.scrollWidth, behavior: 'smooth' })}
           >
             <Icon name="chevron-right" />
