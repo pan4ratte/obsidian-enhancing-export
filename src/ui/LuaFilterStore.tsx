@@ -231,6 +231,10 @@ export default (props: {
     const credit = () =>
       entry().license ? t.STORE_ATTRIBUTION_LICENSE(entry().author, entry().license) : t.STORE_ATTRIBUTION(entry().author);
     const creditInFull = () => (entry().license ? t.STORE_ATTRIBUTION_FULL(entry().author, entry().license) : undefined);
+    /** What the row along the foot of the card holds, which decides whether there is a row at all. */
+    const credited = () => !!entry().author;
+    const canInstall = () => installable() && (!filter() || updatable());
+    const hasActions = () => !!entry().homepage || canInstall() || !!filter();
     /** What the filter needs, a bullet each. The catalogue writes them as one field, so the ways a list is written
         into it are what they are split on. */
     const requirements = () =>
@@ -261,39 +265,42 @@ export default (props: {
           </Show>
         </div>
 
-        <div class="ex-lua-actions">
-          {/* The credit stands in the same row as the buttons, at the end the row is read from. */}
-          <Show when={entry().author}>
-            <span class="ex-lua-author" ref={el => tooltip(el, creditInFull)}>
-              {credit()}
-            </span>
-          </Show>
-          <Show when={entry().homepage}>
-            <button class="ex-lua-readme" ref={el => tooltip(el, () => t.STORE_README)} onClick={() => openExternal(entry().homepage)}>
-              <Icon name="book-open" />
-            </button>
-          </Show>
-          <Show when={installable() && (!filter() || updatable())}>
-            <button
-              class="ex-lua-install"
-              ref={el => tooltip(el, () => (isBusy() ? t.STORE_INSTALLING : updatable() ? t.STORE_UPDATE : t.STORE_INSTALL))}
-              disabled={isBusy()}
-              onClick={() => void install(entry())}
-            >
-              <Icon name={updatable() ? 'refresh-cw' : 'download'} />
-            </button>
-          </Show>
-          <Show when={filter()}>
-            <button
-              class="ex-lua-uninstall"
-              ref={el => tooltip(el, () => t.STORE_UNINSTALL)}
-              disabled={isBusy()}
-              onClick={() => void uninstall(entry())}
-            >
-              <Icon name="trash-2" />
-            </button>
-          </Show>
-        </div>
+        {/* A card with neither a credit nor anything to do has no row along its foot, and no line over one. */}
+        <Show when={credited() || hasActions()}>
+          <div class="ex-lua-actions" classList={{ 'is-credited': credited() }}>
+            {/* The credit stands in the same row as the buttons, at the end the row is read from. */}
+            <Show when={credited()}>
+              <span class="ex-lua-author" ref={el => tooltip(el, creditInFull)}>
+                {credit()}
+              </span>
+            </Show>
+            <Show when={entry().homepage}>
+              <button class="ex-lua-readme" ref={el => tooltip(el, () => t.STORE_README)} onClick={() => openExternal(entry().homepage)}>
+                <Icon name="book-open" />
+              </button>
+            </Show>
+            <Show when={canInstall()}>
+              <button
+                class="ex-lua-install"
+                ref={el => tooltip(el, () => (isBusy() ? t.STORE_INSTALLING : updatable() ? t.STORE_UPDATE : t.STORE_INSTALL))}
+                disabled={isBusy()}
+                onClick={() => void install(entry())}
+              >
+                <Icon name={updatable() ? 'refresh-cw' : 'download'} />
+              </button>
+            </Show>
+            <Show when={filter()}>
+              <button
+                class="ex-lua-uninstall"
+                ref={el => tooltip(el, () => t.STORE_UNINSTALL)}
+                disabled={isBusy()}
+                onClick={() => void uninstall(entry())}
+              >
+                <Icon name="trash-2" />
+              </button>
+            </Show>
+          </div>
+        </Show>
       </div>
     );
   };

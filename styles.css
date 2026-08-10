@@ -1568,12 +1568,6 @@
   border-top: 1px solid var(--background-modifier-border);
 }
 
-/* A card with neither a credit nor anything to do keeps neither the row nor the
-   line over it. */
-.ex-lua-actions:not(:has(button, .ex-lua-author)) {
-  display: none;
-}
-
 /*
  * Segments of one bar, divided by a line rather than spaced apart — the credit
  * included, which is why the line is drawn between everything in the row and
@@ -1600,9 +1594,11 @@
   cursor: var(--cursor);
 }
 
-/* Nothing to the left of them: they take the width themselves rather than
-   huddling at the end of an empty bar. */
-.ex-lua-actions:not(:has(.ex-lua-author)) button {
+/* Nothing to the left of them — the card carries no credit — so they take the
+   width themselves rather than huddling at the end of an empty bar. Marked by
+   the card rather than asked of the row's contents: `:has` is one selector the
+   browser re-evaluates against half the subtree on every change. */
+.ex-lua-actions:not(.is-credited) button {
   flex: 1 1 0;
 }
 
