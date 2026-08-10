@@ -1,11 +1,17 @@
 # Changelog
 
 
-## 1.1.1
+## 1.2.0
 
-### Bug fixes
+### UI/UX enhancements and bug fixes
 
-* Deleted default templates no longer come back on restart.
+* Fixed a bug when deleted default templates came back on restart.
+* Localized all lua-filters info in the store.
+* New, cleaner layout for lua-filters in the store.
+* Reordered some options in the template modal for better UX, plus tweaked UI.
+* Tooltips use Obsidian's own element style now.
+* Updated the environment variables editor UI.
+* Wording corrections in both locales.
 
 
 ## 1.1.0
