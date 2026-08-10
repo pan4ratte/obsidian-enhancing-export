@@ -133,12 +133,11 @@ export const TextArea = (props: {
       el.setCssStyles({ height: '' });
       return;
     }
-    // Measured with nothing of its own in the way; `scrollHeight` is content and padding, and a border-box height has
-    // to carry the border as well.
+    // Measured with nothing of its own in the way. `scrollHeight` is content and padding, so a border-box height has
+    // to carry whatever else stands between the two — the borders, and a horizontal scrollbar where the field scrolls
+    // rather than wraps, which would otherwise take the last line's worth of room from under it.
     el.setCssStyles({ height: 'auto' });
-    const style = getComputedStyle(el);
-    const border = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
-    el.setCssStyles({ height: `${el.scrollHeight + border}px` });
+    el.setCssStyles({ height: `${el.scrollHeight + el.offsetHeight - el.clientHeight}px` });
   };
 
   // Every way it can change: typed into, written from the settings, or brought on screen where it can finally be

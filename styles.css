@@ -1191,9 +1191,10 @@
 
 /*
  * The command as it will be run, one option a line. Monospace, so the flags line
- * up down the left; wrapped rather than scrolled, since a long path that runs off
- * the edge is a path nobody reads. Sized from the script like the lists above, so
- * however many options a template carries, the whole of it is on screen.
+ * up down the left; scrolled rather than wrapped, so the count of lines is the
+ * count of options and a long path cannot push the rest of the command down the
+ * card. Sized from the script like the lists above, so however many options a
+ * template carries, the whole of it is on screen.
  *
  * Drawn as a field rather than as text so it can be selected from and scrolled
  * by keyboard, and given the flat secondary background to say it takes no
@@ -1205,12 +1206,12 @@
   display: block;
   width: 100%;
   resize: none;
+  overflow-x: auto;
   overflow-y: hidden;
   font-family: var(--font-monospace);
   font-size: var(--font-smaller);
   line-height: var(--line-height-tight);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  white-space: pre;
   background: var(--background-secondary);
   color: var(--text-normal);
   cursor: text;
