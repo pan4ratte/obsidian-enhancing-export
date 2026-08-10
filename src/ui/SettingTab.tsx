@@ -1450,8 +1450,15 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
               <Show when={!envVarsAsText()}>
                 <Index each={Object.keys(envVars())}>
                   {name => (
-                    <Button class="ex-env-action" onClick={() => void addEnvFolder(envVars(), name(), setEnvVars)}>
-                      {t.ENV_ADD_FOLDER(name())}
+                    // A plus and the variable's name: what the button does is the icon's to say, and the row is
+                    // several of these side by side, where the word "add" three times over is three times nothing.
+                    <Button
+                      class="ex-env-action"
+                      tooltip={t.ENV_ADD_FOLDER(name())}
+                      onClick={() => void addEnvFolder(envVars(), name(), setEnvVars)}
+                    >
+                      <Icon name="plus" />
+                      {name()}
                     </Button>
                   )}
                 </Index>
