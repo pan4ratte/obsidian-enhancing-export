@@ -3,16 +3,26 @@
 
 ## 1.2.1
 
-### UI/UX enhancements
-
-* A template can be duplicated from its row in the templates table.
-* Row actions fade in on the row under the pointer, each in its own colour.
-
-### Bug fixes
+### Hotfix
 
 * Pandoc 3.7 and later are given `--syntax-highlighting`, so code highlighting no longer warns that `--no-highlight` is deprecated.
 * A warning from Pandoc no longer reports the export as failed; the file is exported and the warning is shown as a notice.
 * A hand-written `--syntax-highlighting` is no longer read as the syntax definition file.
+* A template can be duplicated from its row in the templates table.
+* Row actions fade in on the row under the pointer, each in its own colour.
+
+---
+
+Chagelog for the 1.2.0 release:
+
+> * Fixed a bug when deleted default templates came back on restart.
+> * Localized all lua-filters info in the store.
+> * New, cleaner layout for lua-filters in the store.
+> * Reordered some options in the template modal for better UX, plus tweaked UI.
+> * Tooltips use Obsidian's own element style now.
+> * Updated the environment variables editor UI.
+> * Wording corrections in both locales.
+
 
 
 ## 1.2.0
