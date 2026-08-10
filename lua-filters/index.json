@@ -11,7 +11,13 @@
       "updated": "2026-08-07",
       "fileName": "abstract-section.lua",
       "path": "pandoc-ext/abstract-section.lua",
-      "homepage": "https://github.com/pandoc-ext/abstract-section"
+      "homepage": "https://github.com/pandoc-ext/abstract-section",
+      "i18n": {
+        "ru": {
+          "storeName": "Аннотация разделом",
+          "description": "Пишите аннотацию обычным заголовком «# Abstract», а не втискивайте её в свойства заметки. Фильтр поднимает этот раздел в метаданные, которые читают шаблоны."
+        }
+      }
     },
     {
       "id": "pandoc-ext:include-files",
@@ -23,7 +29,13 @@
       "updated": "2026-08-07",
       "fileName": "include-files.lua",
       "path": "pandoc-ext/include-files.lua",
-      "homepage": "https://github.com/pandoc-ext/include-files"
+      "homepage": "https://github.com/pandoc-ext/include-files",
+      "i18n": {
+        "ru": {
+          "storeName": "Вставка других заметок",
+          "description": "Вставляет целые заметки в документ там, где вы их называете, так что диссертация или руководство могут оставаться папкой небольших заметок и всё равно экспортироваться одним файлом."
+        }
+      }
     },
     {
       "id": "include-code-files",
@@ -35,7 +47,13 @@
       "updated": "2026-08-07",
       "fileName": "include-code-files.lua",
       "path": "pandoc/include-code-files.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/include-code-files"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/include-code-files",
+      "i18n": {
+        "ru": {
+          "storeName": "Код из файлов",
+          "description": "Заполняет пустой блок кода из файла на диске — целиком или только заданным диапазоном строк. Примеры кода в заметке уже не разойдутся с кодом, из которого взяты."
+        }
+      }
     },
     {
       "id": "pandoc-ext:pagebreak",
@@ -47,7 +65,13 @@
       "updated": "2026-08-07",
       "fileName": "pagebreak.lua",
       "path": "pandoc-ext/pagebreak.lua",
-      "homepage": "https://github.com/pandoc-ext/pagebreak"
+      "homepage": "https://github.com/pandoc-ext/pagebreak",
+      "i18n": {
+        "ru": {
+          "storeName": "Разрывы страниц",
+          "description": "Превращает строку \\newpage или \\pagebreak в заметке в настоящий разрыв страницы — в Word, ODT, LaTeX/PDF, EPUB и HTML одинаково, а не только в LaTeX."
+        }
+      }
     },
     {
       "id": "not-in-format",
@@ -59,7 +83,13 @@
       "updated": "2026-08-07",
       "fileName": "not-in-format.lua",
       "path": "pandoc/not-in-format.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/not-in-format"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/not-in-format",
+      "i18n": {
+        "ru": {
+          "storeName": "Содержимое для одного формата",
+          "description": "Не пускает блок или фрагмент в те форматы, для которых он не написан, так что одна заметка может нести и печатную формулировку, и веб-версию."
+        }
+      }
     },
     {
       "id": "pandoc-ext:list-table",
@@ -71,7 +101,13 @@
       "updated": "2026-08-07",
       "fileName": "list-table.lua",
       "path": "pandoc-ext/list-table.lua",
-      "homepage": "https://github.com/pandoc-ext/list-table"
+      "homepage": "https://github.com/pandoc-ext/list-table",
+      "i18n": {
+        "ru": {
+          "storeName": "Таблицы списками",
+          "description": "Пишите таблицу вложенным списком, а получайте таблицу. Ячейки с абзацем, списком или блоком кода остаются редактируемыми в заметке, а не превращаются в нечитаемую таблицу из вертикальных черт."
+        }
+      }
     },
     {
       "id": "revealjs-codeblock",
@@ -84,7 +120,13 @@
       "updated": "2026-08-07",
       "fileName": "revealjs-codeblock.lua",
       "path": "pandoc/revealjs-codeblock.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/revealjs-codeblock"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/revealjs-codeblock",
+      "i18n": {
+        "ru": {
+          "storeName": "Блоки кода в reveal.js",
+          "description": "Передаёт атрибуты блоков кода в reveal.js, так что слайд может подсвечивать строки и проходить по ним по шагам."
+        }
+      }
     },
     {
       "id": "course:zotero",
@@ -97,7 +139,14 @@
       "updated": "2026-08-07",
       "fileName": "zotero.lua",
       "path": "pan4ratte/zotero.lua",
-      "homepage": "https://retorque.re/zotero-better-bibtex/exporting/"
+      "homepage": "https://retorque.re/zotero-better-bibtex/exporting/",
+      "i18n": {
+        "ru": {
+          "storeName": "Живые ссылки из Zotero",
+          "description": "Разрешает citekey из Better BibTeX через запущенный Zotero, так что ссылки и библиография выходят правильными без предварительного экспорта .bib-файла.",
+          "requires": "Запущенный Zotero с установленным дополнением Better BibTeX."
+        }
+      }
     },
     {
       "id": "doi2cite",
@@ -110,7 +159,14 @@
       "updated": "2026-08-07",
       "fileName": "doi2cite.lua",
       "path": "pandoc/doi2cite.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/doi2cite"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/doi2cite",
+      "i18n": {
+        "ru": {
+          "storeName": "DOI в ссылку",
+          "description": "Ищет каждый процитированный DOI и сам пишет соответствующую запись библиографии, так что источнику не нужно ничего, кроме DOI.",
+          "requires": "Подключение к интернету во время экспорта."
+        }
+      }
     },
     {
       "id": "pandoc-ext:multibib",
@@ -122,7 +178,13 @@
       "updated": "2026-08-07",
       "fileName": "multibib.lua",
       "path": "pandoc-ext/multibib.lua",
-      "homepage": "https://github.com/pandoc-ext/multibib"
+      "homepage": "https://github.com/pandoc-ext/multibib",
+      "i18n": {
+        "ru": {
+          "storeName": "Несколько библиографий",
+          "description": "Разделяет список источников на несколько — источники и программы, первичные и вторичные — из одной библиотеки, и каждый печатается там, где вы его поставили."
+        }
+      }
     },
     {
       "id": "pandoc-ext:section-bibliographies",
@@ -134,7 +196,13 @@
       "updated": "2026-08-07",
       "fileName": "section-bibliographies.lua",
       "path": "pandoc-ext/section-bibliographies.lua",
-      "homepage": "https://github.com/pandoc-ext/section-bibliographies"
+      "homepage": "https://github.com/pandoc-ext/section-bibliographies",
+      "i18n": {
+        "ru": {
+          "storeName": "Литература по главам",
+          "description": "Даёт каждой главе или разделу собственный список литературы вместо одного длинного списка в конце."
+        }
+      }
     },
     {
       "id": "bibexport",
@@ -147,7 +215,14 @@
       "updated": "2026-08-07",
       "fileName": "bibexport.lua",
       "path": "pandoc/bibexport.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/bibexport"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/bibexport",
+      "i18n": {
+        "ru": {
+          "storeName": "Экспорт процитированных записей",
+          "description": "Записывает .bib-файл, содержащий только те записи, которые документ действительно цитирует, — то, что сдают вместе с рукописью вместо всей библиотеки.",
+          "requires": "Программа bibexport, входящая в TeX Live."
+        }
+      }
     },
     {
       "id": "pandoc-ext:cito",
@@ -159,7 +234,13 @@
       "updated": "2026-08-07",
       "fileName": "cito.lua",
       "path": "pandoc-ext/cito.lua",
-      "homepage": "https://github.com/pandoc-ext/cito"
+      "homepage": "https://github.com/pandoc-ext/cito",
+      "i18n": {
+        "ru": {
+          "storeName": "Назначение ссылки (CiTO)",
+          "description": "Позволяет ссылке зафиксировать, зачем она здесь — соглашается, развивает, использует метод, — и может перечислить источники по этому отношению."
+        }
+      }
     },
     {
       "id": "scholarly-metadata",
@@ -171,7 +252,13 @@
       "updated": "2026-08-07",
       "fileName": "scholarly-metadata.lua",
       "path": "pandoc/scholarly-metadata.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/scholarly-metadata"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/scholarly-metadata",
+      "i18n": {
+        "ru": {
+          "storeName": "Научные метаданные",
+          "description": "Переписывает авторов и аффилиации в том виде, какой ожидают журнальные шаблоны, так что список имён в свойствах заметки выходит нормальным списком авторов."
+        }
+      }
     },
     {
       "id": "author-info-blocks",
@@ -184,7 +271,14 @@
       "updated": "2026-08-07",
       "fileName": "author-info-blocks.lua",
       "path": "pandoc/author-info-blocks.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/author-info-blocks"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/author-info-blocks",
+      "i18n": {
+        "ru": {
+          "storeName": "Блок авторов и аффилиаций",
+          "description": "Печатает авторов, их аффилиации и адрес для корреспонденции оформленным блоком под названием.",
+          "requires": "Работает после «Scholarly metadata» — сначала добавьте тот фильтр."
+        }
+      }
     },
     {
       "id": "pandoc-ext:diagram",
@@ -197,7 +291,14 @@
       "updated": "2026-08-07",
       "fileName": "diagram.lua",
       "path": "pandoc-ext/diagram.lua",
-      "homepage": "https://github.com/pandoc-ext/diagram"
+      "homepage": "https://github.com/pandoc-ext/diagram",
+      "i18n": {
+        "ru": {
+          "storeName": "Диаграммы из блоков кода",
+          "description": "Рисует диаграмму, описанную блоком кода, и вставляет картинку в документ: Mermaid, GraphViz/Dot, PlantUML, TikZ, Asymptote и другие.",
+          "requires": "Инструмент для нужных вам диаграмм (mermaid-cli, dot, plantuml, …) в PATH."
+        }
+      }
     },
     {
       "id": "math2svg",
@@ -211,7 +312,14 @@
       "updated": "2026-08-07",
       "fileName": "math2svg.lua",
       "path": "pandoc/math2svg.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/math2svg"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/math2svg",
+      "i18n": {
+        "ru": {
+          "storeName": "Формулы как SVG",
+          "description": "Отрисовывает формулы TeX в SVG через MathJax, так что формулы видны везде, где откроют файл, — читателю не нужны ни MathJax, ни шрифты, ни интернет.",
+          "requires": "Node.js с установленным mathjax-node-cli."
+        }
+      }
     },
     {
       "id": "short-captions",
@@ -225,7 +333,14 @@
       "updated": "2026-08-07",
       "fileName": "short-captions.lua",
       "path": "pandoc/short-captions.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/short-captions"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/short-captions",
+      "i18n": {
+        "ru": {
+          "storeName": "Короткие подписи иллюстраций",
+          "description": "Даёт иллюстрации короткую подпись для списка иллюстраций, отдельную от длинной, которая печатается под ней.",
+          "requires": "Вывод в LaTeX/PDF."
+        }
+      }
     },
     {
       "id": "table-short-captions",
@@ -239,7 +354,14 @@
       "updated": "2026-08-07",
       "fileName": "table-short-captions.lua",
       "path": "pandoc/table-short-captions.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/table-short-captions"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/table-short-captions",
+      "i18n": {
+        "ru": {
+          "storeName": "Короткие подписи таблиц",
+          "description": "То же для таблиц: короткая подпись для списка таблиц и способ вообще не включать таблицу в этот список.",
+          "requires": "Вывод в LaTeX/PDF."
+        }
+      }
     },
     {
       "id": "mhchem",
@@ -251,7 +373,13 @@
       "updated": "2026-08-07",
       "fileName": "mhchem.lua",
       "path": "pandoc/mhchem.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/mhchem"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/mhchem",
+      "i18n": {
+        "ru": {
+          "storeName": "Химические формулы (mhchem)",
+          "description": "Набирает химические уравнения и изотопы \\ce{}, записанные в нотации mhchem."
+        }
+      }
     },
     {
       "id": "lilypond",
@@ -264,7 +392,14 @@
       "updated": "2026-08-07",
       "fileName": "lilypond.lua",
       "path": "pandoc/lilypond.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/lilypond"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/lilypond",
+      "i18n": {
+        "ru": {
+          "storeName": "Ноты (LilyPond)",
+          "description": "Гравирует нотацию LilyPond, записанную в заметке, и вставляет партитуру в документ изображением.",
+          "requires": "Программа lilypond в PATH."
+        }
+      }
     },
     {
       "id": "pandoc-quotes",
@@ -276,7 +411,13 @@
       "updated": "2026-08-07",
       "fileName": "pandoc-quotes.lua",
       "path": "pandoc/pandoc-quotes.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/pandoc-quotes.lua"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/pandoc-quotes.lua",
+      "i18n": {
+        "ru": {
+          "storeName": "Кавычки по языку",
+          "description": "Заменяет простые \" и ' теми кавычками, которые приняты в языке документа, — « » во французском, „ “ в немецком, “ ” в английском."
+        }
+      }
     },
     {
       "id": "first-line-indent",
@@ -289,7 +430,13 @@
       "updated": "2026-08-07",
       "fileName": "first-line-indent.lua",
       "path": "pandoc/first-line-indent.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/first-line-indent"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/first-line-indent",
+      "i18n": {
+        "ru": {
+          "storeName": "Красная строка",
+          "description": "Делает абзацный отступ первой строки, как в книгах, и оставляет абзац, открывающий раздел, без отступа, как набирают типографы."
+        }
+      }
     },
     {
       "id": "pandoc-ext:fonts-and-alignment",
@@ -302,7 +449,13 @@
       "updated": "2026-08-07",
       "fileName": "fonts-and-alignment.lua",
       "path": "pandoc-ext/fonts-and-alignment.lua",
-      "homepage": "https://github.com/pandoc-ext/fonts-and-alignment"
+      "homepage": "https://github.com/pandoc-ext/fonts-and-alignment",
+      "i18n": {
+        "ru": {
+          "storeName": "Шрифты и выравнивание",
+          "description": "Задаёт шрифт, размер, цвет и выравнивание помеченного фрагмента или раздела — для тех мест, под которые у шаблона нет стиля."
+        }
+      }
     },
     {
       "id": "pandoc-ext:pretty-urls",
@@ -314,7 +467,13 @@
       "updated": "2026-08-07",
       "fileName": "pretty-urls.lua",
       "path": "pandoc-ext/pretty-urls.lua",
-      "homepage": "https://github.com/pandoc-ext/pretty-urls"
+      "homepage": "https://github.com/pandoc-ext/pretty-urls",
+      "i18n": {
+        "ru": {
+          "storeName": "Аккуратные URL",
+          "description": "Убирает https:// и завершающую косую черту из голой ссылки, так что адрес, напечатанный в тексте, читается как текст."
+        }
+      }
     },
     {
       "id": "course:table-verbatim",
@@ -328,7 +487,14 @@
       "updated": "2026-08-07",
       "fileName": "table-verbatim.lua",
       "path": "pan4ratte/table-verbatim.lua",
-      "homepage": "https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/table-verbatim.lua"
+      "homepage": "https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/table-verbatim.lua",
+      "i18n": {
+        "ru": {
+          "storeName": "Код в таблицах",
+          "description": "Позволяет строчному коду в ячейке таблицы получить собственный знаковый стиль, чтобы его размер подходил таблице, а не основному тексту. Pandoc жёстко проставляет там VerbatimChar и игнорирует всё остальное.",
+          "requires": "Знаковый стиль с названием «Table Verbatim» в эталонном документе."
+        }
+      }
     },
     {
       "id": "course:table-spacing",
@@ -341,7 +507,13 @@
       "updated": "2026-08-07",
       "fileName": "table-spacing.lua",
       "path": "pan4ratte/table-spacing.lua",
-      "homepage": "https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/table-spacing.lua"
+      "homepage": "https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/table-spacing.lua",
+      "i18n": {
+        "ru": {
+          "storeName": "Отступы вокруг таблиц",
+          "description": "Ставит тонкий абзац-разделитель до и после каждой таблицы, чтобы таблицы не прилегали вплотную к тексту в Word."
+        }
+      }
     },
     {
       "id": "track-changes",
@@ -353,7 +525,13 @@
       "updated": "2026-08-07",
       "fileName": "track-changes.lua",
       "path": "pandoc/track-changes.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/track-changes"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/track-changes",
+      "i18n": {
+        "ru": {
+          "storeName": "Исправления Word",
+          "description": "Решает, что делать с исправлениями в режиме рецензирования в читаемом .docx: принять их, отклонить или сохранить оба варианта."
+        }
+      }
     },
     {
       "id": "minted",
@@ -367,7 +545,14 @@
       "updated": "2026-08-07",
       "fileName": "minted.lua",
       "path": "pandoc/minted.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/minted"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/minted",
+      "i18n": {
+        "ru": {
+          "storeName": "Подсветка кода в PDF",
+          "description": "Набирает блоки кода пакетом LaTeX minted, который подсвечивает намного больше языков и делает это лучше, чем простой verbatim, к которому откатывается pandoc.",
+          "requires": "Установленный Pygments и запуск LaTeX с --shell-escape."
+        }
+      }
     },
     {
       "id": "latex-hyphen",
@@ -380,7 +565,13 @@
       "updated": "2026-08-07",
       "fileName": "latex-hyphen.lua",
       "path": "pandoc/latex-hyphen.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/latex-hyphen"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/latex-hyphen",
+      "i18n": {
+        "ru": {
+          "storeName": "Слова с дефисом целиком",
+          "description": "Не даёт LaTeX разрывать слово с дефисом по этому дефису при выключке строки — решение для имён и составных слов, разъезжающихся по строкам."
+        }
+      }
     },
     {
       "id": "scrlttr2",
@@ -394,7 +585,14 @@
       "updated": "2026-08-07",
       "fileName": "scrlttr2.lua",
       "path": "pandoc/scrlttr2.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/scrlttr2"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/scrlttr2",
+      "i18n": {
+        "ru": {
+          "storeName": "Письмо (KOMA-Script)",
+          "description": "Набирает заметку письмом через класс scrlttr2 из KOMA-Script, вместе с адресатом и заключительной формулой. Больше не поддерживается автором.",
+          "requires": "Установленный LaTeX с KOMA-Script."
+        }
+      }
     },
     {
       "id": "wordcount",
@@ -406,7 +604,13 @@
       "updated": "2026-08-07",
       "fileName": "wordcount.lua",
       "path": "pandoc/wordcount.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/wordcount"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/wordcount",
+      "i18n": {
+        "ru": {
+          "storeName": "Подсчёт слов",
+          "description": "Считает слова, которые читает pandoc, а не символы, которые несёт файл, — без разметки, свойств и адресов ссылок. Печатает результат вместо экспорта."
+        }
+      }
     },
     {
       "id": "spellcheck",
@@ -419,7 +623,14 @@
       "updated": "2026-08-07",
       "fileName": "spellcheck.lua",
       "path": "pandoc/spellcheck.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/spellcheck"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/spellcheck",
+      "i18n": {
+        "ru": {
+          "storeName": "Проверка орфографии",
+          "description": "Перечисляет слова заметки с ошибками, читая прозу и пропуская код, ссылки и формулы. Печатает список вместо экспорта.",
+          "requires": "Программа aspell в PATH."
+        }
+      }
     }
   ]
 }

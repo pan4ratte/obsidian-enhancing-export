@@ -73,69 +73,69 @@ Lua-фильтр — это небольшой скрипт, который Pand
 
 | Фильтр | Что делает | Нужно |
 | :--- | :---------- | :--- |
-| [Abstract as a section](https://github.com/pandoc-ext/abstract-section) | Пишите аннотацию обычным заголовком «# Abstract», а не втискивайте её в свойства заметки. Фильтр поднимает этот раздел в метаданные, которые читают шаблоны. | — |
-| [Include other notes](https://github.com/pandoc-ext/include-files) | Вставляет целые заметки в документ там, где вы их называете, так что диссертация или руководство могут оставаться папкой небольших заметок и всё равно экспортироваться одним файлом. | — |
-| [Include code from files](https://github.com/pandoc/lua-filters/tree/master/include-code-files) | Заполняет пустой блок кода из файла на диске — целиком или только заданным диапазоном строк. Примеры кода в заметке уже не разойдутся с кодом, из которого взяты. | — |
-| [Page breaks](https://github.com/pandoc-ext/pagebreak) | Превращает строку \\newpage или \\pagebreak в заметке в настоящий разрыв страницы — в Word, ODT, LaTeX/PDF, EPUB и HTML одинаково, а не только в LaTeX. | — |
-| [Format-only content](https://github.com/pandoc/lua-filters/tree/master/not-in-format) | Не пускает блок или фрагмент в те форматы, для которых он не написан, так что одна заметка может нести и печатную формулировку, и веб-версию. | — |
-| [Tables written as lists](https://github.com/pandoc-ext/list-table) | Пишите таблицу вложенным списком, а получайте таблицу. Ячейки с абзацем, списком или блоком кода остаются редактируемыми в заметке, а не превращаются в нечитаемую таблицу из вертикальных черт. | — |
-| [reveal.js code blocks](https://github.com/pandoc/lua-filters/tree/master/revealjs-codeblock) | Передаёт атрибуты блоков кода в reveal.js, так что слайд может подсвечивать строки и проходить по ним по шагам. | — |
+| [Аннотация разделом](https://github.com/pandoc-ext/abstract-section) | Пишите аннотацию обычным заголовком «# Abstract», а не втискивайте её в свойства заметки. Фильтр поднимает этот раздел в метаданные, которые читают шаблоны. | — |
+| [Вставка других заметок](https://github.com/pandoc-ext/include-files) | Вставляет целые заметки в документ там, где вы их называете, так что диссертация или руководство могут оставаться папкой небольших заметок и всё равно экспортироваться одним файлом. | — |
+| [Код из файлов](https://github.com/pandoc/lua-filters/tree/master/include-code-files) | Заполняет пустой блок кода из файла на диске — целиком или только заданным диапазоном строк. Примеры кода в заметке уже не разойдутся с кодом, из которого взяты. | — |
+| [Разрывы страниц](https://github.com/pandoc-ext/pagebreak) | Превращает строку \\newpage или \\pagebreak в заметке в настоящий разрыв страницы — в Word, ODT, LaTeX/PDF, EPUB и HTML одинаково, а не только в LaTeX. | — |
+| [Содержимое для одного формата](https://github.com/pandoc/lua-filters/tree/master/not-in-format) | Не пускает блок или фрагмент в те форматы, для которых он не написан, так что одна заметка может нести и печатную формулировку, и веб-версию. | — |
+| [Таблицы списками](https://github.com/pandoc-ext/list-table) | Пишите таблицу вложенным списком, а получайте таблицу. Ячейки с абзацем, списком или блоком кода остаются редактируемыми в заметке, а не превращаются в нечитаемую таблицу из вертикальных черт. | — |
+| [Блоки кода в reveal.js](https://github.com/pandoc/lua-filters/tree/master/revealjs-codeblock) | Передаёт атрибуты блоков кода в reveal.js, так что слайд может подсвечивать строки и проходить по ним по шагам. | — |
 
 **Цитаты**
 
 | Фильтр | Что делает | Нужно |
 | :--- | :---------- | :--- |
-| [Zotero live citations](https://retorque.re/zotero-better-bibtex/exporting/) | Разрешает citekey из Better BibTeX через запущенный Zotero, так что ссылки и библиография выходят правильными без предварительного экспорта .bib-файла. | Запущенный Zotero с установленным дополнением Better BibTeX. |
-| [DOI to citation](https://github.com/pandoc/lua-filters/tree/master/doi2cite) | Ищет каждый процитированный DOI и сам пишет соответствующую запись библиографии, так что источнику не нужно ничего, кроме DOI. | Подключение к интернету во время экспорта. |
-| [Several bibliographies](https://github.com/pandoc-ext/multibib) | Разделяет список источников на несколько — источники и программы, первичные и вторичные — из одной библиотеки, и каждый печатается там, где вы его поставили. | — |
-| [References per chapter](https://github.com/pandoc-ext/section-bibliographies) | Даёт каждой главе или разделу собственный список литературы вместо одного длинного списка в конце. | — |
-| [Export the cited entries](https://github.com/pandoc/lua-filters/tree/master/bibexport) | Записывает .bib-файл, содержащий только те записи, которые документ действительно цитирует, — то, что сдают вместе с рукописью вместо всей библиотеки. | Программа bibexport, входящая в TeX Live. |
-| [Citation intent (CiTO)](https://github.com/pandoc-ext/cito) | Позволяет ссылке зафиксировать, зачем она здесь — соглашается, развивает, использует метод, — и может перечислить источники по этому отношению. | — |
-| [Scholarly metadata](https://github.com/pandoc/lua-filters/tree/master/scholarly-metadata) | Переписывает авторов и аффилиации в том виде, какой ожидают журнальные шаблоны, так что список имён в свойствах заметки выходит нормальным списком авторов. | — |
-| [Author and affiliation block](https://github.com/pandoc/lua-filters/tree/master/author-info-blocks) | Печатает авторов, их аффилиации и адрес для корреспонденции оформленным блоком под названием. | Работает после «Scholarly metadata» — сначала добавьте тот фильтр. |
+| [Живые ссылки из Zotero](https://retorque.re/zotero-better-bibtex/exporting/) | Разрешает citekey из Better BibTeX через запущенный Zotero, так что ссылки и библиография выходят правильными без предварительного экспорта .bib-файла. | Запущенный Zotero с установленным дополнением Better BibTeX. |
+| [DOI в ссылку](https://github.com/pandoc/lua-filters/tree/master/doi2cite) | Ищет каждый процитированный DOI и сам пишет соответствующую запись библиографии, так что источнику не нужно ничего, кроме DOI. | Подключение к интернету во время экспорта. |
+| [Несколько библиографий](https://github.com/pandoc-ext/multibib) | Разделяет список источников на несколько — источники и программы, первичные и вторичные — из одной библиотеки, и каждый печатается там, где вы его поставили. | — |
+| [Литература по главам](https://github.com/pandoc-ext/section-bibliographies) | Даёт каждой главе или разделу собственный список литературы вместо одного длинного списка в конце. | — |
+| [Экспорт процитированных записей](https://github.com/pandoc/lua-filters/tree/master/bibexport) | Записывает .bib-файл, содержащий только те записи, которые документ действительно цитирует, — то, что сдают вместе с рукописью вместо всей библиотеки. | Программа bibexport, входящая в TeX Live. |
+| [Назначение ссылки (CiTO)](https://github.com/pandoc-ext/cito) | Позволяет ссылке зафиксировать, зачем она здесь — соглашается, развивает, использует метод, — и может перечислить источники по этому отношению. | — |
+| [Научные метаданные](https://github.com/pandoc/lua-filters/tree/master/scholarly-metadata) | Переписывает авторов и аффилиации в том виде, какой ожидают журнальные шаблоны, так что список имён в свойствах заметки выходит нормальным списком авторов. | — |
+| [Блок авторов и аффилиаций](https://github.com/pandoc/lua-filters/tree/master/author-info-blocks) | Печатает авторов, их аффилиации и адрес для корреспонденции оформленным блоком под названием. | Работает после «Scholarly metadata» — сначала добавьте тот фильтр. |
 
 **Иллюстрации и формулы**
 
 | Фильтр | Что делает | Нужно |
 | :--- | :---------- | :--- |
-| [Diagrams from code blocks](https://github.com/pandoc-ext/diagram) | Рисует диаграмму, описанную блоком кода, и вставляет картинку в документ: Mermaid, GraphViz/Dot, PlantUML, TikZ, Asymptote и другие. | Инструмент для нужных вам диаграмм (mermaid-cli, dot, plantuml, …) в PATH. |
-| [Math as SVG](https://github.com/pandoc/lua-filters/tree/master/math2svg) | Отрисовывает формулы TeX в SVG через MathJax, так что формулы видны везде, где откроют файл, — читателю не нужны ни MathJax, ни шрифты, ни интернет. | Node.js с установленным mathjax-node-cli. |
-| [Short figure captions](https://github.com/pandoc/lua-filters/tree/master/short-captions) | Даёт иллюстрации короткую подпись для списка иллюстраций, отдельную от длинной, которая печатается под ней. | Вывод в LaTeX/PDF. |
-| [Short table captions](https://github.com/pandoc/lua-filters/tree/master/table-short-captions) | То же для таблиц: короткая подпись для списка таблиц и способ вообще не включать таблицу в этот список. | Вывод в LaTeX/PDF. |
-| [Chemical formulas (mhchem)](https://github.com/pandoc/lua-filters/tree/master/mhchem) | Набирает химические уравнения и изотопы \\ce{}, записанные в нотации mhchem. | — |
-| [Sheet music (LilyPond)](https://github.com/pandoc/lua-filters/tree/master/lilypond) | Гравирует нотацию LilyPond, записанную в заметке, и вставляет партитуру в документ изображением. | Программа lilypond в PATH. |
+| [Диаграммы из блоков кода](https://github.com/pandoc-ext/diagram) | Рисует диаграмму, описанную блоком кода, и вставляет картинку в документ: Mermaid, GraphViz/Dot, PlantUML, TikZ, Asymptote и другие. | Инструмент для нужных вам диаграмм (mermaid-cli, dot, plantuml, …) в PATH. |
+| [Формулы как SVG](https://github.com/pandoc/lua-filters/tree/master/math2svg) | Отрисовывает формулы TeX в SVG через MathJax, так что формулы видны везде, где откроют файл, — читателю не нужны ни MathJax, ни шрифты, ни интернет. | Node.js с установленным mathjax-node-cli. |
+| [Короткие подписи иллюстраций](https://github.com/pandoc/lua-filters/tree/master/short-captions) | Даёт иллюстрации короткую подпись для списка иллюстраций, отдельную от длинной, которая печатается под ней. | Вывод в LaTeX/PDF. |
+| [Короткие подписи таблиц](https://github.com/pandoc/lua-filters/tree/master/table-short-captions) | То же для таблиц: короткая подпись для списка таблиц и способ вообще не включать таблицу в этот список. | Вывод в LaTeX/PDF. |
+| [Химические формулы (mhchem)](https://github.com/pandoc/lua-filters/tree/master/mhchem) | Набирает химические уравнения и изотопы \\ce{}, записанные в нотации mhchem. | — |
+| [Ноты (LilyPond)](https://github.com/pandoc/lua-filters/tree/master/lilypond) | Гравирует нотацию LilyPond, записанную в заметке, и вставляет партитуру в документ изображением. | Программа lilypond в PATH. |
 
 **Текст и типографика**
 
 | Фильтр | Что делает | Нужно |
 | :--- | :---------- | :--- |
-| [Quotation marks by language](https://github.com/pandoc/lua-filters/tree/master/pandoc-quotes.lua) | Заменяет простые " и ' теми кавычками, которые приняты в языке документа, — « » во французском, „ “ в немецком, “ ” в английском. | — |
-| [First-line indent](https://github.com/pandoc/lua-filters/tree/master/first-line-indent) | Делает абзацный отступ первой строки, как в книгах, и оставляет абзац, открывающий раздел, без отступа, как набирают типографы. | — |
-| [Fonts and alignment](https://github.com/pandoc-ext/fonts-and-alignment) | Задаёт шрифт, размер, цвет и выравнивание помеченного фрагмента или раздела — для тех мест, под которые у шаблона нет стиля. | — |
-| [Tidier URLs](https://github.com/pandoc-ext/pretty-urls) | Убирает https:// и завершающую косую черту из голой ссылки, так что адрес, напечатанный в тексте, читается как текст. | — |
+| [Кавычки по языку](https://github.com/pandoc/lua-filters/tree/master/pandoc-quotes.lua) | Заменяет простые " и ' теми кавычками, которые приняты в языке документа, — « » во французском, „ “ в немецком, “ ” в английском. | — |
+| [Красная строка](https://github.com/pandoc/lua-filters/tree/master/first-line-indent) | Делает абзацный отступ первой строки, как в книгах, и оставляет абзац, открывающий раздел, без отступа, как набирают типографы. | — |
+| [Шрифты и выравнивание](https://github.com/pandoc-ext/fonts-and-alignment) | Задаёт шрифт, размер, цвет и выравнивание помеченного фрагмента или раздела — для тех мест, под которые у шаблона нет стиля. | — |
+| [Аккуратные URL](https://github.com/pandoc-ext/pretty-urls) | Убирает https:// и завершающую косую черту из голой ссылки, так что адрес, напечатанный в тексте, читается как текст. | — |
 
 **Word и ODT**
 
 | Фильтр | Что делает | Нужно |
 | :--- | :---------- | :--- |
-| [Code inside tables](https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/table-verbatim.lua) | Позволяет строчному коду в ячейке таблицы получить собственный знаковый стиль, чтобы его размер подходил таблице, а не основному тексту. Pandoc жёстко проставляет там VerbatimChar и игнорирует всё остальное. | Знаковый стиль с названием «Table Verbatim» в эталонном документе. |
-| [Space around tables](https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/table-spacing.lua) | Ставит тонкий абзац-разделитель до и после каждой таблицы, чтобы таблицы не прилегали вплотную к тексту в Word. | — |
-| [Word tracked changes](https://github.com/pandoc/lua-filters/tree/master/track-changes) | Решает, что делать с исправлениями в режиме рецензирования в читаемом .docx: принять их, отклонить или сохранить оба варианта. | — |
+| [Код в таблицах](https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/table-verbatim.lua) | Позволяет строчному коду в ячейке таблицы получить собственный знаковый стиль, чтобы его размер подходил таблице, а не основному тексту. Pandoc жёстко проставляет там VerbatimChar и игнорирует всё остальное. | Знаковый стиль с названием «Table Verbatim» в эталонном документе. |
+| [Отступы вокруг таблиц](https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/table-spacing.lua) | Ставит тонкий абзац-разделитель до и после каждой таблицы, чтобы таблицы не прилегали вплотную к тексту в Word. | — |
+| [Исправления Word](https://github.com/pandoc/lua-filters/tree/master/track-changes) | Решает, что делать с исправлениями в режиме рецензирования в читаемом .docx: принять их, отклонить или сохранить оба варианта. | — |
 
 **LaTeX и PDF**
 
 | Фильтр | Что делает | Нужно |
 | :--- | :---------- | :--- |
-| [Highlighted code in PDF](https://github.com/pandoc/lua-filters/tree/master/minted) | Набирает блоки кода пакетом LaTeX minted, который подсвечивает намного больше языков и делает это лучше, чем простой verbatim, к которому откатывается pandoc. | Установленный Pygments и запуск LaTeX с --shell-escape. |
-| [Keep hyphenated words whole](https://github.com/pandoc/lua-filters/tree/master/latex-hyphen) | Не даёт LaTeX разрывать слово с дефисом по этому дефису при выключке строки — решение для имён и составных слов, разъезжающихся по строкам. | — |
-| [Letter (KOMA-Script)](https://github.com/pandoc/lua-filters/tree/master/scrlttr2) | Набирает заметку письмом через класс scrlttr2 из KOMA-Script, вместе с адресатом и заключительной формулой. Больше не поддерживается автором. | Установленный LaTeX с KOMA-Script. |
+| [Подсветка кода в PDF](https://github.com/pandoc/lua-filters/tree/master/minted) | Набирает блоки кода пакетом LaTeX minted, который подсвечивает намного больше языков и делает это лучше, чем простой verbatim, к которому откатывается pandoc. | Установленный Pygments и запуск LaTeX с --shell-escape. |
+| [Слова с дефисом целиком](https://github.com/pandoc/lua-filters/tree/master/latex-hyphen) | Не даёт LaTeX разрывать слово с дефисом по этому дефису при выключке строки — решение для имён и составных слов, разъезжающихся по строкам. | — |
+| [Письмо (KOMA-Script)](https://github.com/pandoc/lua-filters/tree/master/scrlttr2) | Набирает заметку письмом через класс scrlttr2 из KOMA-Script, вместе с адресатом и заключительной формулой. Больше не поддерживается автором. | Установленный LaTeX с KOMA-Script. |
 
 **Инструменты**
 
 | Фильтр | Что делает | Нужно |
 | :--- | :---------- | :--- |
-| [Word count](https://github.com/pandoc/lua-filters/tree/master/wordcount) | Считает слова, которые читает pandoc, а не символы, которые несёт файл, — без разметки, свойств и адресов ссылок. Печатает результат вместо экспорта. | — |
-| [Spellcheck](https://github.com/pandoc/lua-filters/tree/master/spellcheck) | Перечисляет слова заметки с ошибками, читая прозу и пропуская код, ссылки и формулы. Печатает список вместо экспорта. | Программа aspell в PATH. |
+| [Подсчёт слов](https://github.com/pandoc/lua-filters/tree/master/wordcount) | Считает слова, которые читает pandoc, а не символы, которые несёт файл, — без разметки, свойств и адресов ссылок. Печатает результат вместо экспорта. | — |
+| [Проверка орфографии](https://github.com/pandoc/lua-filters/tree/master/spellcheck) | Перечисляет слова заметки с ошибками, читая прозу и пропуская код, ссылки и формулы. Печатает список вместо экспорта. | Программа aspell в PATH. |
 
 Хотите добавить свой фильтр? [Readme](lua-filters/README.md) этой папки описывает, что несёт запись и куда кладётся файл; `npm run docs:catalogue` собирает таблицы выше из него.
 

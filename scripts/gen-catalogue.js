@@ -32,7 +32,6 @@ import { fileURLToPath } from 'node:url';
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const filterDir = path.join(root, 'lua-filters');
 const indexPath = path.join(filterDir, 'index.json');
-const readmePath = path.join(root, 'README.md');
 
 // The shelves, in the order the store shows them. Kept in step with
 // `LUA_FILTER_CATEGORIES` in src/lua_filters.ts and with the `category` labels
@@ -49,11 +48,45 @@ const CATEGORIES = [
   ['other', 'Other'],
 ];
 
-const COLUMNS = ['Filter', 'What it does', 'Needs'];
+/*
+ * A README per language, each generated from the same entries: the English of
+ * an entry, or what `i18n` says it is in that language. The store reads the
+ * catalogue the same way, so a table and a card never disagree.
+ *
+ * `lang` is the key inside `i18n`; English is the entry itself and has none.
+ * The anchors are the prose the generated block sits between, in that file's
+ * own language.
+ */
+const READMES = [
+  {
+    file: 'README.md',
+    lang: null,
+    columns: ['Filter', 'What it does', 'Needs'],
+    headings: Object.fromEntries(CATEGORIES),
+    intro: 'The catalogue currently offers:',
+    outro: 'Want to add a filter of your own?',
+  },
+  {
+    file: 'README_RU.md',
+    lang: 'ru',
+    columns: ['Фильтр', 'Что делает', 'Нужно'],
+    headings: {
+      structure: 'Структура',
+      citations: 'Цитаты',
+      figures: 'Иллюстрации и формулы',
+      prose: 'Текст и типографика',
+      word: 'Word и ODT',
+      latex: 'LaTeX и PDF',
+      tools: 'Инструменты',
+      other: 'Прочее',
+    },
+    intro: 'Содержание каталога на данный момент:',
+    outro: 'Хотите добавить свой фильтр?',
+  },
+];
 
-// The anchors the generated block sits between.
-const INTRO = 'The catalogue currently offers:';
-const OUTRO = 'Want to add a filter of your own?';
+/** The languages an entry is expected to carry, over and above the English it is written in. */
+const LANGUAGES = READMES.map(r => r.lang).filter(Boolean);
 
 // Canonical key order — the order the hand-written entries were in, so
 // regenerating an unchanged catalogue is a no-op diff.
@@ -71,7 +104,11 @@ const KEY_ORDER = [
   'path',
   'url',
   'homepage',
+  'i18n',
 ];
+
+/** The three fields a card reads rather than acts on, and the only ones a translation may carry. */
+const TRANSLATED = ['storeName', 'description', 'requires'];
 
 const loadIndex = () => JSON.parse(fs.readFileSync(indexPath, 'utf8'));
 
@@ -100,6 +137,27 @@ const normalise = entry => {
   if (entry.path && entry.path.startsWith('bundled/')) {
     throw new Error(`${entry.id}: bundled/ is what the plugin ships — the store never offers it`);
   }
+  for (const lang of LANGUAGES) {
+    const ru = entry.i18n?.[lang];
+    if (!ru) {
+      throw new Error(`${entry.id}: no "${lang}" in "i18n" — a card is read in the reader's language`);
+    }
+    for (const key of TRANSLATED) {
+      // Translated exactly where the English has something to translate: a `requires` invented for one language would
+      // be a condition only some readers are told about.
+      if ((entry[key] === undefined) !== (ru[key] === undefined)) {
+        throw new Error(`${entry.id}: "${key}" is in one language and not the other`);
+      }
+      if (ru[key] !== undefined && (typeof ru[key] !== 'string' || ru[key].length === 0)) {
+        throw new Error(`${entry.id}: "${lang}.${key}" is empty`);
+      }
+    }
+    for (const key of Object.keys(ru)) {
+      if (!TRANSLATED.includes(key)) {
+        throw new Error(`${entry.id}: "${lang}.${key}" is not a field a translation carries`);
+      }
+    }
+  }
 
   const out = {};
   for (const key of KEY_ORDER) {
@@ -108,6 +166,13 @@ const normalise = entry => {
   // Derived, not carried: the store writes the file under this name, and a name
   // that disagreed with the path would be a filter no template could run.
   if (entry.path) out.fileName = entry.path.substring(entry.path.lastIndexOf('/') + 1);
+  // The translations in the same order as the fields they translate.
+  out.i18n = Object.fromEntries(
+    LANGUAGES.map(lang => [
+      lang,
+      Object.fromEntries(TRANSLATED.filter(key => entry.i18n[lang][key] !== undefined).map(key => [key, entry.i18n[lang][key]])),
+    ])
+  );
   return out;
 };
 
@@ -160,19 +225,23 @@ const cell = s =>
     .replaceAll('<!--', '&lt;!--')
     .replaceAll('-->', '--&gt;');
 
+/** An entry as one language reads it: what `i18n` says, and the English wherever it says nothing. */
+const read = (entry, lang) => (lang ? { ...entry, ...entry.i18n?.[lang] } : entry);
+
 // A filter's name, linked to where it came from, and what it is used under.
 const name = entry => (entry.homepage ? `[${cell(entry.storeName)}](${entry.homepage})` : cell(entry.storeName));
 
-const table = (filters, category, heading) => {
+const table = (filters, category, readme) => {
   const rows = filters
     .filter(e => e.category === category)
+    .map(e => read(e, readme.lang))
     .map(e => `| ${name(e)} | ${cell(e.description)} | ${e.requires ? cell(e.requires) : '—'} |`);
   if (rows.length === 0) return null;
-  return [`**${heading}**`, '', `| ${COLUMNS.join(' | ')} |`, '| :--- | :---------- | :--- |', ...rows].join('\n');
+  return [`**${readme.headings[category]}**`, '', `| ${readme.columns.join(' | ')} |`, '| :--- | :---------- | :--- |', ...rows].join('\n');
 };
 
-const buildBlock = (index = loadIndex()) =>
-  CATEGORIES.map(([category, heading]) => table(index.filters, category, heading))
+const buildBlock = (index = loadIndex(), readme = READMES[0]) =>
+  CATEGORIES.map(([category]) => table(index.filters, category, readme))
     .filter(Boolean)
     .join('\n\n');
 
@@ -180,13 +249,13 @@ const buildBlock = (index = loadIndex()) =>
  * Splice a freshly built block between the intro/outro anchors; returns the new
  * file text, or null when either anchor is missing.
  */
-const spliceBlock = (text, index) => {
-  const introIdx = text.indexOf(INTRO);
+const spliceBlock = (text, index, readme = READMES[0]) => {
+  const introIdx = text.indexOf(readme.intro);
   if (introIdx === -1) return null;
-  const introEnd = introIdx + INTRO.length;
-  const outroIdx = text.indexOf(OUTRO, introEnd);
+  const introEnd = introIdx + readme.intro.length;
+  const outroIdx = text.indexOf(readme.outro, introEnd);
   if (outroIdx === -1) return null;
-  return `${text.slice(0, introEnd)}\n\n${buildBlock(index)}\n\n${text.slice(outroIdx)}`;
+  return `${text.slice(0, introEnd)}\n\n${buildBlock(index, readme)}\n\n${text.slice(outroIdx)}`;
 };
 
 // ── Running it ────────────────────────────────────────────────────────────────
@@ -216,25 +285,28 @@ const run = ({ check } = {}) => {
   const { index, stale: indexStale } = syncIndex({ check });
   let stale = indexStale;
 
-  const text = fs.readFileSync(readmePath, 'utf8');
-  const next = spliceBlock(text, index);
-  if (next === null) {
-    console.error('! README.md: catalogue anchors not found');
-    stale = true;
-  } else if (next === text) {
-    if (check) console.log('✓ README.md: catalogue up to date');
-  } else if (check) {
-    console.error('✗ README.md: catalogue is stale — run "npm run docs:catalogue"');
-    stale = true;
-  } else {
-    fs.writeFileSync(readmePath, next);
-    console.log('✓ README.md: catalogue regenerated');
+  for (const readme of READMES) {
+    const file = path.join(root, readme.file);
+    const text = fs.readFileSync(file, 'utf8');
+    const next = spliceBlock(text, index, readme);
+    if (next === null) {
+      console.error(`! ${readme.file}: catalogue anchors not found`);
+      stale = true;
+    } else if (next === text) {
+      if (check) console.log(`✓ ${readme.file}: catalogue up to date`);
+    } else if (check) {
+      console.error(`✗ ${readme.file}: catalogue is stale — run "npm run docs:catalogue"`);
+      stale = true;
+    } else {
+      fs.writeFileSync(file, next);
+      console.log(`✓ ${readme.file}: catalogue regenerated`);
+    }
   }
 
   if (stale) process.exitCode = 1;
 };
 
-export { CATEGORIES, INTRO, OUTRO, loadIndex, buildIndex, serializeIndex, buildBlock };
+export { CATEGORIES, READMES, LANGUAGES, TRANSLATED, loadIndex, buildIndex, serializeIndex, buildBlock };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   run({ check: process.argv.includes('--check') });

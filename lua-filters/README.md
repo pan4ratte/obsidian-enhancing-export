@@ -140,7 +140,24 @@ one click away, on the card's *Open readme* button.
       "fileName": "wordcount.lua",
 
       // Optional. Adds the card's "Open readme" button — point it upstream.
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/wordcount"
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/wordcount",
+
+      // The card in the other languages the plugin is read in, keyed by the
+      // language Obsidian is set to ("ru" answers for "ru-RU"). Only the three
+      // fields a card *reads* can be translated — a name, what it does and what
+      // it needs; what is fetched and where it lands are the same everywhere.
+      //
+      // Field by field, and the English wherever a translation stops. In this
+      // catalogue it is not optional: an entry must carry every language, and
+      // must translate `requires` exactly when it has one, or a reader would be
+      // the only one not told about a dependency.
+      "i18n": {
+        "ru": {
+          "storeName": "Подсчёт слов",
+          "description": "Считает слова, которые читает pandoc, а не символы в файле.",
+          "requires": "Программа aspell в PATH."
+        }
+      }
     }
   ]
 }
@@ -153,9 +170,10 @@ the plugin already ships is never offered at all.
 
 `tests/luaFilterCatalogue.spec.ts` holds this file to the schema — every `path`
 must exist, ids and file names must be unique, and every entry must carry a name,
-a description, an author, a licence and a known category. `scripts/gen-catalogue.js`
-refuses the same things when it rewrites the file, and CI runs it in `--check`
-mode, so neither a malformed entry nor a stale table survives a pull request.
+a description, an author, a licence, a known category and its translations.
+`scripts/gen-catalogue.js` refuses the same things when it rewrites the file, and
+CI runs it in `--check` mode, so neither a malformed entry nor a stale table
+survives a pull request.
 
 ## Adding a filter
 
@@ -163,14 +181,18 @@ mode, so neither a malformed entry nor a stale table survives a pull request.
    Not `bundled/` — that folder is what the plugin ships, and a name in it is a
    name the store will never offer.
 2. Add its entry, filling in `requires` if it needs anything the user has to
-   provide. Leave `fileName` out; it is derived from `path`.
+   provide, and `i18n` with the card in every language. Leave `fileName` out; it
+   is derived from `path`.
 3. Run `npm run docs:catalogue`, which normalises the entry and rewrites the
-   catalogue table in the project's [readme](../README.md).
+   catalogue tables in the project's [readme](../README.md) and its
+   [Russian one](../README_RU.md).
 4. Run `npm test`.
 
-The table in that readme is generated, never hand-written: it sits between two
-fixed prose lines — “The catalogue currently offers:” and “Want to add a filter
-of your own?” — and everything between them is replaced on every run.
+The tables in those readmes are generated, never hand-written: each sits between
+two fixed prose lines in its own language — “The catalogue currently offers:” and
+“Want to add a filter of your own?” — and everything between them is replaced on
+every run. Each is built from the entries the store reads, in the language that
+readme is written in, so a table and a card can never disagree.
 
 The base URL is overridable per vault through the `luaFilterRepoUrl` setting, so
 a vault can point the store at a catalogue of its own instead.

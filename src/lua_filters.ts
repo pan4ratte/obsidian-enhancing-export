@@ -1,4 +1,4 @@
-import { requestUrl } from 'obsidian';
+import { moment, requestUrl } from 'obsidian';
 import path from 'path';
 import type PandocGuiPlugin from './main';
 
@@ -38,6 +38,27 @@ export interface LuaFilterEntry {
   /** Where to read about it. */
   homepage?: string;
 }
+
+/** What a catalogue can say in another language — the three fields a card reads rather than acts on. */
+export type LuaFilterTranslation = Partial<Pick<LuaFilterEntry, 'storeName' | 'description' | 'requires'>>;
+
+/**
+ * An entry as it stands in the catalogue: the English of it, and whatever it has been translated into.
+ *
+ * The translations travel with the catalogue rather than living in `lang/`, because the catalogue is a feed — a vault
+ * can point `luaFilterRepoUrl` at another one, and a filter this plugin has never heard of still has to be able to
+ * say what it is.
+ */
+export interface RawLuaFilterEntry extends LuaFilterEntry {
+  i18n?: Record<string, LuaFilterTranslation>;
+}
+
+/**
+ * The translation to read an entry through: the locale as Obsidian gives it, or the language of it — `ru` answers for
+ * `ru-RU`, and a catalogue that spells the whole thing out is answered in kind.
+ */
+const translation = (entry: RawLuaFilterEntry, locale: string): LuaFilterTranslation =>
+  entry.i18n?.[locale] ?? entry.i18n?.[locale.split('-')[0]] ?? {};
 
 /** What is recorded in the settings once a filter is on disk. */
 export interface InstalledLuaFilter {
@@ -173,21 +194,28 @@ export class LuaFilterManager {
     const entries: LuaFilterEntry[] = [];
     const taken = new Set<string>(this.bundled);
 
-    for (const f of data.filters as Partial<LuaFilterEntry>[]) {
+    // What the cards are read in. A card says nothing the plugin wrote — every word of it comes from the catalogue —
+    // so this is the one place the language is chosen.
+    const locale = moment.locale();
+
+    for (const f of data.filters as Partial<RawLuaFilterEntry>[]) {
       // A row with nothing to fetch, or nothing to call it, is not a row — and one malformed row does not take the
       // catalogue down with it.
       if (typeof f?.id !== 'string' || (typeof f.path !== 'string' && typeof f.url !== 'string')) {
         continue;
       }
+      // Translated field by field, and English wherever a translation stops: half a card in the reader's language
+      // beats a card that says nothing.
+      const text = translation(f as RawLuaFilterEntry, locale);
       const entry: LuaFilterEntry = {
         id: f.id,
-        storeName: f.storeName ?? f.id,
-        description: f.description ?? '',
+        storeName: text.storeName ?? f.storeName ?? f.id,
+        description: text.description ?? f.description ?? '',
         author: f.author ?? '',
         license: f.license,
         category: isCategory(f.category) ? f.category : DEFAULT_LUA_FILTER_CATEGORY,
         formats: Array.isArray(f.formats) ? f.formats.filter(v => typeof v === 'string') : undefined,
-        requires: f.requires,
+        requires: text.requires ?? f.requires,
         updated: f.updated,
         fileName: f.fileName,
         path: f.path,

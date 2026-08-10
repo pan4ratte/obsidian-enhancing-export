@@ -4,13 +4,17 @@ import { vi } from 'vitest';
 
 const requestUrlMock = vi.fn<(options: { url: string }) => Promise<{ json: unknown }>>();
 
+/** What the vault is set to; the cards are read in it. */
+let locale = 'en';
+
 vi.mock('obsidian', () => ({
   requestUrl: (options: { url: string }) => requestUrlMock(options),
+  moment: { locale: () => locale },
 }));
 
 import { existsSync, readdirSync } from 'fs';
 import path from 'path';
-import { DEFAULT_LUA_FILTER_REPO_URL, LUA_FILTER_CATEGORIES, LuaFilterManager, type LuaFilterEntry } from '../src/lua_filters';
+import { DEFAULT_LUA_FILTER_REPO_URL, LUA_FILTER_CATEGORIES, LuaFilterManager, type RawLuaFilterEntry } from '../src/lua_filters';
 import { FORMAT_FAMILIES } from '../src/pandoc_format';
 import type PandocGuiPlugin from '../src/main';
 import catalogue from '../lua-filters/index.json';
@@ -22,6 +26,10 @@ const serve = (filters: unknown[]) => {
   requestUrlMock.mockReset();
   requestUrlMock.mockImplementation(() => Promise.resolve({ json: { filters } }));
 };
+
+beforeEach(() => {
+  locale = 'en';
+});
 
 describe('reading a catalogue', () => {
   test('an entry keeps what it carries, and defaults the rest', async () => {
@@ -80,8 +88,61 @@ describe('reading a catalogue', () => {
   });
 });
 
+describe('reading a catalogue in the vault’s language', () => {
+  const translated = [
+    {
+      id: 'wordcount',
+      storeName: 'Word count',
+      description: 'Counts words.',
+      requires: 'Nothing at all.',
+      author: 'JM',
+      category: 'tools',
+      path: 'pandoc/wordcount.lua',
+      i18n: { ru: { storeName: 'Подсчёт слов', description: 'Считает слова.', requires: 'Ничего.' } },
+    },
+  ];
+
+  test('the three fields a card reads come from the translation', async () => {
+    locale = 'ru';
+    serve(translated);
+    const [entry] = await manager().fetchCatalogue();
+    expect(entry).toMatchObject({ storeName: 'Подсчёт слов', description: 'Считает слова.', requires: 'Ничего.' });
+  });
+
+  test('a locale spelled out in full is answered by its language', async () => {
+    locale = 'ru-RU';
+    serve(translated);
+    expect((await manager().fetchCatalogue())[0].storeName).toBe('Подсчёт слов');
+  });
+
+  test('what the catalogue is written in needs no translation', async () => {
+    serve(translated);
+    expect((await manager().fetchCatalogue())[0].storeName).toBe('Word count');
+  });
+
+  test('a language the catalogue has never been translated into reads as it was written', async () => {
+    locale = 'ja';
+    serve(translated);
+    expect((await manager().fetchCatalogue())[0]).toMatchObject({ storeName: 'Word count', description: 'Counts words.' });
+  });
+
+  test('a half-translated entry keeps the English of the rest', async () => {
+    locale = 'ru';
+    serve([{ ...translated[0], i18n: { ru: { storeName: 'Подсчёт слов' } } }]);
+    const [entry] = await manager().fetchCatalogue();
+    expect(entry).toMatchObject({ storeName: 'Подсчёт слов', description: 'Counts words.', requires: 'Nothing at all.' });
+  });
+
+  test('nothing but what a card says is translated — what is fetched, and where it lands, are not', async () => {
+    locale = 'ru';
+    serve([{ ...translated[0], i18n: { ru: { storeName: 'Подсчёт слов', path: 'nowhere.lua', category: 'other' } } }]);
+    const [entry] = await manager().fetchCatalogue();
+    expect(entry).toMatchObject({ path: 'pandoc/wordcount.lua', category: 'tools' });
+  });
+});
+
 describe('the catalogue in this repository', () => {
-  const entries = catalogue.filters as LuaFilterEntry[];
+  const entries = catalogue.filters as RawLuaFilterEntry[];
 
   test('every entry points at a file that is actually vendored here', () => {
     const missing = entries.filter(e => !existsSync(path.join(import.meta.dirname, '..', 'lua-filters', e.path)));
@@ -92,6 +153,23 @@ describe('the catalogue in this repository', () => {
     const dupes = (values: string[]) => values.filter((v, i) => values.indexOf(v) !== i);
     expect(dupes(entries.map(e => e.id))).toEqual([]);
     expect(dupes(entries.map(e => e.fileName))).toEqual([]);
+  });
+
+  test('every entry says what it is in every language the plugin is read in', () => {
+    // The three fields a card reads, translated exactly where there is English to translate: a `requires` in one
+    // language only would be a condition some readers are never told about. `npm run docs:catalogue` refuses the
+    // rest; this is the one that fails a build.
+    for (const entry of entries) {
+      const ru = entry.i18n?.ru;
+      expect(ru, entry.id).toBeDefined();
+      for (const key of ['storeName', 'description', 'requires'] as const) {
+        expect(typeof ru[key], `${entry.id}.${key}`).toBe(typeof entry[key]);
+      }
+      expect(ru.storeName.length, entry.id).toBeGreaterThan(0);
+      expect(ru.description.length, entry.id).toBeGreaterThan(0);
+      // A translation that is the English again is one nobody wrote.
+      expect(ru.description, entry.id).not.toBe(entry.description);
+    }
   });
 
   test('every entry says what it is, whose it is, and where it belongs', () => {
