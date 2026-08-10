@@ -1229,18 +1229,37 @@
  * the heading and what it heads read down one line rather than two.
  */
 .ex-template-modal.ex-template-modal .ex-card > .setting-item.setting-item-heading:not(.ex-section-header) {
-    /* Pinned, because Obsidian adds room above a heading that follows a row and
-       not above one that follows anything else — which fell to some of these
-       groups and not others, and now that a group is only its spacing, an
-       inconsistent gap is the group itself changing size. */
-    margin-top: 16px;
-    /* The card it heads has no side padding, so the inset is the heading's own
-       to take — the same one its rows take, or the name would stand a few
-       pixels to the left of everything it names. Obsidian's default here is
-       `--size-4-4`, which is close enough to look like a mistake. */
-    padding-inline: var(--setting-items-padding-x);
-    border: none;
-    background: none;
+  /* Pinned, because Obsidian adds room above a heading that follows a row and
+     not above one that follows anything else — which fell to some of these
+     groups and not others, and now that a group is only its spacing, an
+     inconsistent gap is the group itself changing size. */
+  margin-top: 16px;
+  /* The card it heads has no side padding, so the inset is the heading's own
+     to take — the same one its rows take, or the name would stand a few
+     pixels to the left of everything it names. Obsidian's default here is
+     `--size-4-4`, which is close enough to look like a mistake. */
+  padding-inline: var(--setting-items-padding-x);
+  /* Room under the words for the line to stand clear of them; pinned rather
+     than left to Obsidian, which gives a heading no floor of its own. */
+  padding-bottom: var(--size-4-4);
+  border: none;
+  /* The line the group's rows are divided by, drawn once more under the name of
+     them: the heading is the top edge of the run rather than the first of it.
+     It runs the width of the card, as those do — the inset above is padding,
+     and a border stands outside it. */
+  border-bottom: 1px solid var(--setting-items-border-color);
+  background: none;
+}
+
+/* A heading is read in two beats — what the group is, then what it is for — and
+   the second wants a little more room than a row's description, which sits
+   under a label no larger than itself. */
+.ex-template-modal.ex-template-modal
+  .ex-card
+  > .setting-item.setting-item-heading:not(.ex-section-header)
+  > .setting-item-info
+  > .setting-item-description {
+  margin-top: var(--size-2-2);
 }
 
 /*

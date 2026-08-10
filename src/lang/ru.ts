@@ -89,7 +89,7 @@ export default {
   TEMPLATES_EMPTY: 'Шаблонов экспорта пока нет.',
   TEMPLATE_NAME: 'Название шаблона',
   TEMPLATE_OUTPUT: 'Формат вывода',
-  TEMPLATE_EDITOR_TITLE: 'Изменить шаблон',
+  TEMPLATE_EDITOR_TITLE: 'Редактирование шаблона',
   TEMPLATE_REMOVE_CONFIRM: (name: string) => `Удалить шаблон экспорта «${name}»? Это действие необратимо.`,
   TEMPLATE_COMMAND: 'Команда',
   TEMPLATE_TARGET_EXTENSIONS: 'Расширения целевых файлов',
@@ -143,7 +143,7 @@ export default {
 
   // ─── Reading the note ────────────────────────────────────────────────────────
   READING: 'Чтение заметки',
-  READING_DESC: 'Настройке, как pandoc должен прочитать заметку.',
+  READING_DESC: 'Настройте, как pandoc должен обработать заметку.',
   SHIFT_HEADINGS: 'Сдвигать уровни заголовков',
   SHIFT_HEADINGS_DESC: 'Где окажутся заголовки заметки в готовом документе.',
   SHIFT_HEADINGS_NONE: 'Оставить как есть',
