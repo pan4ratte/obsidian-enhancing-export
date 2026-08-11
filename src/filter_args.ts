@@ -181,6 +181,9 @@ export const ZOTERO_REFERENCES_FILTER = 'zotero-references.lua';
 const ZOTERO_STYLE = 'zotero-csl-style';
 const ZOTERO_RENDERED = 'zotero-rendered';
 const ZOTERO_LOCALE = 'zotero-locale';
+/** Pandoc's own fields, read by citeproc and — for the first — by the Zotero filter after it. */
+const SUPPRESS_BIBLIOGRAPHY = 'suppress-bibliography';
+const NOTES_AFTER_PUNCTUATION = 'notes-after-punctuation';
 
 /** A style as a template records it: what Zotero calls it, and the copy pandoc renders with. */
 export interface ZoteroStyleArgs {
@@ -213,7 +216,8 @@ export const zoteroStyle = (args?: string): ZoteroStyleArgs | undefined => {
  */
 export const setZoteroStyle = (args: string | undefined, style?: ZoteroStyleArgs): string => {
   if (!style) {
-    const cleared = [ZOTERO_STYLE, ZOTERO_RENDERED, ZOTERO_LOCALE].reduce((line, key) => setMetadata(line, key), args);
+    const keys = [ZOTERO_STYLE, ZOTERO_RENDERED, ZOTERO_LOCALE, SUPPRESS_BIBLIOGRAPHY, NOTES_AFTER_PUNCTUATION];
+    const cleared = keys.reduce((line, key) => setMetadata(line, key), args);
     const withoutFilter = removeLuaFilterArg(cleared, ZOTERO_REFERENCES_FILTER);
     // The style file was this plugin's copy and means nothing now. Citeproc stays where it still has something to
     // work from — switching it off takes the references and the style file with it.
@@ -224,8 +228,33 @@ export const setZoteroStyle = (args: string | undefined, style?: ZoteroStyleArgs
   const filters = addLuaFilterArg(addLuaFilterArg(args, ZOTERO_REFERENCES_FILTER), ZOTERO_FILTER);
   const rendering = setCsl(setCiteproc(filters, true), style.cslPath);
   const named = setMetadata(setMetadata(rendering, ZOTERO_STYLE, style.id), ZOTERO_RENDERED, 'true');
-  return setMetadata(named, ZOTERO_LOCALE, style.locale);
+  const located = setMetadata(named, ZOTERO_LOCALE, style.locale);
+
+  // Where the marker goes is a matter of the language rather than of the style, and only the first choice is made
+  // here: an answer already on the line is the reader's, and choosing another style does not overrule it.
+  if (metadata(located, NOTES_AFTER_PUNCTUATION) !== undefined) {
+    return located;
+  }
+  return setNoteBeforePunctuation(located, !!style.locale?.startsWith('ru'));
 };
+
+/**
+ * Whether a footnote marker stands before the punctuation — `работе[1].` — rather than after it. Russian typography
+ * sets it before, and pandoc puts it after unless told otherwise.
+ */
+export const noteBeforePunctuation = (args?: string): boolean => metadata(args, NOTES_AFTER_PUNCTUATION) === 'false';
+
+export const setNoteBeforePunctuation = (args: string | undefined, on: boolean): string =>
+  setMetadata(args, NOTES_AFTER_PUNCTUATION, on ? 'false' : 'true');
+
+/**
+ * Whether the document is to end with a bibliography. A footnote style writes the whole source in the note, and the
+ * list after it is a second copy of everything — so this is a row of its own rather than the style's business.
+ */
+export const zoteroBibliography = (args?: string): boolean => metadata(args, SUPPRESS_BIBLIOGRAPHY) !== 'true';
+
+export const setZoteroBibliography = (args: string | undefined, on: boolean): string =>
+  setMetadata(args, SUPPRESS_BIBLIOGRAPHY, on ? undefined : 'true');
 
 /* -- Embedded notes ------------------------------------------------------- */
 

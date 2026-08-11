@@ -153,6 +153,17 @@ What it needs:
 
 Styles are taken from Zotero's folder as they are. Some GOST styles are written in CSL-M, with a separate layout per language, and pandoc will not read such a file at all. The plugin keeps a copy with the language layouts taken out, so those styles work too — but they are marked `(approximate)` in the list: Russian sources come out exactly right, foreign ones are written to the Russian layout, and Zotero will rewrite them on Refresh.
 
+A footnote style also gets a **Note marker before punctuation** switch: “in the work[1].” rather than “in the work.[1]”. A Russian style starts with it on.
+
+The bibliography is printed at the end of the document. To put it somewhere else, write a block in the note — and the closing colons are required, or the block swallows everything after it:
+
+```
+::: {#refs}
+:::
+```
+
+Next to the style there is a **Bibliography** switch. A footnote style describes the source in full in the note, which makes a list at the end a second copy of every note — switch it off and Zotero will not put one back on Refresh.
+
 Zotero's data folder is looked for where Zotero puts it. If yours has moved, name it in `zoteroDataDir` in the plugin's `data.json`.
 
 

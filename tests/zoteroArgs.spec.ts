@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import { ZOTERO_FILTER, ZOTERO_REFERENCES_FILTER, setZoteroStyle, zoteroStyle } from '../src/filter_args';
+import {
+  ZOTERO_FILTER,
+  ZOTERO_REFERENCES_FILTER,
+  noteBeforePunctuation,
+  setNoteBeforePunctuation,
+  setZoteroStyle,
+  zoteroStyle,
+} from '../src/filter_args';
 import { addLuaFilterArg } from '../src/lua_filters';
 import { bibliography, citeproc, csl, orderCiteproc, setBibliography } from '../src/writer_args';
 
@@ -60,6 +67,33 @@ describe('setZoteroStyle', () => {
   });
 });
 
+describe('the note marker', () => {
+  const GOST = { id: 'ab91f1f3', cslPath: '${pluginDir}/csl/gost.csl', locale: 'ru-RU' };
+
+  test('stands before the punctuation for a Russian style, as the typography wants', () => {
+    const args = setZoteroStyle(running(), GOST);
+    expect(noteBeforePunctuation(args)).toBe(true);
+    expect(args).toContain('-M notes-after-punctuation=false');
+  });
+
+  test('and after it everywhere else, which is what pandoc does anyway', () => {
+    expect(noteBeforePunctuation(setZoteroStyle(running(), APA))).toBe(false);
+  });
+
+  test('an answer already given is not overruled by choosing another style', () => {
+    const chosen = setNoteBeforePunctuation(setZoteroStyle(running(), APA), true);
+    expect(noteBeforePunctuation(setZoteroStyle(chosen, GOST))).toBe(true);
+
+    const declined = setNoteBeforePunctuation(setZoteroStyle(running(), GOST), false);
+    expect(noteBeforePunctuation(setZoteroStyle(declined, GOST))).toBe(false);
+  });
+
+  test('clearing the style takes the answer with it', () => {
+    const cleared = setZoteroStyle(setZoteroStyle(running(), GOST), undefined);
+    expect(cleared).not.toContain('notes-after-punctuation');
+  });
+});
+
 describe('orderCiteproc', () => {
   const REFS = '--lua-filter="${luaDir}/zotero-references.lua"';
   const LIVE = '--lua-filter="${luaDir}/zotero.lua"';
@@ -71,6 +105,26 @@ describe('orderCiteproc', () => {
   test('leaves a line that already runs them in order', () => {
     const ordered = `pandoc ${REFS} --citeproc ${LIVE} -o out.docx`;
     expect(orderCiteproc(ordered)).toBe(ordered);
+  });
+
+  // What a template looks like when the filter was switched on first and a style chosen after: the sources are
+  // fetched after the citations they are wanted for, and citeproc would render every one of them as "citekey?".
+  test('brings the sources in front of citeproc, wherever the rows left them', () => {
+    expect(orderCiteproc(`pandoc ${LIVE} ${REFS} --citeproc --csl=a.csl -o out.docx`)).toBe(
+      `pandoc ${REFS} --citeproc ${LIVE} --csl=a.csl -o out.docx`
+    );
+  });
+
+  test('the whole chain, however the three were written down', () => {
+    const ordered = `pandoc ${REFS} --citeproc ${LIVE}`;
+    expect(orderCiteproc(`pandoc --citeproc ${LIVE} ${REFS}`)).toBe(ordered);
+    expect(orderCiteproc(`pandoc ${LIVE} --citeproc ${REFS}`)).toBe(ordered);
+    expect(orderCiteproc(`pandoc ${REFS} ${LIVE} --citeproc`)).toBe(ordered);
+  });
+
+  test('a filter named after another is not mistaken for it', () => {
+    const other = '--lua-filter="${luaDir}/my-zotero.lua"';
+    expect(orderCiteproc(`pandoc ${other} --citeproc`)).toBe(`pandoc ${other} --citeproc`);
   });
 
   test('the short spelling is the same flag', () => {

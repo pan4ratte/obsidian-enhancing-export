@@ -1743,11 +1743,16 @@ local config = {
   -- Whether citeproc has already run, so the citations carry their rendered text rather than the citekey.
   rendered = false,
   locale = 'en-US',
+  -- Whether the document is to carry a bibliography, which a footnote style often has no use for.
+  bibliography = true,
 }
 
---- A style is named by the id in its own .csl file, which is a URI. A bare name is one of zotero.org's.
+local UUID = '^%x%x%x%x%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%x%x%x%x%x%x%x%x$'
+
+--- A style is named by the id in its own .csl file: a URI, or the bare UUID a style built from a template gives
+--- itself. Only a plain name is one of zotero.org's, and only that is worth spelling out in full.
 local function style_id(csl_style)
-  if csl_style:match('^%a[%w+.%-]*:') then
+  if csl_style:match('^%a[%w+.%-]*:') or csl_style:match(UUID) then
     return csl_style
   end
   return 'http://www.zotero.org/styles/' .. csl_style
@@ -1760,13 +1765,13 @@ function zotero_docpreferences(csl_style)
   return string.format(
     '<data data-version="3" zotero-version="5.0.89">'
       .. '   <session id="OGe1IYVe"/>'
-      .. '   <style id="%s" locale="%s" hasBibliography="1" bibliographyStyleHasBeenSet="0"/>'
+      .. '   <style id="%s" locale="%s" hasBibliography="%s" bibliographyStyleHasBeenSet="0"/>'
       .. '   <prefs>'
       .. '     <pref name="fieldType" value="%s"/>'
     -- .. '     <pref name="delayCitationUpdates" value="true"/>'
       .. '   </prefs>'
       .. '</data>',
-    style_id(csl_style), config.locale, field_type)
+    style_id(csl_style), config.locale, config.bibliography and '1' or '0', field_type)
 end
 
 local function zotero_bibl_odt_banner()
@@ -2078,6 +2083,9 @@ function Meta(meta)
   end
 
   config.rendered = test_boolean('rendered', meta.zotero['rendered'])
+  -- Pandoc's own field, which citeproc has already read by the time this runs. Zotero is told the same thing, so
+  -- Refresh does not put back a bibliography the document was written without.
+  config.bibliography = pandoc.utils.stringify(meta['suppress-bibliography'] or '') ~= 'true'
   if meta.zotero['locale'] ~= nil then
     config.locale = pandoc.utils.stringify(meta.zotero['locale'])
   end
@@ -2108,14 +2116,15 @@ function Meta(meta)
   zotero.request = {
     jsonrpc = "2.0",
     method = "item.pandoc_filter",
-    params = {
-      style = config.csl_style or 'apa',
-    },
+    params = {},
   }
   if string.match(FORMAT, 'odt') and config.scannable_cite then
     -- scannable-cite takes precedence over csl-style
     config.format = 'scannable-cite'
     zotero.request.params.asCSL = false
+    -- Only this path has Zotero write the citation out, and only it needs a style Better BibTeX can resolve. Asked
+    -- for a CSL record, naming a style gains nothing and loses the answer where the id is not one zotero.org's.
+    zotero.request.params.style = config.csl_style or 'apa'
   elseif string.match(FORMAT, 'odt') or string.match(FORMAT, 'docx') then
     config.format = FORMAT
     zotero.request.params.asCSL = true
@@ -2251,7 +2260,7 @@ function Doc(doc)
     table.insert(doc.blocks, 1, pandoc.RawBlock('opendocument', zotero_bibl_odt_banner()))
   end
 
-  if config.csl_style and not refsDivSeen then
+  if config.csl_style and config.bibliography and not refsDivSeen then
     table.insert(doc.blocks, pandoc.RawBlock('opendocument', zotero_bibl_odt()))
   end
 

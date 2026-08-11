@@ -43,22 +43,26 @@ import {
   keywords,
   keywordsTitle,
   listStyles,
+  noteBeforePunctuation,
   setEmbedNotes,
   setFigureStyle,
   setFlattenOrdered,
   setKeywords,
   setKeywordsTitle,
   setListStyles,
+  setNoteBeforePunctuation,
   setTableHeadStyle,
   setTableStyle,
   setTodayFormat,
+  setZoteroBibliography,
   setZoteroStyle,
   tableHeadStyle,
   tableStyle,
   todayFormat,
+  zoteroBibliography,
   zoteroStyle,
 } from '../filter_args';
-import { defaultZoteroDataDir, installStyle, readZoteroStyles, type ZoteroStyle } from '../zotero_styles';
+import { cslLocale, defaultZoteroDataDir, installStyle, readZoteroStyles, type ZoteroStyle } from '../zotero_styles';
 import { PANDOC_EXTENSIONS, enabledExtensions, setExtensions } from '../pandoc_extensions';
 import {
   CURATED_VARIABLES,
@@ -166,6 +170,7 @@ import {
   textFromPairs,
   topLevelDivision,
   variable,
+  orderCiteproc,
   variables,
   wrap,
   type CuratedVariable,
@@ -578,6 +583,12 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
       })),
     ]);
 
+    /** The style the template names, as the folder describes it. */
+    const chosenZoteroStyle = createMemo(() => {
+      const id = zoteroStyle(args())?.id;
+      return id ? zoteroStyles().find(style => style.id === id) : undefined;
+    });
+
     const chooseZoteroStyle = async (id: string) => {
       const style = zoteroStyles().find(s => s.id === id);
       if (!style) {
@@ -586,7 +597,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
       }
       try {
         const cslPath = await installStyle(plugin, style);
-        writeArgs(a => setZoteroStyle(a, { id: style.id, cslPath, locale: style.locale }));
+        writeArgs(a => setZoteroStyle(a, { id: style.id, cslPath, locale: cslLocale(style, moment.locale()) }));
       } catch (e) {
         console.error(e);
         new Notice(t.ZOTERO_STYLE_FAILED);
@@ -775,17 +786,19 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         left standing: they are filled in at export from a note that does not exist yet. */
     const resultingCommand = createMemo(() =>
       // Assembled as `exportNote` assembles it, filters put in their running order and all.
-      orderLuaFilters(
-        [
-          pandoc.normalizePath(getPlatformValue(settings.pandocPath)),
-          '"${currentPath}"',
-          template()?.arguments,
-          template()?.customArguments,
-          template()?.userArguments,
-        ]
-          .map(part => part?.trim())
-          .filter(part => part)
-          .join(' ')
+      orderCiteproc(
+        orderLuaFilters(
+          [
+            pandoc.normalizePath(getPlatformValue(settings.pandocPath)),
+            '"${currentPath}"',
+            template()?.arguments,
+            template()?.customArguments,
+            template()?.userArguments,
+          ]
+            .map(part => part?.trim())
+            .filter(part => part)
+            .join(' ')
+        )
       )
     );
 
@@ -1081,6 +1094,20 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
                   onChange={value => void chooseZoteroStyle(value)}
                 />
               </Setting>
+              <Show when={zoteroStyle(args())}>
+                <Setting name={t.ZOTERO_BIBLIOGRAPHY} description={t.ZOTERO_BIBLIOGRAPHY_DESC}>
+                  <Toggle checked={zoteroBibliography(args())} onChange={checked => writeArgs(a => setZoteroBibliography(a, checked))} />
+                </Setting>
+                {/* Nothing to say about a marker in a style that writes the citation in the text. */}
+                <Show when={chosenZoteroStyle()?.note}>
+                  <Setting name={t.ZOTERO_NOTE_PUNCTUATION} description={t.ZOTERO_NOTE_PUNCTUATION_DESC}>
+                    <Toggle
+                      checked={noteBeforePunctuation(args())}
+                      onChange={checked => writeArgs(a => setNoteBeforePunctuation(a, checked))}
+                    />
+                  </Setting>
+                </Show>
+              </Show>
             </Show>
           </div>
 

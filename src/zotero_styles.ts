@@ -19,6 +19,8 @@ export interface ZoteroStyle {
   multilingual: boolean;
   /** The language the style writes in, where it names one. */
   locale?: string;
+  /** Whether it writes each citation as a footnote rather than in the text. */
+  note: boolean;
 }
 
 /** Zotero's data folder, where it has not been moved. */
@@ -48,6 +50,7 @@ export const readStyle = (filePath: string, xml: string): ZoteroStyle | undefine
     title: tag(xml, 'title') ?? path.basename(filePath, '.csl'),
     filePath,
     multilingual: localeLayouts().test(xml),
+    note: /<style[^>]*\sclass="note"/.test(xml),
     locale: /<style[^>]*\sdefault-locale="([^"]*)"/.exec(xml)?.[1],
   };
 };
@@ -82,6 +85,18 @@ export const readZoteroStyles = async (dataDir: string): Promise<ZoteroStyle[]> 
     }
   }
   return styles.sort((a, b) => a.title.localeCompare(b.title));
+};
+
+/**
+ * The locale a document records, which is the one Zotero reformats it in: the style's own where it names one, and
+ * otherwise the language Obsidian is read in. A CSL locale carries a region, so `ru` is asked for as `ru-RU`.
+ */
+export const cslLocale = (style: ZoteroStyle, uiLocale: string): string => {
+  if (style.locale) {
+    return style.locale;
+  }
+  const [language, region] = uiLocale.split('-');
+  return region ? `${language}-${region.toUpperCase()}` : `${language}-${language.toUpperCase()}`;
 };
 
 /** Where a style is copied to, as the template writes it — filled in at export time, like a filter's folder. */

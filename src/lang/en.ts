@@ -227,6 +227,10 @@ export default {
   ZOTERO_STYLE_NONE: 'Leave unwritten — refresh in Zotero',
   ZOTERO_STYLE_APPROXIMATE: '(approximate)',
   ZOTERO_STYLE_FAILED: 'The citation style could not be read from Zotero.',
+  ZOTERO_BIBLIOGRAPHY: 'Bibliography',
+  ZOTERO_BIBLIOGRAPHY_DESC: 'End the document with a list of sources. A footnote style rarely needs one: the note already describes the source in full.',
+  ZOTERO_NOTE_PUNCTUATION: 'Note marker before punctuation',
+  ZOTERO_NOTE_PUNCTUATION_DESC: 'Put the note number before the full stop or comma — “in the work[1].” — as Russian typography sets it, rather than after.',
 
   // ─── Word and ODT styles ─────────────────────────────────────────────────────
   REFERENCE_DOC: 'Reference document',

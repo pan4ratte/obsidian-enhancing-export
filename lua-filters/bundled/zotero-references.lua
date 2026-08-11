@@ -30,10 +30,12 @@ end
 
 --- What Better BibTeX answers with, or nil and a reason it could not.
 local function fetch(keys)
+  -- No style is named: what is being asked for is the CSL record, which is the same whatever it will be written in.
+  -- Naming one costs the whole answer, since Better BibTeX resolves it first and not every style id is one it knows.
   local request = {
     jsonrpc = '2.0',
     method = 'item.pandoc_filter',
-    params = { citekeys = keys, asCSL = true, style = config.csl_style or 'apa' },
+    params = { citekeys = keys, asCSL = true },
   }
   if config.library then
     request.params.libraryID = config.library
