@@ -5,8 +5,11 @@
 
 ### Live Zotero citations, written out in a style you choose
 
-* A docx or odt template offers the citation styles installed in Zotero, and exports the citations already written out in one — still as live Zotero fields.
+* A docx or odt template has a Zotero group of its own, after the lua-filter list: live Zotero fields, and the style they are written in.
+* Live citations ship with the plugin now — `zotero.lua` is bundled rather than installed from the store, and leaves the catalogue.
+* The template offers the citation styles installed in Zotero, and exports the citations already written out in one — still as live Zotero fields.
 * The sources are read from a running Zotero, so citeproc renders them without a `.bib` file. New bundled filter: `zotero-references.lua`.
+* Fixed: the style list named styles by their id instead of their title.
 * The exported document records the style it was written in, in Word as well as in LibreOffice, so Refresh does not reformat it.
 * The bibliography is a live Zotero field too, in both formats, and a row switches it off for a footnote style that has no use for one.
 * GOST and other CSL-M styles are exported through a copy without the per-language layouts, which pandoc refuses to read.

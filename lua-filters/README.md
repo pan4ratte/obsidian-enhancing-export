@@ -32,10 +32,10 @@ its author and licence; all of them are MIT.
 
 | Folder | Origin |
 | --- | --- |
-| `bundled/` | This plugin's own — see below. Not catalogue entries: they are embedded in `main.js`, written to the plugin's `lua/` folder on load, and run by name. |
+| `bundled/` | What the plugin ships — see below. Mostly its own; `zotero.lua` is [Better BibTeX]'s, vendored unmodified. Not catalogue entries: they are embedded in `main.js`, written to the plugin's `lua/` folder on load, and run by name. |
 | `pandoc-ext/` | The [pandoc-ext] organisation — the filters the pandoc project maintains today. |
 | `pandoc/` | The retired [pandoc/lua-filters] collection, for the filters pandoc-ext has not re-published. |
-| `pan4ratte/` | `Obsidian/Pandoc/filters` in [pan4ratte/course-it-in-science], written for exporting Obsidian notes to Word. `zotero.lua` there is [Better BibTeX]'s, vendored with it. Several of these have since moved to `bundled/`, and `strip-wikilinks.lua` was written for this plugin. |
+| `pan4ratte/` | `Obsidian/Pandoc/filters` in [pan4ratte/course-it-in-science], written for exporting Obsidian notes to Word. Several of these have since moved to `bundled/`, and `strip-wikilinks.lua` was written for this plugin. |
 
 [pandoc/lua-filters]: https://github.com/pandoc/lua-filters
 [pan4ratte/course-it-in-science]: https://github.com/pan4ratte/course-it-in-science
@@ -45,9 +45,9 @@ its author and licence; all of them are MIT.
 
 A filter whose whole job is one row in the template editor belongs to the
 plugin, not to a shelf the user has to go shopping on first. Each of these fixes
-something that happens to *every* vault exporting to that format, needs no
-external program, and has one obvious answer — so it ships, and the row writes
-its `--lua-filter` and its `-M` fields together.
+something that happens to *every* vault exporting to that format, and has one
+obvious answer — so it ships, and the row writes its `--lua-filter` and its `-M`
+fields together.
 
 | Filter | The row | What it fixes |
 | --- | --- | --- |
@@ -57,12 +57,15 @@ its `--lua-filter` and its `-M` fields together.
 | `figures.lua` | Style images as figures | A captionless image is a paragraph to pandoc, so it lands in body text. |
 | `table-styles.lua` | Style text in table cells | The docx writer stamps "Compact" on every cell, which outranks the table style in Word. |
 | `list-styles.lua` | Use Word's list styles | Pandoc's own numbering carries its own indent and bullet, and direct formatting beats a style. |
+| `zotero.lua`, `zotero-references.lua` | Zotero — live fields, and the style they are written in | Two filters and `--citeproc` in one order, a style copied out of Zotero's folder and four `-M` fields: everything one card writes, and nothing anyone would assemble by hand. `zotero.lua` is [Better BibTeX]'s, vendored unmodified; the one that reads the sources is this plugin's. |
 | `markdown.lua`, `markdown+hugo.lua`, `math_block.lua`, `pdf.lua`, `citefilter.lua` | — | Named by the presets themselves rather than by a row. |
 | `polyfill.lua`, `url.lua` | — | Libraries `markdown.lua` requires. |
 
 Everything else stays in the catalogue: a filter needing a program installed, a
 network, or a judgement only the author of the document can make is a filter
-someone should choose deliberately.
+someone should choose deliberately. The Zotero pair is the exception that proves
+it — those need Zotero running, but the card says so, and no arrangement of
+store filters could have written the rest of what they need.
 
 The folders are provenance only. What the **store** shows is the `category` —
 the shelves below — because a reader is looking for the thing that fixes their

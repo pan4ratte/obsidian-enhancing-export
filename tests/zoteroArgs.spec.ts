@@ -4,7 +4,9 @@ import {
   ZOTERO_REFERENCES_FILTER,
   noteBeforePunctuation,
   setNoteBeforePunctuation,
+  setZoteroLinks,
   setZoteroStyle,
+  zoteroLinks,
   zoteroStyle,
 } from '../src/filter_args';
 import { addLuaFilterArg } from '../src/lua_filters';
@@ -14,6 +16,31 @@ const APA = { id: 'http://www.zotero.org/styles/apa', cslPath: '${pluginDir}/csl
 
 /** A template that already turns citations into live Zotero fields, which is where the row is offered. */
 const running = () => addLuaFilterArg(undefined, ZOTERO_FILTER);
+
+describe('setZoteroLinks', () => {
+  test('runs the filter that writes the fields', () => {
+    const args = setZoteroLinks(undefined, true);
+    expect(zoteroLinks(args)).toBe(true);
+    expect(args).toContain(ZOTERO_FILTER);
+  });
+
+  test('switching it off takes the rendering with it', () => {
+    const args = setZoteroLinks(setZoteroStyle(running(), APA), false);
+    expect(zoteroLinks(args)).toBe(false);
+    expect(args).not.toContain(ZOTERO_FILTER);
+    expect(args).not.toContain(ZOTERO_REFERENCES_FILTER);
+    expect(zoteroStyle(args)).toBeUndefined();
+    expect(csl(args)).toBeUndefined();
+    expect(citeproc(args)).toBe(false);
+  });
+
+  test('and leaves the citations that have sources of their own', () => {
+    const withBib = setBibliography(setZoteroStyle(running(), APA), 'refs.bib');
+    const args = setZoteroLinks(withBib, false);
+    expect(citeproc(args)).toBe(true);
+    expect(bibliography(args)).toBe('refs.bib');
+  });
+});
 
 describe('setZoteroStyle', () => {
   test('writes everything the parts need of each other', () => {

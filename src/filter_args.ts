@@ -174,7 +174,8 @@ export const setTodayFormat = (args: string | undefined, format?: TodayFormat): 
 
 /* -- Zotero citations ----------------------------------------------------- */
 
-/** The filter that turns citations into live Zotero fields, and the one that reads the sources for citeproc. */
+/** The filter that turns citations into live Zotero fields, and the one that reads the sources for citeproc. Both
+    ship with the plugin, so a row switches them on rather than a shelf in the store. */
 export const ZOTERO_FILTER = 'zotero.lua';
 export const ZOTERO_REFERENCES_FILTER = 'zotero-references.lua';
 
@@ -196,6 +197,9 @@ export interface ZoteroStyleArgs {
 
 /** Whether a `--csl` names one of the copies this plugin keeps, rather than a file someone chose themselves. */
 const ownStyle = (file?: string) => !!file && file.includes('${pluginDir}/csl/');
+
+/** Whether `args` turns citations into live Zotero fields. */
+export const zoteroLinks = (args?: string): boolean => runs(args, ZOTERO_FILTER);
 
 /** The style `args` renders Zotero citations in, or undefined where it leaves them for Zotero to render. */
 export const zoteroStyle = (args?: string): ZoteroStyleArgs | undefined => {
@@ -237,6 +241,13 @@ export const setZoteroStyle = (args: string | undefined, style?: ZoteroStyleArgs
   }
   return setNoteBeforePunctuation(located, !!style.locale?.startsWith('ru'));
 };
+
+/**
+ * `args` writing live Zotero fields or not. Switching them off takes the rendering with them: a style, a `--csl` and
+ * the fields that configure it are answers about citations nothing writes any more.
+ */
+export const setZoteroLinks = (args: string | undefined, on: boolean): string =>
+  on ? addLuaFilterArg(args, ZOTERO_FILTER) : removeLuaFilterArg(setZoteroStyle(args, undefined), ZOTERO_FILTER);
 
 /**
  * Whether a footnote marker stands before the punctuation — `работе[1].` — rather than after it. Russian typography

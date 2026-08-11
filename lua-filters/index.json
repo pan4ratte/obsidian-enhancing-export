@@ -129,26 +129,6 @@
       }
     },
     {
-      "id": "course:zotero",
-      "storeName": "Citations as live Zotero links",
-      "description": "Resolves Better BibTeX citekeys against a running Zotero, so citations and the bibliography come out right without exporting a .bib file first.",
-      "author": "Emiliano Heyns · Better BibTeX",
-      "license": "MIT",
-      "category": "citations",
-      "requires": "Zotero running, with the Better BibTeX plugin installed.",
-      "updated": "2026-08-11",
-      "fileName": "zotero.lua",
-      "path": "pan4ratte/zotero.lua",
-      "homepage": "https://retorque.re/zotero-better-bibtex/exporting/",
-      "i18n": {
-        "ru": {
-          "storeName": "Превращение цитирований в живые ссылки Zotero",
-          "description": "Разрешает citekey из Better BibTeX через запущенный Zotero, так что ссылки и библиография выходят правильными без предварительного экспорта .bib-файла.",
-          "requires": "Запущенный Zotero с установленным плагином Better BibTeX."
-        }
-      }
-    },
-    {
       "id": "doi2cite",
       "storeName": "DOI to citation",
       "description": "Looks up every DOI you cite and writes the matching bibliography entry for you, so a reference needs nothing but its DOI.",

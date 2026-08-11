@@ -35,7 +35,6 @@ import {
   FIGURE_DEFAULT_STYLE,
   TABLE_DEFAULT_STYLE,
   TODAY_FORMATS,
-  ZOTERO_FILTER,
   type TodayFormat,
   embedNotes,
   figureStyle,
@@ -55,11 +54,13 @@ import {
   setTableStyle,
   setTodayFormat,
   setZoteroBibliography,
+  setZoteroLinks,
   setZoteroStyle,
   tableHeadStyle,
   tableStyle,
   todayFormat,
   zoteroBibliography,
+  zoteroLinks,
   zoteroStyle,
 } from '../filter_args';
 import { cslLocale, defaultZoteroDataDir, installStyle, readZoteroStyles, type ZoteroStyle } from '../zotero_styles';
@@ -567,19 +568,20 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
     const [zoteroStyles, setZoteroStyles] = createSignal<ZoteroStyle[]>([]);
 
     createEffect(() => {
-      if (!isWordProcessorOutput(format()) || !hasLuaFilterArg(args(), ZOTERO_FILTER)) {
+      if (!isWordProcessorOutput(format()) || !zoteroLinks(args())) {
         return;
       }
       void readZoteroStyles(settings.zoteroDataDir || defaultZoteroDataDir()).then(setZoteroStyles);
     });
 
+    /** What a style is called, rather than the id it records — `name`, which is the field a dropdown reads. */
     const zoteroStyleOptions = createMemo(() => [
-      { value: '', label: t.ZOTERO_STYLE_NONE },
+      { value: '', name: t.ZOTERO_STYLE_NONE },
       ...zoteroStyles().map(style => ({
         value: style.id,
         // A style pandoc cannot read in full is still offered, since it is the one Zotero will reformat with — but
         // never silently: what it writes for a source in another language is not what Zotero writes.
-        label: style.multilingual ? `${style.title} ${t.ZOTERO_STYLE_APPROXIMATE}` : style.title,
+        name: style.multilingual ? `${style.title} ${t.ZOTERO_STYLE_APPROXIMATE}` : style.title,
       })),
     ]);
 
@@ -861,6 +863,43 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
           />
         </Setting>
 
+        {/* The two Zotero filters ship with the plugin, so this card is the whole of the feature: the rows write the
+            `--lua-filter` flags, the style file and the `-M` fields together. Only a word processor opens a live
+            citation, so no other writer is asked about one. */}
+        <Show when={isWordProcessorOutput(format())}>
+          <div class="ex-card ex-template-modal-zotero">
+            <Setting name={t.ZOTERO} description={t.ZOTERO_DESC} heading={true} />
+            <Setting name={t.ZOTERO_LINKS} description={t.ZOTERO_LINKS_DESC}>
+              <Toggle checked={zoteroLinks(args())} onChange={on => writeArgs(a => setZoteroLinks(a, on))} />
+            </Setting>
+
+            <Show when={zoteroLinks(args())}>
+              <Setting name={t.ZOTERO_STYLE} description={t.ZOTERO_STYLE_DESC} class="ex-template-modal-zotero-style">
+                <DropDown
+                  options={zoteroStyleOptions()}
+                  selected={zoteroStyle(args())?.id ?? ''}
+                  autofocus={false}
+                  onChange={value => void chooseZoteroStyle(value)}
+                />
+              </Setting>
+              <Show when={zoteroStyle(args())}>
+                <Setting name={t.ZOTERO_BIBLIOGRAPHY} description={t.ZOTERO_BIBLIOGRAPHY_DESC}>
+                  <Toggle checked={zoteroBibliography(args())} onChange={checked => writeArgs(a => setZoteroBibliography(a, checked))} />
+                </Setting>
+                {/* Nothing to say about a marker in a style that writes the citation in the text. */}
+                <Show when={chosenZoteroStyle()?.note}>
+                  <Setting name={t.ZOTERO_NOTE_PUNCTUATION} description={t.ZOTERO_NOTE_PUNCTUATION_DESC}>
+                    <Toggle
+                      checked={noteBeforePunctuation(args())}
+                      onChange={checked => writeArgs(a => setNoteBeforePunctuation(a, checked))}
+                    />
+                  </Setting>
+                </Show>
+              </Show>
+            </Show>
+          </div>
+        </Show>
+
         {/* Every style named here has to exist in that document. Each row runs a bundled
             filter — pandoc has no option for any of this. */}
         <Show when={supportsCustomStyle(format())}>
@@ -1083,32 +1122,6 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
                 />
               </Setting>
             </Collapsible>
-
-            {/* Only a word processor has anything to do with a live citation, and only the Zotero filter writes one. */}
-            <Show when={isWordProcessorOutput(format()) && hasLuaFilterArg(args(), ZOTERO_FILTER)}>
-              <Setting name={t.ZOTERO_STYLE} description={t.ZOTERO_STYLE_DESC} class="ex-template-modal-zotero-style">
-                <DropDown
-                  options={zoteroStyleOptions()}
-                  selected={zoteroStyle(args())?.id ?? ''}
-                  autofocus={false}
-                  onChange={value => void chooseZoteroStyle(value)}
-                />
-              </Setting>
-              <Show when={zoteroStyle(args())}>
-                <Setting name={t.ZOTERO_BIBLIOGRAPHY} description={t.ZOTERO_BIBLIOGRAPHY_DESC}>
-                  <Toggle checked={zoteroBibliography(args())} onChange={checked => writeArgs(a => setZoteroBibliography(a, checked))} />
-                </Setting>
-                {/* Nothing to say about a marker in a style that writes the citation in the text. */}
-                <Show when={chosenZoteroStyle()?.note}>
-                  <Setting name={t.ZOTERO_NOTE_PUNCTUATION} description={t.ZOTERO_NOTE_PUNCTUATION_DESC}>
-                    <Toggle
-                      checked={noteBeforePunctuation(args())}
-                      onChange={checked => writeArgs(a => setNoteBeforePunctuation(a, checked))}
-                    />
-                  </Setting>
-                </Show>
-              </Show>
-            </Show>
           </div>
 
           {/* The page as template variables, each row shown only where the writer reads it. */}
