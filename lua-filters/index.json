@@ -4,7 +4,7 @@
     {
       "id": "abstract-section",
       "storeName": "Abstract as a section",
-      "description": "Write the abstract as an ordinary \"# Abstract\" heading instead of squeezing it into the note's properties. The filter lifts that section into the metadata the templates read.",
+      "description": "Lets you write the abstract as an ordinary \"# Abstract\" heading instead of putting it in the note's properties. The filter moves that section into the metadata the templates read.",
       "author": "Albert Krewinkel",
       "license": "MIT",
       "category": "structure",
@@ -15,7 +15,7 @@
       "i18n": {
         "ru": {
           "storeName": "Аннотация разделом",
-          "description": "Пишите аннотацию обычным заголовком «# Abstract», а не втискивайте её в свойства заметки. Фильтр поднимает этот раздел в метаданные, которые читают шаблоны."
+          "description": "Позволяет писать аннотацию обычным заголовком «# Abstract», а не вставлять в свойства заметки. Фильтр переносит этот раздел в метаданные, которые считываются шаблонами."
         }
       }
     },
@@ -57,8 +57,8 @@
     },
     {
       "id": "pandoc-ext:pagebreak",
-      "storeName": "Page breaks",
-      "description": "Turns a \\newpage or \\pagebreak line in the note into a real page break — in Word, ODT, LaTeX/PDF, EPUB and HTML alike, rather than in LaTeX only.",
+      "storeName": "Manual page breaks",
+      "description": "Turns a \\newpage or \\pagebreak line in the note into a real page break — in Word, ODT, LaTeX/PDF, EPUB and HTML.",
       "author": "Benct Philip Jonsson, Albert Krewinkel",
       "license": "MIT",
       "category": "structure",
@@ -68,8 +68,8 @@
       "homepage": "https://github.com/pandoc-ext/pagebreak",
       "i18n": {
         "ru": {
-          "storeName": "Разрывы страниц",
-          "description": "Превращает строку \\newpage или \\pagebreak в заметке в настоящий разрыв страницы — в Word, ODT, LaTeX/PDF, EPUB и HTML одинаково, а не только в LaTeX."
+          "storeName": "Ручные разрывы страниц",
+          "description": "Превращает строку \\newpage или \\pagebreak в заметке в настоящий разрыв страницы — в Word, ODT, LaTeX/PDF, EPUB и HTML."
         }
       }
     },
@@ -130,21 +130,21 @@
     },
     {
       "id": "course:zotero",
-      "storeName": "Zotero live citations",
+      "storeName": "Citations as live Zotero links",
       "description": "Resolves Better BibTeX citekeys against a running Zotero, so citations and the bibliography come out right without exporting a .bib file first.",
       "author": "Emiliano Heyns · Better BibTeX",
       "license": "MIT",
       "category": "citations",
-      "requires": "Zotero running, with the Better BibTeX add-on installed.",
+      "requires": "Zotero running, with the Better BibTeX plugin installed.",
       "updated": "2026-08-07",
       "fileName": "zotero.lua",
       "path": "pan4ratte/zotero.lua",
       "homepage": "https://retorque.re/zotero-better-bibtex/exporting/",
       "i18n": {
         "ru": {
-          "storeName": "Живые ссылки из Zotero",
+          "storeName": "Превращение цитирований в живые ссылки Zotero",
           "description": "Разрешает citekey из Better BibTeX через запущенный Zotero, так что ссылки и библиография выходят правильными без предварительного экспорта .bib-файла.",
-          "requires": "Запущенный Zotero с установленным дополнением Better BibTeX."
+          "requires": "Запущенный Zotero с установленным плагином Better BibTeX."
         }
       }
     },
@@ -322,27 +322,6 @@
       }
     },
     {
-      "id": "short-captions",
-      "storeName": "Short figure captions",
-      "description": "Gives a figure a short caption for the list of figures, separate from the long one printed underneath it.",
-      "author": "Greg Tucker-Kellogg",
-      "license": "MIT",
-      "category": "figures",
-      "formats": ["latex"],
-      "requires": "LaTeX/PDF output.",
-      "updated": "2026-08-07",
-      "fileName": "short-captions.lua",
-      "path": "pandoc/short-captions.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/short-captions",
-      "i18n": {
-        "ru": {
-          "storeName": "Короткие подписи иллюстраций",
-          "description": "Даёт иллюстрации короткую подпись для списка иллюстраций, отдельную от длинной, которая печатается под ней.",
-          "requires": "Вывод в LaTeX/PDF."
-        }
-      }
-    },
-    {
       "id": "table-short-captions",
       "storeName": "Short table captions",
       "description": "The same for tables: a short caption for the list of tables, and a way to keep a table out of that list altogether.",
@@ -478,7 +457,7 @@
     {
       "id": "strip-wikilinks",
       "storeName": "Remove wikilinks",
-      "description": "Removes wikilinks along with the text inside them, so `[[Note|alias]]` leaves nothing behind. Embeds, images, attachments and external links stay as they are; in a vault writing markdown links, links to a `.md` file or to a heading go the same way.",
+      "description": "Removes wikilinks along with the text inside them from the exported file. Embeds, images, attachments and external links are not affected; in a vault writing markdown links, links to a `.md` file or to a heading go the same way.",
       "author": "Mark Ingrem (pan4ratte)",
       "license": "MIT",
       "category": "prose",
@@ -488,8 +467,8 @@
       "homepage": "https://github.com/pan4ratte/obsidian-pandoc-gui/blob/main/lua-filters/pan4ratte/strip-wikilinks.lua",
       "i18n": {
         "ru": {
-          "storeName": "Убрать вики-ссылки",
-          "description": "Удаляет вики-ссылки вместе с текстом внутри них: от `[[Заметка|текст]]` в экспорте не остаётся ничего. Вложения, изображения и внешние ссылки не трогает; в хранилище с обычными markdown-ссылками так же убирает ссылки на `.md` и на заголовки."
+          "storeName": "Удаление вики-ссылок",
+          "description": "Удаляет вики-ссылки вместе с текстом внутри них из экспортированного файла. Вложения, изображения и внешние ссылки не затрагиваются; в хранилище с обычными markdown-ссылками так же убирает ссылки на `.md` и на заголовки."
         }
       }
     },
@@ -516,8 +495,8 @@
     },
     {
       "id": "course:table-spacing",
-      "storeName": "Space around tables",
-      "description": "Puts a thin spacer paragraph before and after every table, so tables do not sit flush against the text in Word.",
+      "storeName": "Space before and after tables",
+      "description": "Adds a thin spacer paragraph before and after every table, so tables do not sit flush against the text in Word.",
       "author": "Mark Ingrem (pan4ratte)",
       "license": "MIT",
       "category": "word",
@@ -528,8 +507,8 @@
       "homepage": "https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/table-spacing.lua",
       "i18n": {
         "ru": {
-          "storeName": "Отступы вокруг таблиц",
-          "description": "Ставит тонкий абзац-разделитель до и после каждой таблицы, чтобы таблицы не прилегали вплотную к тексту в Word."
+          "storeName": "Отступы до и после таблиц",
+          "description": "Добавляет тонкий абзац-разделитель до и после каждой таблицы, чтобы таблицы не прилегали вплотную к тексту в Word."
         }
       }
     },

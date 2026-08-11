@@ -73,10 +73,10 @@ The catalogue currently offers:
 
 | Filter | What it does | Needs |
 | :--- | :---------- | :--- |
-| [Abstract as a section](https://github.com/pandoc-ext/abstract-section) | Write the abstract as an ordinary "# Abstract" heading instead of squeezing it into the note's properties. The filter lifts that section into the metadata the templates read. | — |
+| [Abstract as a section](https://github.com/pandoc-ext/abstract-section) | Lets you write the abstract as an ordinary "# Abstract" heading instead of putting it in the note's properties. The filter moves that section into the metadata the templates read. | — |
 | [Include other notes](https://github.com/pandoc-ext/include-files) | Splices whole notes into the document where you name them, so a thesis or a manual can stay a folder of small notes and still export as one file. | — |
 | [Include code from files](https://github.com/pandoc/lua-filters/tree/master/include-code-files) | Fills an empty code block from a file on disk — all of it, or just a range of lines. Code samples in the note can never drift from the code they came from. | — |
-| [Page breaks](https://github.com/pandoc-ext/pagebreak) | Turns a \\newpage or \\pagebreak line in the note into a real page break — in Word, ODT, LaTeX/PDF, EPUB and HTML alike, rather than in LaTeX only. | — |
+| [Manual page breaks](https://github.com/pandoc-ext/pagebreak) | Turns a \\newpage or \\pagebreak line in the note into a real page break — in Word, ODT, LaTeX/PDF, EPUB and HTML. | — |
 | [Format-only content](https://github.com/pandoc/lua-filters/tree/master/not-in-format) | Keeps a block or a span out of the formats it was not written for, so one note can carry both the printed wording and the web wording. | — |
 | [Tables written as lists](https://github.com/pandoc-ext/list-table) | Write a table as a nested list and have it come out as a table. Cells that hold a paragraph, a list or a code block stay editable in the note instead of becoming an unreadable pipe table. | — |
 | [reveal.js code blocks](https://github.com/pandoc/lua-filters/tree/master/revealjs-codeblock) | Passes code-block attributes through to reveal.js, so a slide can highlight lines and step through them. | — |
@@ -85,7 +85,7 @@ The catalogue currently offers:
 
 | Filter | What it does | Needs |
 | :--- | :---------- | :--- |
-| [Zotero live citations](https://retorque.re/zotero-better-bibtex/exporting/) | Resolves Better BibTeX citekeys against a running Zotero, so citations and the bibliography come out right without exporting a .bib file first. | Zotero running, with the Better BibTeX add-on installed. |
+| [Citations as live Zotero links](https://retorque.re/zotero-better-bibtex/exporting/) | Resolves Better BibTeX citekeys against a running Zotero, so citations and the bibliography come out right without exporting a .bib file first. | Zotero running, with the Better BibTeX plugin installed. |
 | [DOI to citation](https://github.com/pandoc/lua-filters/tree/master/doi2cite) | Looks up every DOI you cite and writes the matching bibliography entry for you, so a reference needs nothing but its DOI. | An internet connection at export time. |
 | [Several bibliographies](https://github.com/pandoc-ext/multibib) | Splits the references into separate lists — sources and software, primary and secondary — from one library, each printed where you put it. | — |
 | [References per chapter](https://github.com/pandoc-ext/section-bibliographies) | Gives every chapter or section its own reference list instead of one long list at the end. | — |
@@ -100,7 +100,6 @@ The catalogue currently offers:
 | :--- | :---------- | :--- |
 | [Diagrams from code blocks](https://github.com/pandoc-ext/diagram) | Draws the diagram a code block describes and puts the picture in the document: Mermaid, GraphViz/Dot, PlantUML, TikZ, Asymptote and more. | The tool for the diagrams you use (mermaid-cli, dot, plantuml, …) on the PATH. |
 | [Math as SVG](https://github.com/pandoc/lua-filters/tree/master/math2svg) | Renders TeX formulas to SVG with MathJax, so the maths shows up wherever the file is opened — no MathJax, no fonts, no internet needed by the reader. | Node.js with mathjax-node-cli installed. |
-| [Short figure captions](https://github.com/pandoc/lua-filters/tree/master/short-captions) | Gives a figure a short caption for the list of figures, separate from the long one printed underneath it. | LaTeX/PDF output. |
 | [Short table captions](https://github.com/pandoc/lua-filters/tree/master/table-short-captions) | The same for tables: a short caption for the list of tables, and a way to keep a table out of that list altogether. | LaTeX/PDF output. |
 | [Chemical formulas (mhchem)](https://github.com/pandoc/lua-filters/tree/master/mhchem) | Sets \\ce{} chemical equations and isotopes written in mhchem notation. | — |
 | [Sheet music (LilyPond)](https://github.com/pandoc/lua-filters/tree/master/lilypond) | Engraves LilyPond notation written in the note and puts the score in the document as an image. | The lilypond program on the PATH. |
@@ -113,14 +112,14 @@ The catalogue currently offers:
 | [First-line indent](https://github.com/pandoc/lua-filters/tree/master/first-line-indent) | Indents the first line of every paragraph the way books do, and leaves the paragraph that opens a section flush, as typographers set it. | — |
 | [Fonts and alignment](https://github.com/pandoc-ext/fonts-and-alignment) | Sets the font, size, colour and alignment of a marked span or section, for the passages a template has no style for. | — |
 | [Tidier URLs](https://github.com/pandoc-ext/pretty-urls) | Drops the https:// and the trailing slash from a bare link, so an address printed in the text reads as text. | — |
-| [Remove wikilinks](https://github.com/pan4ratte/obsidian-pandoc-gui/blob/main/lua-filters/pan4ratte/strip-wikilinks.lua) | Removes wikilinks along with the text inside them, so `[[Note\|alias]]` leaves nothing behind. Embeds, images, attachments and external links stay as they are; in a vault writing markdown links, links to a `.md` file or to a heading go the same way. | — |
+| [Remove wikilinks](https://github.com/pan4ratte/obsidian-pandoc-gui/blob/main/lua-filters/pan4ratte/strip-wikilinks.lua) | Removes wikilinks along with the text inside them from the exported file. Embeds, images, attachments and external links are not affected; in a vault writing markdown links, links to a `.md` file or to a heading go the same way. | — |
 
 **Word & ODT**
 
 | Filter | What it does | Needs |
 | :--- | :---------- | :--- |
 | [Code inside tables](https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/table-verbatim.lua) | Lets inline code in a table cell take its own character style, so it can be sized for the table instead of the body text. Pandoc hardcodes VerbatimChar there and ignores anything else. | A character style named "Table Verbatim" in the reference document. |
-| [Space around tables](https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/table-spacing.lua) | Puts a thin spacer paragraph before and after every table, so tables do not sit flush against the text in Word. | — |
+| [Space before and after tables](https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/table-spacing.lua) | Adds a thin spacer paragraph before and after every table, so tables do not sit flush against the text in Word. | — |
 | [Word tracked changes](https://github.com/pandoc/lua-filters/tree/master/track-changes) | Decides what to do with the tracked changes in a .docx you are reading in: accept them, reject them, or keep both readings. | — |
 
 **LaTeX & PDF**
