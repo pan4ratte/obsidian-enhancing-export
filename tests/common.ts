@@ -24,10 +24,12 @@ export async function exec(cmd: string, options: { lineSeparator: '\n' | '\r\n' 
   });
 }
 
-/** `dir` is the folder in `lua-filters/` the filter is vendored in; `from` the reader spec the note is read with. */
-export const testConversion = async (name: string, filter?: string, options?: { dir?: string; from?: string }) => {
+/**
+ * A fixture as the filter leaves it, in native form. `dir` is the folder in `lua-filters/` the filter is vendored in;
+ * `from` the reader spec the note is read with.
+ */
+export const convert = async (name: string, filter?: string, options?: { dir?: string; from?: string }) => {
   const input_file = path.join(here, 'markdowns', `${name}.md`);
-  const expect_out = path.join(here, 'markdowns', `${name}.out`);
   const from = options?.from ?? 'markdown';
   let pandoc: string;
   if (filter) {
@@ -36,6 +38,10 @@ export const testConversion = async (name: string, filter?: string, options?: { 
   } else {
     pandoc = `pandoc -s -t native -f ${from} "${input_file}" -o -`;
   }
-  const ret = await exec(pandoc, { lineSeparator: '\n' });
-  expect(ret).toBe(await readFile(expect_out, { encoding: 'utf-8', flag: 'r' }));
+  return await exec(pandoc, { lineSeparator: '\n' });
+};
+
+export const testConversion = async (name: string, filter?: string, options?: { dir?: string; from?: string }) => {
+  const expect_out = path.join(here, 'markdowns', `${name}.out`);
+  expect(await convert(name, filter, options)).toBe(await readFile(expect_out, { encoding: 'utf-8', flag: 'r' }));
 };

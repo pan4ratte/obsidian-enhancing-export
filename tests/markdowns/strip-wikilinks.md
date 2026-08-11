@@ -4,8 +4,6 @@ A [[Note]] and [[Note|alias]] and [[Note#Head]] and [[Note#^blk]] end.
 
 [[Alone]]
 
-![[Embed]]
-
-![[picture.png]]
+Older pandoc marked a [wikilink](Note "wikilink") by its title, not its class.
 
 [real](https://x.com) and [pdf](report.pdf)

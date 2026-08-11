@@ -9,7 +9,11 @@
   (Long-bracket level 1, since the examples above write `]]` themselves.)
 ]==]
 
+--- Newer pandoc marks a wikilink with the class, older pandoc with the title, and both are still in use.
 local function is_wikilink(link)
+  if link.title == 'wikilink' then
+    return true
+  end
   for _, class in ipairs(link.classes) do
     if class == 'wikilink' then
       return true

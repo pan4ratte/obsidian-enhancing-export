@@ -12,25 +12,26 @@ Pandoc
       , Space
       , Str "end."
       ]
-  , Figure
-      ( "" , [] , [] )
-      (Caption Nothing [ Plain [ Str "Embed" ] ])
-      [ Plain
-          [ Image
-              ( "" , [ "wikilink" ] , [] )
-              [ Str "Embed" ]
-              ( "Embed" , "" )
-          ]
-      ]
-  , Figure
-      ( "" , [] , [] )
-      (Caption Nothing [ Plain [ Str "picture.png" ] ])
-      [ Plain
-          [ Image
-              ( "" , [ "wikilink" ] , [] )
-              [ Str "picture.png" ]
-              ( "picture.png" , "" )
-          ]
+  , Para
+      [ Str "Older"
+      , Space
+      , Str "pandoc"
+      , Space
+      , Str "marked"
+      , Space
+      , Str "a"
+      , Space
+      , Str "by"
+      , Space
+      , Str "its"
+      , Space
+      , Str "title,"
+      , Space
+      , Str "not"
+      , Space
+      , Str "its"
+      , Space
+      , Str "class."
       ]
   , Para
       [ Link
