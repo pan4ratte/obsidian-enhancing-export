@@ -113,6 +113,7 @@ The catalogue currently offers:
 | [First-line indent](https://github.com/pandoc/lua-filters/tree/master/first-line-indent) | Indents the first line of every paragraph the way books do, and leaves the paragraph that opens a section flush, as typographers set it. | — |
 | [Fonts and alignment](https://github.com/pandoc-ext/fonts-and-alignment) | Sets the font, size, colour and alignment of a marked span or section, for the passages a template has no style for. | — |
 | [Tidier URLs](https://github.com/pandoc-ext/pretty-urls) | Drops the https:// and the trailing slash from a bare link, so an address printed in the text reads as text. | — |
+| [Remove wikilinks](https://github.com/pan4ratte/obsidian-pandoc-gui/blob/main/lua-filters/pan4ratte/strip-wikilinks.lua) | Removes wikilinks along with the text inside them, so `[[Note\|alias]]` leaves nothing behind. Embeds, images, attachments and external links stay as they are; in a vault writing markdown links, links to a `.md` file or to a heading go the same way. | — |
 
 **Word & ODT**
 

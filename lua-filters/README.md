@@ -35,7 +35,7 @@ its author and licence; all of them are MIT.
 | `bundled/` | This plugin's own — see below. Not catalogue entries: they are embedded in `main.js`, written to the plugin's `lua/` folder on load, and run by name. |
 | `pandoc-ext/` | The [pandoc-ext] organisation — the filters the pandoc project maintains today. |
 | `pandoc/` | The retired [pandoc/lua-filters] collection, for the filters pandoc-ext has not re-published. |
-| `pan4ratte/` | `Obsidian/Pandoc/filters` in [pan4ratte/course-it-in-science], written for exporting Obsidian notes to Word. `zotero.lua` there is [Better BibTeX]'s, vendored with it. Several of these have since moved to `bundled/`. |
+| `pan4ratte/` | `Obsidian/Pandoc/filters` in [pan4ratte/course-it-in-science], written for exporting Obsidian notes to Word. `zotero.lua` there is [Better BibTeX]'s, vendored with it. Several of these have since moved to `bundled/`, and `strip-wikilinks.lua` was written for this plugin. |
 
 [pandoc/lua-filters]: https://github.com/pandoc/lua-filters
 [pan4ratte/course-it-in-science]: https://github.com/pan4ratte/course-it-in-science

@@ -1,0 +1,33 @@
+Pandoc
+  Meta { unMeta = fromList [] }
+  [ Para
+      [ Str "See"
+      , Space
+      , Str "and"
+      , Space
+      , Str "and"
+      , Space
+      , Str "end."
+      ]
+  , Figure
+      ( "" , [] , [] )
+      (Caption Nothing [ Plain [ Str "img" ] ])
+      [ Plain
+          [ Image
+              ( "" , [] , [] ) [ Str "img" ] ( "picture.png" , "" )
+          ]
+      ]
+  , Para
+      [ Link
+          ( "" , [] , [] ) [ Str "real" ] ( "https://x.com" , "" )
+      , Space
+      , Str "and"
+      , Space
+      , Link ( "" , [] , [] ) [ Str "pdf" ] ( "report.pdf" , "" )
+      , Space
+      , Str "and"
+      , Space
+      , Link
+          ( "" , [] , [] ) [ Str "mail" ] ( "mailto:a@b.c" , "" )
+      ]
+  ]
