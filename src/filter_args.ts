@@ -1,4 +1,5 @@
 import { EMBEDS_FILTER, addLuaFilterArg, hasLuaFilterArg, removeLuaFilterArg } from './lua_filters';
+import { bibliography, csl, setCiteproc, setCsl } from './writer_args';
 
 /* The filters the plugin ships with, read out of and written into a template's extra arguments. */
 
@@ -169,6 +170,61 @@ export const setTodayFormat = (args: string | undefined, format?: TodayFormat): 
   }
   // Always quoted: what this stands for is a date, and dates have spaces in them.
   return setMetadata(setRuns(args, FILTERS.today, true), TODAY, todayVariable(format), true);
+};
+
+/* -- Zotero citations ----------------------------------------------------- */
+
+/** The filter that turns citations into live Zotero fields, and the one that reads the sources for citeproc. */
+export const ZOTERO_FILTER = 'zotero.lua';
+export const ZOTERO_REFERENCES_FILTER = 'zotero-references.lua';
+
+const ZOTERO_STYLE = 'zotero-csl-style';
+const ZOTERO_RENDERED = 'zotero-rendered';
+const ZOTERO_LOCALE = 'zotero-locale';
+
+/** A style as a template records it: what Zotero calls it, and the copy pandoc renders with. */
+export interface ZoteroStyleArgs {
+  /** The style's own id, which is what the exported document records to say how it was written. */
+  id: string;
+  /** The `--csl` file, as `zotero_styles` wrote it down. */
+  cslPath: string;
+  locale?: string;
+}
+
+/** Whether a `--csl` names one of the copies this plugin keeps, rather than a file someone chose themselves. */
+const ownStyle = (file?: string) => !!file && file.includes('${pluginDir}/csl/');
+
+/** The style `args` renders Zotero citations in, or undefined where it leaves them for Zotero to render. */
+export const zoteroStyle = (args?: string): ZoteroStyleArgs | undefined => {
+  if (!runs(args, ZOTERO_FILTER) || metadata(args, ZOTERO_RENDERED) !== 'true') {
+    return undefined;
+  }
+  const id = metadata(args, ZOTERO_STYLE);
+  const cslPath = csl(args);
+  return id && cslPath ? { id, cslPath, locale: metadata(args, ZOTERO_LOCALE) } : undefined;
+};
+
+/**
+ * `args` exporting live Zotero citations in `style`, or back to leaving them unrendered at undefined.
+ *
+ * One row writes the lot, because the parts only work together: the sources have to be read before citeproc renders
+ * them, citeproc has to run before the citations are made live, and the document has to record the same style
+ * Zotero will reformat it with.
+ */
+export const setZoteroStyle = (args: string | undefined, style?: ZoteroStyleArgs): string => {
+  if (!style) {
+    const cleared = [ZOTERO_STYLE, ZOTERO_RENDERED, ZOTERO_LOCALE].reduce((line, key) => setMetadata(line, key), args);
+    const withoutFilter = removeLuaFilterArg(cleared, ZOTERO_REFERENCES_FILTER);
+    // The style file was this plugin's copy and means nothing now. Citeproc stays where it still has something to
+    // work from — switching it off takes the references and the style file with it.
+    const withoutStyle = ownStyle(csl(withoutFilter)) ? setCsl(withoutFilter, '') : withoutFilter;
+    return bibliography(withoutStyle) || csl(withoutStyle) ? withoutStyle : setCiteproc(withoutStyle, false);
+  }
+
+  const filters = addLuaFilterArg(addLuaFilterArg(args, ZOTERO_REFERENCES_FILTER), ZOTERO_FILTER);
+  const rendering = setCsl(setCiteproc(filters, true), style.cslPath);
+  const named = setMetadata(setMetadata(rendering, ZOTERO_STYLE, style.id), ZOTERO_RENDERED, 'true');
+  return setMetadata(named, ZOTERO_LOCALE, style.locale);
 };
 
 /* -- Embedded notes ------------------------------------------------------- */

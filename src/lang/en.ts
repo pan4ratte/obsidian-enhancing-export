@@ -222,6 +222,11 @@ export default {
   BIBLIOGRAPHY_DESC: 'The file the references are read from — .bib, .json, .yaml or .ris.',
   CSL: 'Citation style',
   CSL_DESC: 'A .csl file saying how citations and the bibliography are written. Pandoc’s own is Chicago author-date.',
+  ZOTERO_STYLE: 'Zotero style',
+  ZOTERO_STYLE_DESC: 'A style from your Zotero library. Citations are written out at export and stay live Zotero fields: the document opens finished, and Refresh in Word or LibreOffice goes on working.',
+  ZOTERO_STYLE_NONE: 'Leave unwritten — refresh in Zotero',
+  ZOTERO_STYLE_APPROXIMATE: '(approximate)',
+  ZOTERO_STYLE_FAILED: 'The citation style could not be read from Zotero.',
 
   // ─── Word and ODT styles ─────────────────────────────────────────────────────
   REFERENCE_DOC: 'Reference document',

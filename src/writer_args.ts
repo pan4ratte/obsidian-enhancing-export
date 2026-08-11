@@ -336,9 +336,9 @@ export const setPdfEngine = (args: string | undefined, engine: string): string =
 /**
  * `-C` is pandoc's short form; the long one is what gets written.
  *
- * Where it lands on the line does not matter, unlike a filter's: `--citeproc` runs after every `--lua-filter`
- * whatever order they are written in — the positional form is `--filter citeproc`, which is a separate program and
- * not what this writes.
+ * Where it lands on the line matters as much as a filter's: pandoc renders the citations at the point `--citeproc`
+ * stands among the `--lua-filter`s, so a filter written before it is handed `[@citekey]` and one written after it is
+ * handed the rendered citation. `orderCiteproc` is what puts it where the Zotero filters need it.
  */
 const CITEPROC = ['--citeproc', '-C'] as const;
 const BIBLIOGRAPHY = '--bibliography';
@@ -362,6 +362,31 @@ export const setBibliography = (args: string | undefined, file: string): string 
 export const csl = (args?: string): string | undefined => valueOf(args, CSL);
 
 export const setCsl = (args: string | undefined, file: string): string => setValue(args, CSL, file || undefined);
+
+/** The filter that turns rendered citations into live Zotero fields, wherever its folder is written. */
+const ZOTERO_FILTER_FLAG = /(?:--lua-filter|-L)[= ]("[^"]*zotero\.lua"|\S*zotero\.lua)/;
+
+const CITEPROC_FLAG = /(?:^|\s)(?:--citeproc|-C)(?=\s|$)/;
+
+/**
+ * `command` with `--citeproc` moved to just before the filter that makes citations live.
+ *
+ * The Zotero filter reads what citeproc rendered, so it has to run after it; the filter that fetches the sources has
+ * to run before it. Both are appended to the line as rows are toggled, in whatever order that happens, so the one
+ * rule is applied where the command is assembled — the same as `orderLuaFilters`, and for the same reason.
+ */
+export const orderCiteproc = (command: string): string => {
+  const citeproc = CITEPROC_FLAG.exec(command);
+  const zotero = ZOTERO_FILTER_FLAG.exec(command);
+  if (!citeproc || !zotero || citeproc.index < zotero.index) {
+    return command;
+  }
+  // Cut where it stands, then put it back in front of the filter — which is earlier in the line, so the cut leaves
+  // that offset where it was.
+  const cut = command.slice(0, citeproc.index) + command.slice(citeproc.index + citeproc[0].length);
+  const flag = citeproc[0].trim();
+  return `${cut.slice(0, zotero.index)}${flag} ${cut.slice(zotero.index)}`;
+};
 
 /* -- Reference document --------------------------------------------------- */
 

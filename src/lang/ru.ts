@@ -222,6 +222,11 @@ export default {
   BIBLIOGRAPHY_DESC: 'Файл, из которого читаются источники — .bib, .json, .yaml или .ris.',
   CSL: 'Стиль цитирования',
   CSL_DESC: 'Файл .csl, который задаёт, как оформляются ссылки и список литературы. По умолчанию — Chicago author-date.',
+  ZOTERO_STYLE: 'Стиль Zotero',
+  ZOTERO_STYLE_DESC: 'Стиль из вашей библиотеки Zotero. Ссылки будут оформлены при экспорте и останутся живыми полями Zotero: документ откроется готовым, а «Обновить» в Word или LibreOffice продолжит работать.',
+  ZOTERO_STYLE_NONE: 'Не оформлять — обновить в Zotero',
+  ZOTERO_STYLE_APPROXIMATE: '(приблизительно)',
+  ZOTERO_STYLE_FAILED: 'Не удалось прочитать стиль цитирования из Zotero.',
 
   // ─── Word and ODT styles ─────────────────────────────────────────────────────
   REFERENCE_DOC: 'Референсный документ',

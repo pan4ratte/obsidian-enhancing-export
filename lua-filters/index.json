@@ -136,7 +136,7 @@
       "license": "MIT",
       "category": "citations",
       "requires": "Zotero running, with the Better BibTeX plugin installed.",
-      "updated": "2026-08-07",
+      "updated": "2026-08-11",
       "fileName": "zotero.lua",
       "path": "pan4ratte/zotero.lua",
       "homepage": "https://retorque.re/zotero-better-bibtex/exporting/",

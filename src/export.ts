@@ -13,7 +13,7 @@ import { describeExportFailure } from './export_error';
 import type PandocGuiPlugin from './main';
 import pandoc from './pandoc';
 import { orderLuaFilters } from './lua_filters';
-import { renameHighlightFlags } from './writer_args';
+import { orderCiteproc, renameHighlightFlags } from './writer_args';
 import { outputArg } from './output_arg';
 import { dialogWindow } from './dialog';
 
@@ -215,11 +215,13 @@ export async function exportNote(
     // they run where they stand, so `orderLuaFilters` has the last word on the one whose place is not negotiable.
     let cmdTpl =
       setting.type === 'pandoc'
-        ? orderLuaFilters(
-            [pandocPath, '"${currentPath}"', setting.arguments, setting.customArguments, setting.userArguments]
-              .map(part => part?.trim())
-              .filter(Boolean)
-              .join(' ')
+        ? orderCiteproc(
+            orderLuaFilters(
+              [pandocPath, '"${currentPath}"', setting.arguments, setting.customArguments, setting.userArguments]
+                .map(part => part?.trim())
+                .filter(Boolean)
+                .join(' ')
+            )
           )
         : setting.command;
 

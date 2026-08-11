@@ -140,6 +140,22 @@ The catalogue currently offers:
 Want to add a filter of your own? The folder's [readme](lua-filters/README.md) says what an entry carries and where the file goes; `npm run docs:catalogue` writes the tables above from it.
 
 
+## Live Zotero citations in a style you choose
+
+The "Citations as live Zotero links" filter turns `[@citekey]` into live Zotero fields: the document opens in Word or LibreOffice and Refresh goes on working. The citations themselves were left unwritten, though — `<Do Zotero Refresh: …>` stood where the text belongs until you refreshed them by hand.
+
+A docx or odt template now has a **Zotero style** row listing the styles in your library. Choose one and the citations are written out at export while staying live fields. The document records that same style, so Refresh has nothing to reformat.
+
+What it needs:
+
+- Zotero running with [Better BibTeX](https://retorque.re/zotero-better-bibtex/) — the sources are read straight from the library, with no `.bib` to export first;
+- the "Citations as live Zotero links" filter, installed from the store. The second filter, the one that reads the sources, ships with the plugin.
+
+Styles are taken from Zotero's folder as they are. Some GOST styles are written in CSL-M, with a separate layout per language, and pandoc will not read such a file at all. The plugin keeps a copy with the language layouts taken out, so those styles work too — but they are marked `(approximate)` in the list: Russian sources come out exactly right, foreign ones are written to the Russian layout, and Zotero will rewrite them on Refresh.
+
+Zotero's data folder is looked for where Zotero puts it. If yours has moved, name it in `zoteroDataDir` in the plugin's `data.json`.
+
+
 ## Custom export commands
 
 Choose `Custom` when creating an export template, and write whatever command you like — a Pandoc invocation the setting rows do not cover, or another program entirely. The variables below are filled in before it runs.

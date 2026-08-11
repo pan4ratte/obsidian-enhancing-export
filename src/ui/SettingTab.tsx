@@ -35,6 +35,7 @@ import {
   FIGURE_DEFAULT_STYLE,
   TABLE_DEFAULT_STYLE,
   TODAY_FORMATS,
+  ZOTERO_FILTER,
   type TodayFormat,
   embedNotes,
   figureStyle,
@@ -51,10 +52,13 @@ import {
   setTableHeadStyle,
   setTableStyle,
   setTodayFormat,
+  setZoteroStyle,
   tableHeadStyle,
   tableStyle,
   todayFormat,
+  zoteroStyle,
 } from '../filter_args';
+import { defaultZoteroDataDir, installStyle, readZoteroStyles, type ZoteroStyle } from '../zotero_styles';
 import { PANDOC_EXTENSIONS, enabledExtensions, setExtensions } from '../pandoc_extensions';
 import {
   CURATED_VARIABLES,
@@ -170,6 +174,7 @@ import {
   isEpubOutput,
   isPdfOutput,
   isSlideOutput,
+  isWordProcessorOutput,
   outputFormat,
   supportsAscii,
   supportsCss,
@@ -552,6 +557,41 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
 
     /** Setting one is always the same move: that field, rewritten. */
     const writeArgs = (write: (args?: string) => string) => updateTemplate(v => (v.customArguments = write(v.customArguments)));
+
+    /* The citation styles installed in Zotero, read once the row that offers them is on the page. */
+    const [zoteroStyles, setZoteroStyles] = createSignal<ZoteroStyle[]>([]);
+
+    createEffect(() => {
+      if (!isWordProcessorOutput(format()) || !hasLuaFilterArg(args(), ZOTERO_FILTER)) {
+        return;
+      }
+      void readZoteroStyles(settings.zoteroDataDir || defaultZoteroDataDir()).then(setZoteroStyles);
+    });
+
+    const zoteroStyleOptions = createMemo(() => [
+      { value: '', label: t.ZOTERO_STYLE_NONE },
+      ...zoteroStyles().map(style => ({
+        value: style.id,
+        // A style pandoc cannot read in full is still offered, since it is the one Zotero will reformat with — but
+        // never silently: what it writes for a source in another language is not what Zotero writes.
+        label: style.multilingual ? `${style.title} ${t.ZOTERO_STYLE_APPROXIMATE}` : style.title,
+      })),
+    ]);
+
+    const chooseZoteroStyle = async (id: string) => {
+      const style = zoteroStyles().find(s => s.id === id);
+      if (!style) {
+        writeArgs(a => setZoteroStyle(a, undefined));
+        return;
+      }
+      try {
+        const cslPath = await installStyle(plugin, style);
+        writeArgs(a => setZoteroStyle(a, { id: style.id, cslPath, locale: style.locale }));
+      } catch (e) {
+        console.error(e);
+        new Notice(t.ZOTERO_STYLE_FAILED);
+      }
+    };
 
     /** Three flags with nothing to say for themselves, so they share a card. */
     const numbering = createMemo(() => {
@@ -1030,6 +1070,18 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
                 />
               </Setting>
             </Collapsible>
+
+            {/* Only a word processor has anything to do with a live citation, and only the Zotero filter writes one. */}
+            <Show when={isWordProcessorOutput(format()) && hasLuaFilterArg(args(), ZOTERO_FILTER)}>
+              <Setting name={t.ZOTERO_STYLE} description={t.ZOTERO_STYLE_DESC} class="ex-template-modal-zotero-style">
+                <DropDown
+                  options={zoteroStyleOptions()}
+                  selected={zoteroStyle(args())?.id ?? ''}
+                  autofocus={false}
+                  onChange={value => void chooseZoteroStyle(value)}
+                />
+              </Setting>
+            </Show>
           </div>
 
           {/* The page as template variables, each row shown only where the writer reads it. */}

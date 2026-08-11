@@ -396,6 +396,9 @@ export const isSlideOutput = supportedBy(SLIDE_WRITERS);
 /** Whether it is an EPUB, which has a cover, a font and a title page of its own. */
 export const isEpubOutput = supportedBy(['epub', 'epub2', 'epub3']);
 
+/** The formats a word processor opens, and the only ones a live Zotero citation means anything in. */
+export const isWordProcessorOutput = supportedBy(['docx', 'odt']);
+
 /** `--split-level`, which chunked HTML splits on as an EPUB splits chapters. */
 export const supportsSplitLevel = supportedBy(['epub', 'epub2', 'epub3', 'chunkedhtml']);
 
