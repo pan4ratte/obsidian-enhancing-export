@@ -6,7 +6,7 @@
   English | <a href="https://github.com/pan4ratte/obsidian-pandoc-gui/blob/main/README_RU.md">Русский</a>
 </p>
 
-Export notes with Pandoc without touching the command line: every option Pandoc offers is available right in the Obsidian interface. Build export templates for Word, PDF, LaTeX, HTML, EPUB and many other formats, and install extra lua filters straight from the store inside the plugin.
+Export and import notes with Pandoc without touching the command line: every option Pandoc offers is available right in the Obsidian interface. Build export templates for Word, PDF, LaTeX, HTML, EPUB and many other formats, and install extra lua filters straight from the store inside the plugin.
 
 
 ## Features
@@ -27,9 +27,9 @@ The plugin works around many of the problems of Pandoc itself and of other expor
 
 A lua filter is a small script Pandoc applies to the document on export, which lets you tune the document more finely still: page breaks in Word, diagrams from Mermaid code blocks, embedded notes, chemical formulas or sheet music. The filter store offers more than three dozen of them, grouped by the problem they solve, each naming what it requires.
 
-### 5. Files brought into the vault
+### 5. Import files to the vault
 
-The “Import a file” command converts an outside document and turns it into a note. The import dialog asks for the flavour of Markdown to format it in and the folder to put it in, and lets the reading and the writing be set more finely: Word's tracked changes, images extracted into a folder of the vault, the document's details kept as the note's properties, shifted headings, line wrapping and heading style.
+The “Import a file and convert it to a note” command calls the import dialog and asks for the flavour of Markdown to format it in and the folder to put it in, and lets the reading and the writing be set more finely: Word's tracked changes, images extracted into a folder of the vault, the document's details kept as the note's properties, shifted headings, line wrapping and heading style.
 
 ### 6. Pandoc, watched over
 

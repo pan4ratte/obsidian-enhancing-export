@@ -1,9 +1,9 @@
 {
   "id": "pandoc-gui",
   "name": "Pandoc GUI",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "minAppVersion": "1.13.0",
-  "description": "Export notes via Pandoc with a modern GUI. Create templates for Word, PDF, LaTeX, HTML, EPUB, and many other formats, and install dozens of lua filters from the store.",
+  "description": "Export and import notes via Pandoc with a modern GUI. Create templates for Word, PDF, LaTeX, HTML, EPUB, and many other formats, and install dozens of lua filters from the store.",
   "author": "pan4ratte",
   "authorUrl": "https://github.com/pan4ratte/",
   "isDesktopOnly": true
