@@ -26,10 +26,16 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
+      # The version the fixtures under `tests/markdowns` were written by: they are
+      # pandoc's own native output, so the reader that produced them is part of
+      # what is being tested. Bump it when developing against a newer pandoc.
       - name: Install Pandoc
-        run: | 
-          wget https://github.com/jgm/pandoc/releases/download/3.1.11.1/pandoc-3.1.11.1-1-amd64.deb
-          sudo dpkg -i pandoc-3.1.11.1-1-amd64.deb
+        env:
+          PANDOC_VERSION: 3.10.2
+        run: |
+          wget --tries=5 --waitretry=10 --retry-connrefused --retry-on-http-error=429,500,502,503,504 \
+            "https://github.com/jgm/pandoc/releases/download/$PANDOC_VERSION/pandoc-$PANDOC_VERSION-1-amd64.deb"
+          sudo dpkg -i "pandoc-$PANDOC_VERSION-1-amd64.deb"
       - name: Install Dependencies
         run: npm ci
       - name: Catalogue is generated, not hand-edited
