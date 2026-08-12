@@ -1,6 +1,6 @@
 import path from 'path';
 import { Notice } from 'obsidian';
-import { Show, createMemo, createRoot, createSignal, onCleanup, untrack } from 'solid-js';
+import { JSX, Show, createMemo, createRoot, createSignal, onCleanup, untrack } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { insert } from 'solid-js/web';
 import type PandocGuiPlugin from '../main';
@@ -34,6 +34,26 @@ const SOURCE_FILES = [
 
 /** The folder the images of a document land in, where none was asked for by name. */
 const defaultMediaFolder = (folder: string): string => (folder ? `${folder}/media` : 'media');
+
+/**
+ * A row for a path: the label, the field under it at the width of the row, and the line that answers the field under
+ * that — where the note will be written, what it will be called.
+ *
+ * Written out rather than asked of `Setting`, whose description belongs to the label block: what a path row wants is
+ * the description after the field, and a box cannot hold a thing that stands outside it.
+ */
+const PathSetting = (props: { name: string; description?: string; children?: JSX.Element }) => (
+  <div class="setting-item ex-import-modal-path">
+    <div class="setting-item-info">
+      <div class="setting-item-name">{props.name}</div>
+    </div>
+    <div class="setting-item-control">{props.children}</div>
+    {/* A row asked nothing gets no empty block under its field. */}
+    <Show when={props.description}>
+      <div class="setting-item-description">{props.description}</div>
+    </Show>
+  </div>
+);
 
 const Dialog = (props: { plugin: PandocGuiPlugin; onClose?: () => void }) => {
   const {
@@ -119,17 +139,16 @@ const Dialog = (props: { plugin: PandocGuiPlugin; onClose?: () => void }) => {
         />
       </Setting>
 
-      <Setting name={t.IMPORT_DIALOG_SOURCE} description={sourceDescription()} class="ex-import-modal-path">
+      <PathSetting name={t.IMPORT_DIALOG_SOURCE} description={sourceDescription()}>
         <FileInput value={source()} filters={SOURCE_FILES} tooltip={t.CHOOSE_FILE} onChange={setSource} />
-      </Setting>
+      </PathSetting>
 
-      <Setting
+      <PathSetting
         name={t.IMPORT_DIALOG_FOLDER}
         description={noteName() ? t.IMPORT_DIALOG_FOLDER_DESC(noteName()) : t.IMPORT_DIALOG_FOLDER_NONE}
-        class="ex-import-modal-path"
       >
         <FolderInput app={app} value={folder()} placeholder={t.IMPORT_DIALOG_FOLDER_PLACEHOLDER} onChange={setFolder} />
-      </Setting>
+      </PathSetting>
 
       {/* Only what the chosen file's reader answers to — until one is chosen there is nothing to ask about. */}
       <Show when={reader()}>
@@ -152,9 +171,9 @@ const Dialog = (props: { plugin: PandocGuiPlugin; onClose?: () => void }) => {
               <Toggle checked={extractMedia()} onChange={setExtractMedia} />
             </Setting>
             <Show when={extractMedia()}>
-              <Setting name={t.IMPORT_MEDIA_FOLDER} class="ex-import-modal-path">
+              <PathSetting name={t.IMPORT_MEDIA_FOLDER}>
                 <FolderInput app={app} value={mediaFolder()} placeholder={defaultMediaFolder(folder())} onChange={setMediaFolder} />
-              </Setting>
+              </PathSetting>
             </Show>
           </Show>
 

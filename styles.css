@@ -843,18 +843,15 @@
  *
  * Toggles are left out: a switch is the size it is, and stretching the block
  * around it would only move it away from the label it answers. So is a group's
- * heading, which has no control beside it to leave room for — capped, it wrapped
- * its description down the left half of a card that was standing empty.
+ * heading, which has no control beside it to leave room for.
  */
 .ex-export-modal.ex-export-modal .setting-item:not(.mod-toggle) > .setting-item-info {
   flex: 0 1 auto;
   max-width: 50%;
 }
 
-/* The import dialog gives the label more of the row. The paths it asks for are
-   read down the row instead — see below — so what stands beside a control here
-   is a line of explanation, and half a row broke those over two lines and left
-   the control looking adrift beside a paragraph. */
+/* More of the row in the import dialog, where a label stands beside a dropdown
+   rather than a field: half a row broke its description over two lines. */
 .ex-import-modal.ex-import-modal .setting-item:not(.mod-toggle):not(.setting-item-heading) > .setting-item-info {
   flex: 0 1 auto;
   max-width: 70%;
@@ -884,19 +881,10 @@
 }
 
 /*
- * A path is read down the row rather than across it.
- *
- * The file to convert and the folders it is written into are long, and half a
- * row of one says nothing: the end of a path is the part that names something,
- * and the end is what a field beside a label loses. So the label stands over the
- * field, the field takes the width of the row, and the line that answers it —
- * what the note will be called, where the images go — sits under the field
- * rather than above it.
- *
- * `display: contents` on the label block, because the description lives inside
- * it and a row cannot put a child of that block after a sibling of it. With the
- * block dropped, the name and the description are items of the row itself, and
- * the field can be ordered between them.
+ * A path is read down the row: the label, the field at the width of the row, and
+ * the line that answers it under both. Half a row of a path loses the end of it,
+ * which is the part that names something. `PathSetting` in ImportDialog writes
+ * the description after the control, which is what lets this be one column.
  */
 .ex-import-modal.ex-import-modal .setting-item.ex-import-modal-path {
   display: flex;
@@ -904,36 +892,29 @@
   align-items: stretch;
 }
 
-.ex-import-modal.ex-import-modal .setting-item.ex-import-modal-path.ex-import-modal-path > .setting-item-info {
-  display: contents;
+/* Nothing stands beside the label here for the cap to protect. */
+.ex-import-modal.ex-import-modal .setting-item.ex-import-modal-path > .setting-item-info {
+  max-width: none;
 }
 
 .ex-import-modal.ex-import-modal .ex-import-modal-path > .setting-item-control {
-  order: 1;
-  /* Its own height, not the row's: growth along a column is not what `flex: 1`
-     was asked for two rules above, and neither is the centring beside it — down
-     a column both of those work on the other axis. */
+  /* Down a column, the `flex: 1` and the centring above work on the other axis. */
   flex: 0 0 auto;
   align-self: stretch;
   width: 100%;
   margin-top: var(--size-2-3);
 }
 
-.ex-import-modal.ex-import-modal .ex-import-modal-path .setting-item-description {
-  order: 2;
+.ex-import-modal.ex-import-modal .ex-import-modal-path > .setting-item-description {
   margin-top: var(--size-2-2);
 }
 
 /*
- * A group's heading is the first row of its card, and takes a row's spacing.
+ * A group's heading is the first row of its card, and takes a row's inset.
  *
- * The template modal heads groups that stand among rows drawn as boxes, so its
- * headings are given a margin to set the group apart and are left Obsidian's own
- * room above the words. Here the card is the group and there is nothing to be
- * set apart from: those margins only pushed the name away from the card's top
- * edge and, below the line, pushed the first row away from the heading it
- * belongs to. So the heading takes the inset every row of the card takes, and
- * the line at its foot is all that stands between it and what it names.
+ * The template modal's headings carry a margin to set a group apart from the
+ * boxes around it. Here the card is the group, and that margin only pushed the
+ * name off the card's top edge and the first row off the line under it.
  */
 .ex-import-modal.ex-import-modal .ex-card > .setting-item.setting-item-heading {
   margin: 0;
@@ -943,9 +924,8 @@
   background: none;
 }
 
-/* And the empty block a row keeps its control in takes none of the width: there
-   is no control in a heading, and half a row held for one is half a row the
-   name and its line are wrapped out of. */
+/* A heading has no control, so its empty control block takes none of the row —
+   held open, it wrapped the name and the line under it. */
 .ex-import-modal.ex-import-modal .ex-card > .setting-item.setting-item-heading > .setting-item-control {
   flex: 0 0 auto;
 }
@@ -1120,11 +1100,8 @@
  * box around all of them is what read as mud.
  *
  * No side padding, so the lines between the rows run the width of the card;
- * the rows carry the inset themselves.
- *
- * The import dialog groups its rows the same way — what pandoc takes out of the
- * file, and what it writes into the note — and they are the same kind of group,
- * so they are drawn as the same kind of card.
+ * the rows carry the inset themselves. The import dialog groups its rows the
+ * same way.
  */
 .ex-template-modal.ex-template-modal .ex-card:not(.ex-section),
 .ex-import-modal.ex-import-modal .ex-card:not(.ex-section) {
@@ -1134,9 +1111,8 @@
   background: var(--setting-items-background);
 }
 
-/* A group standing in the modal rather than inside a panel — the Word styles,
-   and both of the import dialog's — keeps the spacing of the rows it stands
-   among. */
+/* A group standing in the modal rather than inside a panel keeps the spacing of
+   the rows it stands among. */
 .ex-template-modal.ex-template-modal .modal-content > .ex-card:not(.ex-section),
 .ex-import-modal.ex-import-modal .modal-content > .ex-card:not(.ex-section) {
   margin-bottom: var(--size-4-3);
