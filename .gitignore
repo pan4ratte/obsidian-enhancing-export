@@ -5,7 +5,5 @@
 # The plugin folder's runtime lua/: written on load from the filters embedded in
 # main.js, and written into by the store. The sources are in lua-filters/bundled.
 /lua/
-# The same, for the citation styles copied out of Zotero when one is chosen.
-/csl/
 /.env.local
 /.idea

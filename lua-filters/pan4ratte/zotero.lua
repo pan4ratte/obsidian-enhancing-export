@@ -1740,38 +1740,20 @@ local config = {
   format = nil, -- more to document than anything else -- Lua does not store nils in tables
   transferable = false,
   sorted = true,
-  -- Whether citeproc has already run, so the citations carry their rendered text rather than the citekey.
-  rendered = false,
-  locale = 'en-US',
-  -- Whether the document is to carry a bibliography, which a footnote style often has no use for.
-  bibliography = true,
 }
 
-local UUID = '^%x%x%x%x%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%x%x%x%x%x%x%x%x$'
-
---- A style is named by the id in its own .csl file: a URI, or the bare UUID a style built from a template gives
---- itself. Only a plain name is one of zotero.org's, and only that is worth spelling out in full.
-local function style_id(csl_style)
-  if csl_style:match('^%a[%w+.%-]*:') or csl_style:match(UUID) then
-    return csl_style
-  end
-  return 'http://www.zotero.org/styles/' .. csl_style
-end
-
 -- -- bibliography marker generator -- --
-function zotero_docpreferences(csl_style)
-  -- Word marks a citation with a field, LibreOffice with a reference mark.
-  local field_type = config.format == 'docx' and 'Field' or 'ReferenceMark'
+function zotero_docpreferences_odt(csl_style)
   return string.format(
     '<data data-version="3" zotero-version="5.0.89">'
       .. '   <session id="OGe1IYVe"/>'
-      .. '   <style id="%s" locale="%s" hasBibliography="%s" bibliographyStyleHasBeenSet="0"/>'
+      .. '   <style id="http://www.zotero.org/styles/%s" locale="en-US" hasBibliography="1" bibliographyStyleHasBeenSet="0"/>'
       .. '   <prefs>'
-      .. '     <pref name="fieldType" value="%s"/>'
+      .. '     <pref name="fieldType" value="ReferenceMark"/>'
     -- .. '     <pref name="delayCitationUpdates" value="true"/>'
       .. '   </prefs>'
       .. '</data>',
-    style_id(csl_style), config.locale, config.bibliography and '1' or '0', field_type)
+    csl_style)
 end
 
 local function zotero_bibl_odt_banner()
@@ -1794,7 +1776,7 @@ local function zotero_bibl_odt_banner()
     .. '<text:p text:style-name="Text_20_body">'
     .. '<text:a xlink:type="simple" xlink:href="https://www.zotero.org/" text:style-name="Internet_20_link">'
     .. 'DOCUMENT_PREFERENCES '
-    .. utils.xmlescape(zotero_docpreferences(config.csl_style))
+    .. utils.xmlescape(zotero_docpreferences_odt(config.csl_style))
     .. '</text:a>'
     .. '</text:p>'
 
@@ -1856,15 +1838,6 @@ function stringify(node)
     html = ' ' .. html
   end
   return html
-end
-
---- Markers either side of content pandoc goes on to write itself, so a rendered citation keeps its italics and its
---- ampersands: text put in the marker would be escaped once by the writer and once again here.
-local function spliced(format, opening, content, closing)
-  local inlines = pandoc.Inlines({ pandoc.RawInline(format, opening) })
-  inlines:extend(content)
-  inlines:insert(pandoc.RawInline(format, closing))
-  return inlines
 end
 
 local function zotero_ref(cite)
@@ -1932,17 +1905,13 @@ local function zotero_ref(cite)
   local message = '<Do Zotero Refresh: ' .. content .. '>'
 
   if config.format == 'docx' then
-    local opening = author_in_text .. '<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve">'
-      .. ' ADDIN ZOTERO_ITEM CSL_CITATION ' .. utils.xmlescape(json.encode(csl)) .. '   '
-      .. '</w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r>'
-    local closing = '<w:r><w:fldChar w:fldCharType="end"/></w:r>'
+    local field = author_in_text .. '<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve">'
+    field = field .. ' ADDIN ZOTERO_ITEM CSL_CITATION ' .. utils.xmlescape(json.encode(csl)) .. '   '
+    field = field .. '</w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:rPr><w:noProof/></w:rPr><w:t>'
+    field = field .. utils.xmlescape(message)
+    field = field .. '</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r>'
 
-    if config.rendered then
-      return spliced('openxml', opening, cite.content, closing)
-    end
-
-    return pandoc.RawInline('openxml',
-      opening .. '<w:r><w:rPr><w:noProof/></w:rPr><w:t>' .. utils.xmlescape(message) .. '</w:t></w:r>' .. closing)
+    return pandoc.RawInline('openxml', field)
   else
     if config.transferable then
       local field = author_in_text
@@ -1954,14 +1923,11 @@ local function zotero_ref(cite)
     end
 
     csl = 'ZOTERO_ITEM CSL_CITATION ' .. utils.xmlattr(json.encode(csl)) .. ' RND' .. utils.next_id(10)
-    local opening = author_in_text .. '<text:reference-mark-start text:name="' .. csl .. '"/>'
-    local closing = '<text:reference-mark-end text:name="' .. csl .. '"/>'
+    local field = author_in_text .. '<text:reference-mark-start text:name="' .. csl .. '"/>'
+    field = field .. utils.xmlescape(message)
+    field = field .. '<text:reference-mark-end text:name="' .. csl .. '"/>'
 
-    if config.rendered then
-      return spliced('opendocument', opening, cite.content, closing)
-    end
-
-    return pandoc.RawInline('opendocument', opening .. utils.xmlescape(message) .. closing)
+    return pandoc.RawInline('opendocument', field)
   end
 end
 
@@ -2082,14 +2048,6 @@ function Meta(meta)
     end
   end
 
-  config.rendered = test_boolean('rendered', meta.zotero['rendered'])
-  -- Pandoc's own field, which citeproc has already read by the time this runs. Zotero is told the same thing, so
-  -- Refresh does not put back a bibliography the document was written without.
-  config.bibliography = pandoc.utils.stringify(meta['suppress-bibliography'] or '') ~= 'true'
-  if meta.zotero['locale'] ~= nil then
-    config.locale = pandoc.utils.stringify(meta.zotero['locale'])
-  end
-
   config.transferable = test_boolean('transferable', meta.zotero['transferable'])
 
   -- refuse to create a transferable document, when csl style is not specified
@@ -2116,15 +2074,14 @@ function Meta(meta)
   zotero.request = {
     jsonrpc = "2.0",
     method = "item.pandoc_filter",
-    params = {},
+    params = {
+      style = config.csl_style or 'apa',
+    },
   }
   if string.match(FORMAT, 'odt') and config.scannable_cite then
     -- scannable-cite takes precedence over csl-style
     config.format = 'scannable-cite'
     zotero.request.params.asCSL = false
-    -- Only this path has Zotero write the citation out, and only it needs a style Better BibTeX can resolve. Asked
-    -- for a CSL record, naming a style gains nothing and loses the answer where the id is not one zotero.org's.
-    zotero.request.params.style = config.csl_style or 'apa'
   elseif string.match(FORMAT, 'odt') or string.match(FORMAT, 'docx') then
     config.format = FORMAT
     zotero.request.params.asCSL = true
@@ -2134,33 +2091,10 @@ function Meta(meta)
     zotero.request.params.libraryID = meta.zotero.library
   end
 
-  -- These will be added to the document metadata by pandoc automatically
-  if config.csl_style and (config.format == 'odt' or config.format == 'docx') then
-    local preferences = zotero_docpreferences(config.csl_style)
-    if config.format == 'docx' then
-      -- Word holds 255 characters to a property, so the preferences are spread over as many as they take — which is
-      -- how Zotero writes them itself, and how it reads them back.
-      local part = 0
-      for pos = 1, #preferences, 255 do
-        part = part + 1
-        meta['ZOTERO_PREF_' .. part] = string.sub(preferences, pos, pos + 254)
-      end
-    else
-      meta.ZOTERO_PREF_1 = preferences
-      meta.ZOTERO_PREF_2 = ''
-    end
-  end
-
-  -- What citeproc was handed is no part of the document, and pandoc writes stray metadata into the file's properties.
-  if config.rendered then
-    meta.references = nil
-    meta.csl = nil
-    meta.zotero = nil
-    for key in pairs(meta) do
-      if key:match('^zotero[-_]') then
-        meta[key] = nil
-      end
-    end
+  if config.format == 'odt' and config.csl_style then
+    -- These will be added to the document metadata by pandoc automatically
+    meta.ZOTERO_PREF_1 = zotero_docpreferences_odt(config.csl_style)
+    meta.ZOTERO_PREF_2 = ''
   end
 
   return meta
@@ -2187,67 +2121,10 @@ function Cite_replace(cite)
   end
 end
 
-local BIB_SETTINGS = '{"uncited":[],"omitted":[],"custom":[]}'
-
---- The paragraph a field has to open on, or close on, wherever citeproc nested the entries.
-local function edge_para(blocks, last)
-  for i = 1, #blocks do
-    local block = blocks[last and (#blocks - i + 1) or i]
-    if block.t == 'Para' or block.t == 'Plain' then
-      return block
-    end
-    if block.content then
-      local found = edge_para(block.content, last)
-      if found then
-        return found
-      end
-    end
-  end
-end
-
---- One Word field over the whole rendered bibliography: it opens in the first entry and closes in the last.
-local function docx_bibliography(blocks)
-  local first, last = edge_para(blocks, false), edge_para(blocks, true)
-  if not first or not last then
-    return nil
-  end
-  first.content:insert(1, pandoc.RawInline('openxml',
-    '<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve">'
-      .. ' ADDIN ZOTERO_BIBL ' .. utils.xmlescape(BIB_SETTINGS) .. ' CSL_BIBLIOGRAPHY '
-      .. '</w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r>'))
-  last.content:insert(pandoc.RawInline('openxml', '<w:r><w:fldChar w:fldCharType="end"/></w:r>'))
-  return blocks
-end
-
---- The same for LibreOffice, where the bibliography is a named section rather than a field.
-local function odt_bibliography(blocks)
-  local name = 'ZOTERO_BIBL ' .. utils.xmlattr(BIB_SETTINGS) .. ' CSL_BIBLIOGRAPHY' .. ' RND' .. utils.next_id(10)
-  local wrapped = pandoc.Blocks({ pandoc.RawBlock('opendocument', string.format('<text:section text:name=" %s">', name)) })
-  wrapped:extend(blocks)
-  wrapped:insert(pandoc.RawBlock('opendocument', '</text:section>'))
-  return wrapped
-end
-
 local refsDivSeen=false
 function Div(div)
   if not div.attr or div.attr.identifier ~= 'refs' then return nil end
-  if not config.csl_style then return nil end
-
-  -- What citeproc rendered is kept, and made live where it stands. Without it there is nothing to keep, and the
-  -- reader is sent to Refresh instead.
-  if config.rendered and not config.transferable then
-    if config.format == 'docx' then
-      refsDivSeen = true
-      return docx_bibliography(div.content)
-    end
-    if config.format == 'odt' then
-      refsDivSeen = true
-      return odt_bibliography(div.content)
-    end
-    return nil
-  end
-
-  if config.format ~= 'odt' then return nil end
+  if config.format ~= 'odt' or not config.csl_style then return nil end
 
   refsDivSeen=true
   return pandoc.RawBlock('opendocument', zotero_bibl_odt())
@@ -2260,7 +2137,7 @@ function Doc(doc)
     table.insert(doc.blocks, 1, pandoc.RawBlock('opendocument', zotero_bibl_odt_banner()))
   end
 
-  if config.csl_style and config.bibliography and not refsDivSeen then
+  if config.csl_style and not refsDivSeen then
     table.insert(doc.blocks, pandoc.RawBlock('opendocument', zotero_bibl_odt()))
   end
 

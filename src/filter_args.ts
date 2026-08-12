@@ -1,5 +1,4 @@
 import { EMBEDS_FILTER, addLuaFilterArg, hasLuaFilterArg, removeLuaFilterArg } from './lua_filters';
-import { bibliography, csl, setCiteproc, setCsl } from './writer_args';
 
 /* The filters the plugin ships with, read out of and written into a template's extra arguments. */
 
@@ -171,101 +170,6 @@ export const setTodayFormat = (args: string | undefined, format?: TodayFormat): 
   // Always quoted: what this stands for is a date, and dates have spaces in them.
   return setMetadata(setRuns(args, FILTERS.today, true), TODAY, todayVariable(format), true);
 };
-
-/* -- Zotero citations ----------------------------------------------------- */
-
-/** The filter that turns citations into live Zotero fields, and the one that reads the sources for citeproc. Both
-    ship with the plugin, so a row switches them on rather than a shelf in the store. */
-export const ZOTERO_FILTER = 'zotero.lua';
-export const ZOTERO_REFERENCES_FILTER = 'zotero-references.lua';
-
-const ZOTERO_STYLE = 'zotero-csl-style';
-const ZOTERO_RENDERED = 'zotero-rendered';
-const ZOTERO_LOCALE = 'zotero-locale';
-/** Pandoc's own fields, read by citeproc and — for the first — by the Zotero filter after it. */
-const SUPPRESS_BIBLIOGRAPHY = 'suppress-bibliography';
-const NOTES_AFTER_PUNCTUATION = 'notes-after-punctuation';
-
-/** A style as a template records it: what Zotero calls it, and the copy pandoc renders with. */
-export interface ZoteroStyleArgs {
-  /** The style's own id, which is what the exported document records to say how it was written. */
-  id: string;
-  /** The `--csl` file, as `zotero_styles` wrote it down. */
-  cslPath: string;
-  locale?: string;
-}
-
-/** Whether a `--csl` names one of the copies this plugin keeps, rather than a file someone chose themselves. */
-const ownStyle = (file?: string) => !!file && file.includes('${pluginDir}/csl/');
-
-/** Whether `args` turns citations into live Zotero fields. */
-export const zoteroLinks = (args?: string): boolean => runs(args, ZOTERO_FILTER);
-
-/** The style `args` renders Zotero citations in, or undefined where it leaves them for Zotero to render. */
-export const zoteroStyle = (args?: string): ZoteroStyleArgs | undefined => {
-  if (!runs(args, ZOTERO_FILTER) || metadata(args, ZOTERO_RENDERED) !== 'true') {
-    return undefined;
-  }
-  const id = metadata(args, ZOTERO_STYLE);
-  const cslPath = csl(args);
-  return id && cslPath ? { id, cslPath, locale: metadata(args, ZOTERO_LOCALE) } : undefined;
-};
-
-/**
- * `args` exporting live Zotero citations in `style`, or back to leaving them unrendered at undefined.
- *
- * One row writes the lot, because the parts only work together: the sources have to be read before citeproc renders
- * them, citeproc has to run before the citations are made live, and the document has to record the same style
- * Zotero will reformat it with.
- */
-export const setZoteroStyle = (args: string | undefined, style?: ZoteroStyleArgs): string => {
-  if (!style) {
-    const keys = [ZOTERO_STYLE, ZOTERO_RENDERED, ZOTERO_LOCALE, SUPPRESS_BIBLIOGRAPHY, NOTES_AFTER_PUNCTUATION];
-    const cleared = keys.reduce((line, key) => setMetadata(line, key), args);
-    const withoutFilter = removeLuaFilterArg(cleared, ZOTERO_REFERENCES_FILTER);
-    // The style file was this plugin's copy and means nothing now. Citeproc stays where it still has something to
-    // work from — switching it off takes the references and the style file with it.
-    const withoutStyle = ownStyle(csl(withoutFilter)) ? setCsl(withoutFilter, '') : withoutFilter;
-    return bibliography(withoutStyle) || csl(withoutStyle) ? withoutStyle : setCiteproc(withoutStyle, false);
-  }
-
-  const filters = addLuaFilterArg(addLuaFilterArg(args, ZOTERO_REFERENCES_FILTER), ZOTERO_FILTER);
-  const rendering = setCsl(setCiteproc(filters, true), style.cslPath);
-  const named = setMetadata(setMetadata(rendering, ZOTERO_STYLE, style.id), ZOTERO_RENDERED, 'true');
-  const located = setMetadata(named, ZOTERO_LOCALE, style.locale);
-
-  // Where the marker goes is a matter of the language rather than of the style, and only the first choice is made
-  // here: an answer already on the line is the reader's, and choosing another style does not overrule it.
-  if (metadata(located, NOTES_AFTER_PUNCTUATION) !== undefined) {
-    return located;
-  }
-  return setNoteBeforePunctuation(located, !!style.locale?.startsWith('ru'));
-};
-
-/**
- * `args` writing live Zotero fields or not. Switching them off takes the rendering with them: a style, a `--csl` and
- * the fields that configure it are answers about citations nothing writes any more.
- */
-export const setZoteroLinks = (args: string | undefined, on: boolean): string =>
-  on ? addLuaFilterArg(args, ZOTERO_FILTER) : removeLuaFilterArg(setZoteroStyle(args, undefined), ZOTERO_FILTER);
-
-/**
- * Whether a footnote marker stands before the punctuation — `работе[1].` — rather than after it. Russian typography
- * sets it before, and pandoc puts it after unless told otherwise.
- */
-export const noteBeforePunctuation = (args?: string): boolean => metadata(args, NOTES_AFTER_PUNCTUATION) === 'false';
-
-export const setNoteBeforePunctuation = (args: string | undefined, on: boolean): string =>
-  setMetadata(args, NOTES_AFTER_PUNCTUATION, on ? 'false' : 'true');
-
-/**
- * Whether the document is to end with a bibliography. A footnote style writes the whole source in the note, and the
- * list after it is a second copy of everything — so this is a row of its own rather than the style's business.
- */
-export const zoteroBibliography = (args?: string): boolean => metadata(args, SUPPRESS_BIBLIOGRAPHY) !== 'true';
-
-export const setZoteroBibliography = (args: string | undefined, on: boolean): string =>
-  setMetadata(args, SUPPRESS_BIBLIOGRAPHY, on ? undefined : 'true');
 
 /* -- Embedded notes ------------------------------------------------------- */
 

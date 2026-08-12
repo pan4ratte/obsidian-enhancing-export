@@ -79,9 +79,6 @@ export interface PandocGuiSettings {
   installedLuaFilters?: InstalledLuaFilter[];
   /** Base URL of the lua-filter catalogue. Unset means the default repo. */
   luaFilterRepoUrl?: string;
-
-  /** Zotero's data folder, which the citation styles are read from. Unset means where Zotero puts it by default. */
-  zoteroDataDir?: string;
 }
 
 export type OptionsMeta = {
