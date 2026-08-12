@@ -12,9 +12,20 @@
   Metadata, shared with zotero.lua:
     zotero-client   zotero (default) or jurism
     zotero-library  the library to read, where it is not the personal one
+
+  Metadata of its own:
+    zotero-article-urls  true to keep the URL of a paginated article, which
+                         Zotero itself prints only when asked to
 ]==]
 
 local config = { client = 'zotero' }
+
+--- The types Zotero drops the URL of, matching its own "Include URLs of paper articles in references".
+local PAGINATED = {
+  ['article-journal'] = true,
+  ['article-magazine'] = true,
+  ['article-newspaper'] = true,
+}
 
 local citekeys = {}
 
@@ -96,6 +107,12 @@ function Pandoc(doc)
     item.custom = nil
     -- What the note cites it by, which is what citeproc matches against.
     item.id = citekey
+    -- An article that carries its pages is cited by them, and Zotero leaves the address off unless it is asked for
+    -- it. Kept here so the exported text reads as what Zotero will write over it on Refresh.
+    if config.article_urls ~= 'true' and PAGINATED[item.type] and item.page then
+      item.URL = nil
+      item.accessed = nil
+    end
     items[#items + 1] = item
   end
 

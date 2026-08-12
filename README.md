@@ -147,7 +147,9 @@ Under it is a **Zotero style** row listing the styles in your library. With no s
 
 All it needs is Zotero running with [Better BibTeX](https://retorque.re/zotero-better-bibtex/): the sources are read straight from the library, with no `.bib` to export first.
 
-Styles are taken from Zotero's folder as they are. Some GOST styles are written in CSL-M, with a separate layout per language, and pandoc will not read such a file at all. The plugin keeps a copy with the language layouts taken out, so those styles work too — but they are marked `(approximate)` in the list: Russian sources come out exactly right, foreign ones are written to the Russian layout, and Zotero will rewrite them on Refresh.
+Styles are taken from Zotero's folder as they are. Some GOST styles are written in CSL-M, with a separate layout per language, and pandoc will not read such a file at all. The plugin keeps a copy with the language layouts taken out, so those styles work too — but they are marked `(approximate)` in the list: sources in the style's own language come out right, foreign ones are written in that language too rather than in their own, and Zotero will rewrite them on Refresh.
+
+The copy is also stamped with the language the document records, since most GOST styles name none and pandoc would otherwise write every source in American English. What Zotero prints and pandoc would not is matched where the plugin can: the URL of an article that carries its page numbers is left out, as Zotero leaves it out — `-M zotero-article-urls=true` in the extra arguments keeps it.
 
 A footnote style also gets a **Note marker before punctuation** switch: “in the work[1].” rather than “in the work.[1]”. A Russian style starts with it on.
 

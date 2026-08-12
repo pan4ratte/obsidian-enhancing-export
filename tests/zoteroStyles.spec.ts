@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { readStyle, withoutLocaleLayouts } from '../src/zotero_styles';
+import { readStyle, styleLocale, withDefaultLocale, withoutLocaleLayouts, type ZoteroStyle } from '../src/zotero_styles';
 
 /** A style as Zotero installs it, cut down to what is read off it. */
 const style = (info: string, layouts: string) =>
@@ -64,5 +64,32 @@ describe('withoutLocaleLayouts', () => {
   test('leaves a style that has only the one layout alone', () => {
     const plain = style('<id>a</id>', ONE_LAYOUT);
     expect(withoutLocaleLayouts(plain)).toBe(plain);
+  });
+});
+
+describe('the locale the copy renders in', () => {
+  const named = { locale: 'ru-RU' } as ZoteroStyle;
+  const silent = {} as ZoteroStyle;
+
+  test('is the style’s own where it names one', () => {
+    expect(styleLocale(named, 'en')).toBe('ru-RU');
+  });
+
+  test('and otherwise the language Obsidian is read in, with no region invented for it', () => {
+    expect(styleLocale(silent, 'ru')).toBe('ru');
+    expect(styleLocale(silent, 'en-GB')).toBe('en');
+  });
+
+  /* Without it citeproc renders in en-US: a Russian source comes out as "Vol. 14. – P. 49", and a repeated citation
+     as nothing at all, the `ibid-ru` term of the GOST styles being defined only in their Russian locale. */
+  test('is written onto a style that names none, which is what citeproc reads', () => {
+    const stamped = withDefaultLocale('<?xml version="1.0"?>\n<style xmlns="x" class="note" version="1.0"><info/></style>', 'ru');
+    expect(stamped).toContain('<style default-locale="ru" xmlns="x"');
+  });
+
+  test('and never overwrites the answer the style gives itself', () => {
+    const own = style('<id>a</id>', ONE_LAYOUT);
+    expect(withDefaultLocale(own, 'en')).toBe(own);
+    expect(own).toContain('default-locale="ru-RU"');
   });
 });

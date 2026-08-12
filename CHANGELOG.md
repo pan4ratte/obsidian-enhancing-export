@@ -10,6 +10,8 @@
 * The template offers the citation styles installed in Zotero, and exports the citations already written out in one — still as live Zotero fields.
 * The sources are read from a running Zotero, so citeproc renders them without a `.bib` file. New bundled filter: `zotero-references.lua`.
 * Fixed: the style list named styles by their id instead of their title.
+* Fixed: citations were rendered in en-US whatever the style — a Russian source came out as «Vol. 14. – P. 49», and a repeated citation as an empty footnote.
+* The URL of a paginated article is left out, as Zotero itself leaves it out; `-M zotero-article-urls=true` keeps it.
 * The exported document records the style it was written in, in Word as well as in LibreOffice, so Refresh does not reformat it.
 * The bibliography is a live Zotero field too, in both formats, and a row switches it off for a footnote style that has no use for one.
 * GOST and other CSL-M styles are exported through a copy without the per-language layouts, which pandoc refuses to read.

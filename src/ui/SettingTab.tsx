@@ -598,7 +598,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         return;
       }
       try {
-        const cslPath = await installStyle(plugin, style);
+        const cslPath = await installStyle(plugin, style, moment.locale());
         writeArgs(a => setZoteroStyle(a, { id: style.id, cslPath, locale: cslLocale(style, moment.locale()) }));
       } catch (e) {
         console.error(e);

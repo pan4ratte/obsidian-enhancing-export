@@ -58,6 +58,29 @@ export const readStyle = (filePath: string, xml: string): ZoteroStyle | undefine
 /** The same style with its language-specific layouts removed, which is what leaves a file pandoc can read. */
 export const withoutLocaleLayouts = (xml: string): string => xml.replace(localeLayouts(), '');
 
+/**
+ * The language the copy is rendered in: the style's own where it names one, and otherwise the language Obsidian is
+ * read in — the rule Zotero itself renders by.
+ *
+ * Bare, where it comes from the interface: every CSL locale file answers to a language on its own, while the region a
+ * two-part code would have to invent answers to nothing — there is no `en-EN`.
+ */
+export const styleLocale = (style: ZoteroStyle, uiLocale: string): string => style.locale ?? uiLocale.split('-')[0];
+
+/**
+ * The same style rendering in `locale`.
+ *
+ * Without this citeproc falls back to en-US, and a style that names no locale of its own — which the GOST styles do
+ * not — writes a Russian source as "Vol. 14. – P. 49" and, worse, renders a repeated citation as nothing at all: the
+ * `ibid-ru` term those styles define lives in their Russian locale block, and an English rendering finds no term to
+ * put there. Zotero has no such trouble because it renders in the locale it exports in, which is the one the document
+ * records alongside the style.
+ *
+ * A style that names its own locale is left alone — that is its author's answer, and Zotero honours it too.
+ */
+export const withDefaultLocale = (xml: string, locale: string): string =>
+  /<style[^>]*\sdefault-locale=/.test(xml) ? xml : xml.replace(/<style\b/, `<style default-locale="${locale}"`);
+
 /** Every style installed in Zotero, by title. A folder that is not there is no styles rather than an error. */
 export const readZoteroStyles = async (dataDir: string): Promise<ZoteroStyle[]> => {
   const dir = path.join(dataDir, 'styles');
@@ -119,7 +142,7 @@ const copyName = (style: ZoteroStyle) =>
  * language-specific layouts out of a multilingual style, it keeps a template working on a machine where Zotero lives
  * somewhere else, and it spares pandoc a file name it would read as a URL.
  */
-export const installStyle = async (plugin: PandocGuiPlugin, style: ZoteroStyle): Promise<string> => {
+export const installStyle = async (plugin: PandocGuiPlugin, style: ZoteroStyle, uiLocale: string): Promise<string> => {
   const xml = await fs.promises.readFile(style.filePath, 'utf8');
   const fileName = copyName(style);
   const folder = path.posix.join(plugin.manifest.dir, 'csl');
@@ -128,6 +151,7 @@ export const installStyle = async (plugin: PandocGuiPlugin, style: ZoteroStyle):
   if (!(await adapter.exists(folder))) {
     await adapter.mkdir(folder);
   }
-  await adapter.write(path.posix.join(folder, fileName), style.multilingual ? withoutLocaleLayouts(xml) : xml);
+  const readable = style.multilingual ? withoutLocaleLayouts(xml) : xml;
+  await adapter.write(path.posix.join(folder, fileName), withDefaultLocale(readable, styleLocale(style, uiLocale)));
   return styleArgPath(fileName);
 };
