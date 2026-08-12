@@ -14,7 +14,7 @@ export default {
   EXPORT_COMMAND_OUTPUT: (cmd: string) => `Команда: ${cmd}`,
 
   // ─── Export dialog ───────────────────────────────────────────────────────────
-  EXPORT_DIALOG_TITLE: 'Экспорт через Pandoc',
+  EXPORT_DIALOG_TITLE: 'Экспорт с помощью Pandoc',
   EXPORT_DIALOG_TEMPLATE: 'Выберите шаблон экспорта',
   EXPORT_DIALOG_FILE_NAME: 'Введите имя файла',
   EXPORT_DIALOG_FILE_NAME_DESC: (extension: string) => `Будет сохранён как ${extension}`,
