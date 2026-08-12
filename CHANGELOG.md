@@ -1,6 +1,15 @@
 # Changelog
 
 
+## 1.3.0
+
+### New feature: Import document and convert it to Markdown
+
+* New command: “Import a file and convert it to a note”. The dialog asks for the flavour of Markdown, the file, and the destination folder, suggesting the vault's folders as you type.
+* The default choice is GitHub Flavored Markdown — the flavour closest to Obsidian's own, maths included.
+* Different formats support different settings: tracked changes, extracted images, document details, shifted headings, tab width, stripped comments, wrapping, heading style and reference links.
+
+
 ## 1.2.2
 
 ### UI/UX enhancements and bug fixes

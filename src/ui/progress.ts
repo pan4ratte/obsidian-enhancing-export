@@ -7,15 +7,34 @@ import { t } from '../lang/helpers';
  */
 const DONE_VISIBLE_MS = 4000;
 
+/** What the notice says at each turn, which is all that tells a run out of the vault from one into it. */
+export interface ProgressMessages {
+  running: (file: string) => string;
+  done: (file: string) => string;
+  warned: (file: string) => string;
+}
+
+export const EXPORT_MESSAGES: ProgressMessages = {
+  running: t.NOTICE_EXPORTING,
+  done: t.NOTICE_EXPORT_SUCCESS,
+  warned: t.NOTICE_EXPORT_WARNINGS,
+};
+
+export const IMPORT_MESSAGES: ProgressMessages = {
+  running: t.NOTICE_IMPORTING,
+  done: t.NOTICE_IMPORT_SUCCESS,
+  warned: t.NOTICE_IMPORT_WARNINGS,
+};
+
 /**
- * The notice an export runs behind: a line saying what is being done, and a bar under it. Borrowed from the Classy
- * PDF Extractor.
+ * The notice a pandoc run goes on behind: a line saying what is being done, and a bar under it. Borrowed from the
+ * Classy PDF Extractor.
  *
  * Nothing here can be counted — pandoc is one child process that says nothing until it is done — so the bar sweeps
- * rather than fills, which says the export is still going where a bar standing still would not. It is the whole
+ * rather than fills, which says the run is still going where a bar standing still would not. It is the whole
  * report: the outcome is written into the same notice rather than raised as a second one.
  */
-export class ExportProgress {
+export class PandocProgress {
   private readonly notice: Notice;
   private readonly labelEl: HTMLElement;
   private readonly barEl: HTMLElement;
@@ -23,9 +42,9 @@ export class ExportProgress {
   /** Set once the run is over, whether it finished or gave up. */
   private ended = false;
 
-  constructor() {
-    // 0 keeps it on screen: an export takes as long as the note is long, and a notice that timed out halfway would
-    // be saying the run had ended when it had not.
+  constructor(private readonly messages: ProgressMessages = EXPORT_MESSAGES) {
+    // 0 keeps it on screen: a run takes as long as the document is long, and a notice that timed out halfway would
+    // be saying it had ended when it had not.
     this.notice = new Notice('', 0);
 
     // Obsidian lays a notice out as a column on the desktop and as a row on a phone, and `notice-message` is the
@@ -41,18 +60,18 @@ export class ExportProgress {
   /** Pandoc is running, which is the whole of the wait. */
   running(file: string): void {
     if (!this.ended) {
-      this.labelEl.setText(t.NOTICE_EXPORTING(file));
+      this.labelEl.setText(this.messages.running(file));
     }
   }
 
   /** The file was written, and the notice bows out by itself. */
   succeed(file: string): void {
-    this.finish(t.NOTICE_EXPORT_SUCCESS(file), 'is-done');
+    this.finish(this.messages.done(file), 'is-done');
   }
 
   /** Written, but pandoc had something to say about it. */
   warn(file: string): void {
-    this.finish(t.NOTICE_EXPORT_WARNINGS(file), 'is-warn');
+    this.finish(this.messages.warned(file), 'is-warn');
   }
 
   /**

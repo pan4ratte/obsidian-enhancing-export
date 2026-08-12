@@ -27,7 +27,11 @@ The plugin works around many of the problems of Pandoc itself and of other expor
 
 A lua filter is a small script Pandoc applies to the document on export, which lets you tune the document more finely still: page breaks in Word, diagrams from Mermaid code blocks, embedded notes, chemical formulas or sheet music. The filter store offers more than three dozen of them, grouped by the problem they solve, each naming what it requires.
 
-### 5. Pandoc, watched over
+### 5. Files brought into the vault
+
+The “Import a file” command converts an outside document and turns it into a note. The import dialog asks for the flavour of Markdown to format it in and the folder to put it in, and lets the reading and the writing be set more finely: Word's tracked changes, images extracted into a folder of the vault, the document's details kept as the note's properties, shifted headings, line wrapping and heading style.
+
+### 6. Pandoc, watched over
 
 Your Pandoc stays at the current version, because the plugin tracks releases and offers to install a new one when it finds it. The manual and the changelog can be opened straight from the plugin too.
 

@@ -66,6 +66,10 @@ export interface PandocGuiSettings {
   lastExportDirectory?: PlatformValue<string>;
   lastExportType?: string;
 
+  /** What the last import was written as, and the vault folder it was written into. */
+  lastImportFlavour?: string;
+  lastImportFolder?: string;
+
   /** How the templates table was last ordered. */
   lastTemplateSort?: { column: 'name' | 'output'; ascending: boolean };
 

@@ -8,7 +8,7 @@ import { TFile, getLinkpath, moment, type EmbedCache } from 'obsidian';
 import type { SemVer } from 'semver';
 import { exec, renderTemplate, getPlatformValue, trimQuotes } from './utils';
 import { t } from './lang/helpers';
-import { ExportProgress } from './ui/progress';
+import { PandocProgress } from './ui/progress';
 import { describeExportFailure } from './export_error';
 import type PandocGuiPlugin from './main';
 import pandoc from './pandoc';
@@ -166,7 +166,7 @@ export async function exportNote(
 
   // Shown for every export: a PDF engine on a long note takes long enough to look stuck.
   beforeExport?.();
-  const progress = new ExportProgress();
+  const progress = new PandocProgress();
 
   // Rendering a `${...}` can fail on a template the editor let through, and the notice is already up by here — so
   // everything from the environment onwards reports through the one handler rather than escaping past it.
