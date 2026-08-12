@@ -42,28 +42,19 @@ import {
   keywords,
   keywordsTitle,
   listStyles,
-  noteBeforePunctuation,
   setEmbedNotes,
   setFigureStyle,
   setFlattenOrdered,
   setKeywords,
   setKeywordsTitle,
   setListStyles,
-  setNoteBeforePunctuation,
   setTableHeadStyle,
   setTableStyle,
   setTodayFormat,
-  setZoteroBibliography,
-  setZoteroLinks,
-  setZoteroStyle,
   tableHeadStyle,
   tableStyle,
   todayFormat,
-  zoteroBibliography,
-  zoteroLinks,
-  zoteroStyle,
 } from '../filter_args';
-import { cslLocale, defaultZoteroDataDir, installStyle, readZoteroStyles, type ZoteroStyle } from '../zotero_styles';
 import { PANDOC_EXTENSIONS, enabledExtensions, setExtensions } from '../pandoc_extensions';
 import {
   CURATED_VARIABLES,
@@ -171,7 +162,6 @@ import {
   textFromPairs,
   topLevelDivision,
   variable,
-  orderCiteproc,
   variables,
   wrap,
   type CuratedVariable,
@@ -180,7 +170,6 @@ import {
   isEpubOutput,
   isPdfOutput,
   isSlideOutput,
-  isWordProcessorOutput,
   outputFormat,
   supportsAscii,
   supportsCss,
@@ -564,48 +553,6 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
     /** Setting one is always the same move: that field, rewritten. */
     const writeArgs = (write: (args?: string) => string) => updateTemplate(v => (v.customArguments = write(v.customArguments)));
 
-    /* The citation styles installed in Zotero, read once the row that offers them is on the page. */
-    const [zoteroStyles, setZoteroStyles] = createSignal<ZoteroStyle[]>([]);
-
-    createEffect(() => {
-      if (!isWordProcessorOutput(format()) || !zoteroLinks(args())) {
-        return;
-      }
-      void readZoteroStyles(settings.zoteroDataDir || defaultZoteroDataDir()).then(setZoteroStyles);
-    });
-
-    /** What a style is called, rather than the id it records — `name`, which is the field a dropdown reads. */
-    const zoteroStyleOptions = createMemo(() => [
-      { value: '', name: t.ZOTERO_STYLE_NONE },
-      ...zoteroStyles().map(style => ({
-        value: style.id,
-        // A style pandoc cannot read in full is still offered, since it is the one Zotero will reformat with — but
-        // never silently: what it writes for a source in another language is not what Zotero writes.
-        name: style.multilingual ? `${style.title} ${t.ZOTERO_STYLE_APPROXIMATE}` : style.title,
-      })),
-    ]);
-
-    /** The style the template names, as the folder describes it. */
-    const chosenZoteroStyle = createMemo(() => {
-      const id = zoteroStyle(args())?.id;
-      return id ? zoteroStyles().find(style => style.id === id) : undefined;
-    });
-
-    const chooseZoteroStyle = async (id: string) => {
-      const style = zoteroStyles().find(s => s.id === id);
-      if (!style) {
-        writeArgs(a => setZoteroStyle(a, undefined));
-        return;
-      }
-      try {
-        const cslPath = await installStyle(plugin, style, moment.locale());
-        writeArgs(a => setZoteroStyle(a, { id: style.id, cslPath, locale: cslLocale(style, moment.locale()) }));
-      } catch (e) {
-        console.error(e);
-        new Notice(t.ZOTERO_STYLE_FAILED);
-      }
-    };
-
     /** Three flags with nothing to say for themselves, so they share a card. */
     const numbering = createMemo(() => {
       const items: { value: string; label: string; tooltip: string; checked: boolean }[] = [];
@@ -788,19 +735,17 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         left standing: they are filled in at export from a note that does not exist yet. */
     const resultingCommand = createMemo(() =>
       // Assembled as `exportNote` assembles it, filters put in their running order and all.
-      orderCiteproc(
-        orderLuaFilters(
-          [
-            pandoc.normalizePath(getPlatformValue(settings.pandocPath)),
-            '"${currentPath}"',
-            template()?.arguments,
-            template()?.customArguments,
-            template()?.userArguments,
-          ]
-            .map(part => part?.trim())
-            .filter(part => part)
-            .join(' ')
-        )
+      orderLuaFilters(
+        [
+          pandoc.normalizePath(getPlatformValue(settings.pandocPath)),
+          '"${currentPath}"',
+          template()?.arguments,
+          template()?.customArguments,
+          template()?.userArguments,
+        ]
+          .map(part => part?.trim())
+          .filter(part => part)
+          .join(' ')
       )
     );
 
@@ -862,43 +807,6 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
             onRemove={fileName => setLuaFilterOnCurrentTemplate(fileName, false)}
           />
         </Setting>
-
-        {/* The two Zotero filters ship with the plugin, so this card is the whole of the feature: the rows write the
-            `--lua-filter` flags, the style file and the `-M` fields together. Only a word processor opens a live
-            citation, so no other writer is asked about one. */}
-        <Show when={isWordProcessorOutput(format())}>
-          <div class="ex-card ex-template-modal-zotero">
-            <Setting name={t.ZOTERO} description={t.ZOTERO_DESC} heading={true} />
-            <Setting name={t.ZOTERO_LINKS} description={t.ZOTERO_LINKS_DESC}>
-              <Toggle checked={zoteroLinks(args())} onChange={on => writeArgs(a => setZoteroLinks(a, on))} />
-            </Setting>
-
-            <Show when={zoteroLinks(args())}>
-              <Setting name={t.ZOTERO_STYLE} description={t.ZOTERO_STYLE_DESC} class="ex-template-modal-zotero-style">
-                <DropDown
-                  options={zoteroStyleOptions()}
-                  selected={zoteroStyle(args())?.id ?? ''}
-                  autofocus={false}
-                  onChange={value => void chooseZoteroStyle(value)}
-                />
-              </Setting>
-              <Show when={zoteroStyle(args())}>
-                <Setting name={t.ZOTERO_BIBLIOGRAPHY} description={t.ZOTERO_BIBLIOGRAPHY_DESC}>
-                  <Toggle checked={zoteroBibliography(args())} onChange={checked => writeArgs(a => setZoteroBibliography(a, checked))} />
-                </Setting>
-                {/* Nothing to say about a marker in a style that writes the citation in the text. */}
-                <Show when={chosenZoteroStyle()?.note}>
-                  <Setting name={t.ZOTERO_NOTE_PUNCTUATION} description={t.ZOTERO_NOTE_PUNCTUATION_DESC}>
-                    <Toggle
-                      checked={noteBeforePunctuation(args())}
-                      onChange={checked => writeArgs(a => setNoteBeforePunctuation(a, checked))}
-                    />
-                  </Setting>
-                </Show>
-              </Show>
-            </Show>
-          </div>
-        </Show>
 
         {/* Every style named here has to exist in that document. Each row runs a bundled
             filter — pandoc has no option for any of this. */}

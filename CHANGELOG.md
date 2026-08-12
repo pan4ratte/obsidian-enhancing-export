@@ -1,25 +1,6 @@
 # Changelog
 
 
-## Unreleased
-
-### Live Zotero citations, written out in a style you choose
-
-* A docx or odt template has a Zotero group of its own, after the lua-filter list: live Zotero fields, and the style they are written in.
-* Live citations ship with the plugin now — `zotero.lua` is bundled rather than installed from the store, and leaves the catalogue.
-* The template offers the citation styles installed in Zotero, and exports the citations already written out in one — still as live Zotero fields.
-* The sources are read from a running Zotero, so citeproc renders them without a `.bib` file. New bundled filter: `zotero-references.lua`.
-* Fixed: the style list named styles by their id instead of their title.
-* Fixed: citations were rendered in en-US whatever the style — a Russian source came out as «Vol. 14. – P. 49», and a repeated citation as an empty footnote.
-* The URL of a paginated article is left out, as Zotero itself leaves it out; `-M zotero-article-urls=true` keeps it.
-* The exported document records the style it was written in, in Word as well as in LibreOffice, so Refresh does not reformat it.
-* The bibliography is a live Zotero field too, in both formats, and a row switches it off for a footnote style that has no use for one.
-* GOST and other CSL-M styles are exported through a copy without the per-language layouts, which pandoc refuses to read.
-* A footnote style can set the note marker before the punctuation — «в работе[1].» — which is how Russian typography sets it, and is what a Russian style starts on.
-* Fixed: an ampersand in a citation came out as `&amp;` in Word.
-* Fixed: `--citeproc` is put where the Zotero filters need it, since pandoc renders citations where the flag stands among the filters.
-
-
 ## 1.2.2
 
 ### UI/UX enhancements and bug fixes

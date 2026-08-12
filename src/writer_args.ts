@@ -336,9 +336,9 @@ export const setPdfEngine = (args: string | undefined, engine: string): string =
 /**
  * `-C` is pandoc's short form; the long one is what gets written.
  *
- * Where it lands on the line matters as much as a filter's: pandoc renders the citations at the point `--citeproc`
- * stands among the `--lua-filter`s, so a filter written before it is handed `[@citekey]` and one written after it is
- * handed the rendered citation. `orderCiteproc` is what puts it where the Zotero filters need it.
+ * Where it lands on the line does not matter, unlike a filter's: `--citeproc` runs after every `--lua-filter`
+ * whatever order they are written in — the positional form is `--filter citeproc`, which is a separate program and
+ * not what this writes.
  */
 const CITEPROC = ['--citeproc', '-C'] as const;
 const BIBLIOGRAPHY = '--bibliography';
@@ -362,69 +362,6 @@ export const setBibliography = (args: string | undefined, file: string): string 
 export const csl = (args?: string): string | undefined => valueOf(args, CSL);
 
 export const setCsl = (args: string | undefined, file: string): string => setValue(args, CSL, file || undefined);
-
-/** A lua filter on the command line, in every spelling pandoc takes for one. */
-const LUA_FILTER_FLAG = /(?:--lua-filter|-L)[= ]("[^"]*"|\S+)/g;
-
-const CITEPROC_FLAG = /(?:^|\s)(?:--citeproc|-C)(?=\s|$)/;
-
-/** Where a flag stands on the line, and the text of it. */
-interface Flag {
-  index: number;
-  text: string;
-}
-
-/** The flag that runs `fileName`, whatever folder it was found in. */
-const filterFlag = (command: string, fileName: string): Flag | undefined => {
-  for (const match of command.matchAll(LUA_FILTER_FLAG)) {
-    const file = match[1].replace(/"/g, '');
-    if (file === fileName || file.endsWith(`/${fileName}`) || file.endsWith(`\\${fileName}`)) {
-      return { index: match.index, text: match[0] };
-    }
-  }
-};
-
-const citeprocFlag = (command: string): Flag | undefined => {
-  const match = CITEPROC_FLAG.exec(command);
-  if (!match) {
-    return undefined;
-  }
-  // The pattern takes the space in front of the flag with it, and the index has to name the flag itself.
-  const lead = match[0].length - match[0].trimStart().length;
-  return { index: match.index + lead, text: match[0].trim() };
-};
-
-/** `command` with `moving` lifted out and put back in front of `anchor`, or unchanged where it is already there. */
-const moveBefore = (command: string, moving?: Flag, anchor?: Flag): string => {
-  if (!moving || !anchor || moving.index < anchor.index) {
-    return command;
-  }
-  // Cut where it stands, taking one space with it; the anchor is earlier in the line, so the cut leaves its offset
-  // where it was.
-  const rest = command.slice(moving.index + moving.text.length);
-  const head = command.slice(0, moving.index);
-  const cut = rest.startsWith(' ') ? head + rest.slice(1) : head.replace(/ $/, '') + rest;
-  return `${cut.slice(0, anchor.index)}${moving.text.trim()} ${cut.slice(anchor.index)}`;
-};
-
-/**
- * `command` with the three parts of a rendered Zotero citation in the only order they work in: the sources are read,
- * then citeproc renders them, then the citations are made live.
- *
- * Pandoc renders citations where `--citeproc` stands among the filters, and all three are appended to the line as
- * rows are toggled — in whatever order that happens, which is not the order they have to run in. So the rule is
- * applied where the command is assembled, the same as `orderLuaFilters` and for the same reason.
- */
-export const orderCiteproc = (command: string): string => {
-  if (!filterFlag(command, 'zotero.lua') || !citeprocFlag(command)) {
-    return command;
-  }
-  // Citeproc goes in front of the filter that makes citations live, and the sources in front of citeproc. In that
-  // order: putting the sources first only guarantees they precede the filter, which citeproc may already have done,
-  // and each move is measured against the line the one before it left.
-  const rendered = moveBefore(command, citeprocFlag(command), filterFlag(command, 'zotero.lua'));
-  return moveBefore(rendered, filterFlag(rendered, 'zotero-references.lua'), citeprocFlag(rendered));
-};
 
 /* -- Reference document --------------------------------------------------- */
 

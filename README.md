@@ -85,6 +85,7 @@ The catalogue currently offers:
 
 | Filter | What it does | Needs |
 | :--- | :---------- | :--- |
+| [Citations as live Zotero links](https://retorque.re/zotero-better-bibtex/exporting/) | Resolves Better BibTeX citekeys against a running Zotero, so citations and the bibliography come out right without exporting a .bib file first. | Zotero running, with the Better BibTeX plugin installed. |
 | [DOI to citation](https://github.com/pandoc/lua-filters/tree/master/doi2cite) | Looks up every DOI you cite and writes the matching bibliography entry for you, so a reference needs nothing but its DOI. | An internet connection at export time. |
 | [Several bibliographies](https://github.com/pandoc-ext/multibib) | Splits the references into separate lists — sources and software, primary and secondary — from one library, each printed where you put it. | — |
 | [References per chapter](https://github.com/pandoc-ext/section-bibliographies) | Gives every chapter or section its own reference list instead of one long list at the end. | — |
@@ -137,32 +138,6 @@ The catalogue currently offers:
 | [Spellcheck](https://github.com/pandoc/lua-filters/tree/master/spellcheck) | Lists the misspelled words of a note, reading the prose and skipping code, links and maths. Prints the list instead of exporting. | The aspell program on the PATH. |
 
 Want to add a filter of your own? The folder's [readme](lua-filters/README.md) says what an entry carries and where the file goes; `npm run docs:catalogue` writes the tables above from it.
-
-
-## Live Zotero citations in a style you choose
-
-A docx or odt template has a **Zotero** group, right after the lua-filter list. The **Live Zotero fields** switch turns `[@citekey]` into live Zotero fields: the document opens in Word or LibreOffice and Refresh goes on working. Both filters ship with the plugin — there is nothing to install from the store.
-
-Under it is a **Zotero style** row listing the styles in your library. With no style the citations are left unwritten — `<Do Zotero Refresh: …>` stands where the text belongs until you refresh them by hand. Choose one and they are written out at export while staying live fields, and the document records that same style, so Refresh has nothing to reformat.
-
-All it needs is Zotero running with [Better BibTeX](https://retorque.re/zotero-better-bibtex/): the sources are read straight from the library, with no `.bib` to export first.
-
-Styles are taken from Zotero's folder as they are. Some GOST styles are written in CSL-M, with a separate layout per language, and pandoc will not read such a file at all. The plugin keeps a copy with the language layouts taken out, so those styles work too — but they are marked `(approximate)` in the list: sources in the style's own language come out right, foreign ones are written in that language too rather than in their own, and Zotero will rewrite them on Refresh.
-
-The copy is also stamped with the language the document records, since most GOST styles name none and pandoc would otherwise write every source in American English. What Zotero prints and pandoc would not is matched where the plugin can: the URL of an article that carries its page numbers is left out, as Zotero leaves it out — `-M zotero-article-urls=true` in the extra arguments keeps it.
-
-A footnote style also gets a **Note marker before punctuation** switch: “in the work[1].” rather than “in the work.[1]”. A Russian style starts with it on.
-
-The bibliography is printed at the end of the document. To put it somewhere else, write a block in the note — and the closing colons are required, or the block swallows everything after it:
-
-```
-::: {#refs}
-:::
-```
-
-Next to the style there is a **Bibliography** switch. A footnote style describes the source in full in the note, which makes a list at the end a second copy of every note — switch it off and Zotero will not put one back on Refresh.
-
-Zotero's data folder is looked for where Zotero puts it. If yours has moved, name it in `zoteroDataDir` in the plugin's `data.json`.
 
 
 ## Custom export commands
@@ -219,7 +194,7 @@ Thanks are also owed to:
 
 - **[John MacFarlane](https://johnmacfarlane.net/) and the other Pandoc contributors** for the best document converter in the world.
 - **The [pandoc-ext](https://github.com/pandoc-ext) organisation** and the retired **[pandoc/lua-filters](https://github.com/pandoc/lua-filters)** collection.
-- **[Better BibTeX](https://retorque.re/zotero-better-bibtex/)** for the Zotero filter the plugin ships with.
+- **[Better BibTeX](https://retorque.re/zotero-better-bibtex/)** for the Zotero filter the catalogue also offers.
 
 ---
 
