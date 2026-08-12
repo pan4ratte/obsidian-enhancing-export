@@ -106,7 +106,7 @@ export default {
   PANDOC_DASHBOARD: 'Панель Pandoc',
   PANDOC_VERSION: (version: string) => `Версия Pandoc: ${version}`,
   PANDOC_NOT_INSTALLED: 'Не установлен',
-  PANDOC_NOT_FOUND: 'Pandoc не найден. Укажите путь к файлу Pandoc или добавьте его в переменные среды системы.',
+  PANDOC_NOT_FOUND: 'Pandoc не найден. Укажите путь к файлу или добавьте его в переменные среды системы.',
   PANDOC_CHECKING: 'Проверка обновлений…',
   PANDOC_UP_TO_DATE: 'Актуальная версия',
   PANDOC_UPDATE_AVAILABLE: (version: string) => `Доступна версия ${version}`,

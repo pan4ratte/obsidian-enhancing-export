@@ -5,7 +5,6 @@ import { t } from '../lang/helpers';
 import pandoc, { type PandocRelease } from '../pandoc';
 import Button from './components/Button';
 import Icon from './components/Icon';
-import { ExtraButton } from './components/Setting';
 
 /** Green / yellow / grey dot next to the version. */
 type Status = 'ok' | 'outdated' | 'checking' | 'missing';
@@ -89,8 +88,7 @@ export default (props: {
 
       <div class="ex-pandoc-dashboard-actions">
         <Button
-          class="ex-pandoc-dashboard-button"
-          cta={updateAvailable()}
+          class={`ex-pandoc-dashboard-button${updateAvailable() ? ' is-outdated' : ''}`}
           onClick={() => openExternal(latest()?.url ?? pandoc.latestReleaseUrl)}
         >
           <Icon name={updateAvailable() ? 'download' : 'scroll-text'} />
@@ -106,7 +104,9 @@ export default (props: {
         </Button>
         {/* The dialog cannot pick "nothing", so clearing needs its own control. */}
         <Show when={props.path}>
-          <ExtraButton icon="rotate-ccw" tooltip={t.PANDOC_PATH_RESET} onClick={() => props.onPathChange?.('')} />
+          <Button class="ex-pandoc-dashboard-button is-icon" tooltip={t.PANDOC_PATH_RESET} onClick={() => props.onPathChange?.('')}>
+            <Icon name="rotate-ccw" />
+          </Button>
         </Show>
       </div>
     </div>

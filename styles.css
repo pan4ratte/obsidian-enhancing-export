@@ -77,25 +77,31 @@
  */
 
 /*
- * Status on the left, actions on the right. Both are flex items of the card,
- * so a pane too narrow to hold them side by side wraps them into a column.
+ * One card divided into blocks by the lines between them, the way the templates
+ * table's actions card is: what pandoc is, and then what can be done about it.
+ * `overflow` keeps a block's hover fill inside the rounded corners.
  */
 .ex-pandoc-dashboard {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--size-4-4);
-  border: var(--border-width) solid var(--background-modifier-border);
+  flex-direction: row;
+  align-items: stretch;
+  border: 1px solid var(--background-modifier-border);
   border-radius: var(--setting-items-radius);
-  background-color: var(--background-secondary);
-  padding: var(--size-4-4);
+  background: var(--setting-items-background);
+  overflow: hidden;
   margin-bottom: 24px;
 }
 
+/* The section the card opens with, and the only one that is read rather than
+   pressed: it takes the width the actions leave, and the card's padding with it.
+   `min-width` is what lets it be the one that gives way when the pane narrows. */
 .ex-pandoc-dashboard-info {
   flex: 1 1 auto;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--size-4-4);
 }
 
 .ex-pandoc-dashboard-version {
@@ -108,7 +114,7 @@
 /* Status line: the dot and its label share the state colour. */
 .ex-pandoc-dashboard-status {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--size-4-2);
   font-size: var(--font-ui-smaller);
   color: var(--text-muted);
@@ -123,6 +129,9 @@
   background-color: currentColor;
   /* Halo in the same colour as the dot, only much fainter. */
   box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 20%, transparent);
+  /* Centred on the first line rather than on the label, which a long enough
+     status wraps onto a second one. */
+  margin-top: calc((1lh - 0.30rem) / 2);
 }
 
 .ex-pandoc-dashboard-status.is-ok {
@@ -147,24 +156,70 @@
   margin-top: var(--size-2-2);
 }
 
-/* Side by side, and only breaking apart when the row genuinely cannot hold
-   them — the settings pane otherwise stacks buttons as soon as it gets narrow. */
+/* The sections after it, one per action, each as wide as what it says. */
 .ex-pandoc-dashboard-actions {
+  flex: none;
   display: flex;
-  flex: 0 1 auto;
   flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--size-4-2);
+  align-items: stretch;
+  border-inline-start: 1px solid var(--background-modifier-border);
 }
 
+/* Two-class specificity throughout: these are `button` elements, and every
+   property below is one the theme's button rules would otherwise set. */
 .ex-pandoc-dashboard-button.ex-pandoc-dashboard-button {
-  display: inline-flex;
   flex: none;
-  width: auto;
+  display: inline-flex;
   align-items: center;
-  gap: var(--size-4-1);
+  justify-content: center;
+  gap: var(--size-4-2);
+  min-width: 0;
+  /* The section is the full height of the card, not a button standing in one. */
+  align-self: stretch;
+  height: auto;
+  min-height: 42px;
   margin: 0;
+  padding: var(--size-4-2) var(--size-4-4);
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  cursor: var(--cursor);
+  transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
+}
+
+/* The lines the card is divided by. */
+.ex-pandoc-dashboard-actions .ex-pandoc-dashboard-button + .ex-pandoc-dashboard-button {
+  border-inline-start: 1px solid var(--background-modifier-border);
+}
+
+/* Accent under the pointer only: these are what the card is for, but not what
+   it is about. */
+.ex-pandoc-dashboard-button.ex-pandoc-dashboard-button:hover,
+.ex-pandoc-dashboard-button.ex-pandoc-dashboard-button:focus-visible {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-accent);
+}
+
+/* Reached by tab, so it has to show where it is — but inside the card, where an
+   outline would otherwise be clipped by the corners. */
+.ex-pandoc-dashboard-button.ex-pandoc-dashboard-button:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+/* An update to offer wears the colour the status line is already wearing, in
+   place of the accent the other sections take. */
+.ex-pandoc-dashboard-button.is-outdated.is-outdated,
+.ex-pandoc-dashboard-button.is-outdated.is-outdated:hover {
+  color: var(--text-warning);
+}
+
+/* A section with an icon and no label needs less width around it. */
+.ex-pandoc-dashboard-button.is-icon.is-icon {
+  padding-inline: var(--size-4-3);
 }
 
 /* `setIcon` sizes to the font, which is too big for a button label. */
