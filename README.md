@@ -66,7 +66,7 @@ Mind what the built-in build cannot do:
 * **Nothing is fetched from the network** while converting, so an image linked by URL will not make it into the document.
 * **Lua filters only** — which is what every filter in the plugin's store is.
 * The build takes about 56 MB in the plugin folder. With plugin syncing on, it will be copied to every device.
-* It needs a recent device: iOS 18.4 or newer, or an up-to-date Android WebView. The plugin checks this itself and says so when the device is too old.
+* It needs a recent engine: iOS 18.4 or newer, or an up-to-date Android WebView. On a desktop the plugin switches on the wasm feature the build needs, which Obsidian's Chromium still keeps behind a flag.
 
 ### Option 1: Obsidian plugin store
 

@@ -3,7 +3,7 @@ import { Show, createMemo, createResource, createSignal } from 'solid-js';
 import { t } from '../lang/helpers';
 import type { EngineMode } from '../engine';
 import type { PandocWasmManager, WasmRelease } from '../wasm/install';
-import { supportsPandocWasm } from '../wasm/support';
+import { pandocWasmSupport } from '../wasm/support';
 import { MessageBox } from './message_box';
 import Button from './components/Button';
 import Icon from './components/Icon';
@@ -24,9 +24,10 @@ export default (props: {
   version?: string;
   mode?: EngineMode;
   onModeChange: (mode: EngineMode) => void;
-  onInstalled: () => void;
+  /** The version now on disk, or nothing where it has just been removed. */
+  onInstalled: (version?: string) => void;
 }) => {
-  const [supported] = createResource(supportsPandocWasm);
+  const [supported] = createResource(pandocWasmSupport);
   const [latest] = createResource(async () => {
     try {
       return await props.manager.latest();
@@ -36,8 +37,16 @@ export default (props: {
   });
   /** What the panel is doing, while it is doing it — the buttons stand down until it is finished. */
   const [busy, setBusy] = createSignal<string>();
+  /** Why the installed binary would not start, in the engine's own words. */
+  const [failed, setFailed] = createSignal<string>();
 
-  const installed = () => !!props.version;
+  /**
+   * Whether the binary is on disk. The recorded version says which one it is, but a file deleted from outside
+   * Obsidian would otherwise leave the panel offering to remove something that is not there — and, worse, nothing to
+   * install.
+   */
+  const [onDisk, { refetch: lookAgain }] = createResource(() => props.manager.isInstalled());
+  const installed = () => !!props.version && onDisk() !== false;
 
   const updatable = createMemo(() => {
     const release = latest();
@@ -45,18 +54,22 @@ export default (props: {
   });
 
   const status = createMemo(() => {
-    if (supported() === false) {
+    if (supported()?.ok === false || failed()) {
       return 'missing';
     }
     return installed() ? (updatable() ? 'outdated' : 'ok') : 'missing';
   });
 
   const statusText = createMemo(() => {
-    if (supported() === false) {
-      return t.WASM_UNAVAILABLE;
-    }
     if (busy()) {
       return busy();
+    }
+    // What the binary said when it would not start beats what the probe guessed before it was ever downloaded.
+    if (failed()) {
+      return t.WASM_LOAD_FAILED(failed());
+    }
+    if (supported()?.ok === false) {
+      return t.WASM_UNAVAILABLE;
     }
     if (!installed()) {
       return latest() ? t.WASM_SIZE(megabytes(latest().size)) : t.WASM_DESC;
@@ -68,12 +81,25 @@ export default (props: {
     const said = { downloading: t.WASM_DOWNLOADING(megabytes(release.size)), extracting: t.WASM_EXTRACTING, writing: t.WASM_WRITING };
     setBusy(said.downloading);
     try {
-      await props.manager.install(release, stage => setBusy(said[stage]));
+      const version = await props.manager.install(release, stage => setBusy(said[stage]));
+      void lookAgain();
+      props.onInstalled(version);
+
+      // The probe only guessed; this is the binary actually starting, which is the answer that counts.
+      setBusy(t.WASM_PREPARING);
+      await props.manager.load();
+      setFailed(undefined);
       new Notice(t.WASM_INSTALLED(release.version));
-      props.onInstalled();
     } catch (e) {
       console.error(e);
-      new Notice(t.WASM_INSTALL_FAILED);
+      // Downloaded but unable to start is a different thing from a download that failed, and says so.
+      const reason = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+      if (await props.manager.isInstalled()) {
+        setFailed(reason);
+        new Notice(t.WASM_LOAD_FAILED(reason));
+      } else {
+        new Notice(t.WASM_INSTALL_FAILED);
+      }
     } finally {
       setBusy(undefined);
     }
@@ -86,7 +112,11 @@ export default (props: {
       buttons: 'YesNo',
       callback: {
         yes: () => {
-          void props.manager.remove().then(props.onInstalled);
+          setFailed(undefined);
+          void props.manager.remove().then(() => {
+            void lookAgain();
+            props.onInstalled(undefined);
+          });
         },
       },
     }).open();
@@ -112,27 +142,26 @@ export default (props: {
           </div>
         </div>
 
-        {/* Nothing to offer on a device that cannot run it — the notice above says why. */}
-        <Show when={supported() !== false}>
-          <div class="ex-pandoc-dashboard-actions">
-            <Show when={latest()}>
-              <Button
-                class={`ex-pandoc-dashboard-button${updatable() ? ' is-outdated' : ''}`}
-                disabled={!!busy()}
-                onClick={() => void install(latest())}
-              >
-                <Icon name="download" />
-                {installed() ? t.WASM_UPDATE : t.WASM_INSTALL}
-              </Button>
-            </Show>
-            <Show when={installed()}>
-              <Button class="ex-pandoc-dashboard-button" disabled={!!busy()} onClick={remove}>
-                <Icon name="trash-2" />
-                {t.WASM_REMOVE}
-              </Button>
-            </Show>
-          </div>
-        </Show>
+        {/* Offered whatever the probe thought: it is a guess, and being wrong about it must not be what stops
+            someone installing. The binary itself answers on the next line. */}
+        <div class="ex-pandoc-dashboard-actions">
+          <Show when={latest() && (!installed() || updatable() || failed())}>
+            <Button
+              class={`ex-pandoc-dashboard-button${updatable() ? ' is-outdated' : ''}`}
+              disabled={!!busy()}
+              onClick={() => void install(latest())}
+            >
+              <Icon name="download" />
+              {installed() ? t.WASM_UPDATE : t.WASM_INSTALL}
+            </Button>
+          </Show>
+          <Show when={installed()}>
+            <Button class="ex-pandoc-dashboard-button" disabled={!!busy()} onClick={remove}>
+              <Icon name="trash-2" />
+              {t.WASM_REMOVE}
+            </Button>
+          </Show>
+        </div>
       </div>
 
       {/* Asked whether or not it is installed: it is the answer that says what to install for. */}

@@ -8,6 +8,7 @@ import { requestUrl } from 'obsidian';
 import type PandocGuiPlugin from '../main';
 import { extractFromZip } from './zip';
 import { PandocWasm } from './runtime';
+import { pandocWasmSupport } from './support';
 
 /** Where the binary lives inside the plugin folder. */
 export const WASM_DIR = 'wasm';
@@ -97,12 +98,16 @@ export class PandocWasmManager {
   }
 
   /**
-   * Download the archive, take the binary out of it and write it into the plugin folder.
+   * Download the archive, take the binary out of it and write it into the plugin folder. Answers the version now on
+   * disk, for the caller to record.
+   *
+   * What is installed is written to the settings by whoever owns them — the settings tab holds them in a store, and a
+   * second writer reaching past it leaves the panel showing what was true a moment ago.
    *
    * The whole archive is held in memory while it is unpacked — 16 MB of it, and 56 MB once unpacked, which is the
    * price of not having a real file system to stream through.
    */
-  async install(release: WasmRelease, onProgress?: InstallProgress): Promise<void> {
+  async install(release: WasmRelease, onProgress?: InstallProgress): Promise<string> {
     onProgress?.('downloading');
     const { arrayBuffer: archive } = await requestUrl({ url: release.url });
 
@@ -119,19 +124,16 @@ export class PandocWasmManager {
 
     // A newly written binary replaces whatever was loaded from the old one.
     this.forget();
-    this.plugin.settings.wasmVersion = release.version;
-    await this.plugin.saveSettings();
+    return release.version;
   }
 
-  /** Delete the binary and forget the version it was. */
+  /** Delete the binary. The version it was is the caller's to forget, as installing it was theirs to record. */
   async remove(): Promise<void> {
     const { adapter } = this.plugin.app.vault;
     if (await adapter.exists(this.filePath)) {
       await adapter.remove(this.filePath);
     }
     this.forget();
-    delete this.plugin.settings.wasmVersion;
-    await this.plugin.saveSettings();
   }
 
   /** Drop the loaded binary, so the next run reads whatever is on disk now. */
@@ -165,6 +167,9 @@ export class PandocWasmManager {
     if (!(await adapter.exists(this.filePath))) {
       throw new Error('Pandoc for mobile is not installed');
     }
+    // The flag this may have to set lasts only as long as the process, so it is asked for again every session — and
+    // before the compile, which is what needs it.
+    await pandocWasmSupport();
     const binary = await adapter.readBinary(this.filePath);
     this.#module ??= await WebAssembly.compile(binary);
     this.#instance = await PandocWasm.load(this.#module);

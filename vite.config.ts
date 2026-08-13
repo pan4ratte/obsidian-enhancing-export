@@ -64,6 +64,11 @@ export default defineConfig(({ mode }) => {
           exports: 'named',
           // `banner` is prepended before minification, which drops the comment.
           postBanner: banner,
+          // Node and electron are reached by dynamic import, so that a phone — which has neither — can still load the
+          // plugin. Left as a native `import()`, the renderer refuses a bare specifier it has no resolver for
+          // ("Failed to resolve module specifier 'electron'"); this emits `require()` for them instead, which is how
+          // the same modules were reached when they were imported at the top of a file.
+          dynamicImportInCjs: false,
         },
         external: [
           'obsidian',

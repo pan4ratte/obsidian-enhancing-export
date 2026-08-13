@@ -1422,7 +1422,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         version={settings.wasmVersion}
         mode={settings.engineMode}
         onModeChange={mode => setSettings('engineMode', mode)}
-        onInstalled={() => setSettings('wasmVersion', plugin.settings.wasmVersion)}
+        onInstalled={version => setSettings('wasmVersion', version)}
       />
 
       <Setting name={t.SECTION_DEFAULTS} heading={true} />

@@ -4,14 +4,16 @@
  * Skipped unless PANDOC_WASM names a `pandoc.wasm` — it is 56 MB, so it is not something to keep in the repository or
  * download on every run. To run these:
  *
- *   PANDOC_WASM=/path/to/pandoc.wasm NODE_OPTIONS=--experimental-wasm-exnref npx vitest run tests/wasmConvert.spec.ts
+ *   PANDOC_WASM=/path/to/pandoc.wasm npx vitest run tests/wasmConvert.spec.ts
  *
- * The node flag is only needed because node lags the browsers on wasm exception handling; Obsidian needs no such thing.
+ * Node keeps wasm exception handling behind a flag, as Obsidian's desktop build does; `pandocWasmSupport` is what
+ * turns it on in both, so it is called here for the same reason the plugin calls it.
  */
 
 import { existsSync, readFileSync } from 'fs';
 import { convertWithWasm } from '../src/wasm/convert';
 import { PandocWasm } from '../src/wasm/runtime';
+import { pandocWasmSupport } from '../src/wasm/support';
 import type { FileStore } from '../src/file_store';
 
 const binary = process.env['PANDOC_WASM'];
@@ -39,6 +41,7 @@ describe.skipIf(!available)('the wasm build', () => {
   let pandoc: PandocWasm;
 
   beforeAll(async () => {
+    expect((await pandocWasmSupport()).ok).toBe(true);
     pandoc = await PandocWasm.load(await WebAssembly.compile(readFileSync(binary)));
     // The first conversion carries the runtime's own start-up, which is seconds rather than the half-second the rest take.
   }, 120_000);
