@@ -7,7 +7,10 @@ export const moment = { locale: () => 'en-us' };
 
 /** A desktop, which is what a test run is; the per-platform settings then key off node's own name for it. */
 export const Platform = {
+  isDesktop: true,
   isMobile: false,
+  isPhone: false,
+  isTablet: false,
   isMobileApp: false,
   isDesktopApp: true,
   isIosApp: false,

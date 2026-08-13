@@ -5,13 +5,22 @@
  * plugin loading on a phone, where there is no node at all.
  */
 
-import type { Vault } from 'obsidian';
+import { Platform, type Vault } from 'obsidian';
 import { VirtualPaths } from './wasm/paths';
 import { isDesktop } from './platform';
 import { dirname } from './paths';
 
-/** Node's own file system. Every caller has already established that this is a platform with one. */
-const nodeFs = async () => await import('fs/promises');
+/**
+ * Node's own file system. Every caller has already established that this is a platform with one; the guard here is
+ * the stricter question of whether node can be reached at all — see `isDesktop` — and the two only part where a
+ * phone is being emulated, which every caller either catches or was going to fail in anyway.
+ */
+const nodeFs = async () => {
+  if (!Platform.isDesktop) {
+    throw new Error('There is no file system outside the vault to reach on this device');
+  }
+  return await import('fs/promises');
+};
 
 const asBytes = (buffer: ArrayBuffer): Uint8Array => new Uint8Array(buffer);
 

@@ -1,4 +1,5 @@
-import { currentPlatform, isDesktop } from './platform';
+import { Platform } from 'obsidian';
+import { currentPlatform } from './platform';
 
 /**
  * The platforms a setting can be given a value of its own on: node's own names for the desktops, which is what vaults
@@ -43,7 +44,9 @@ export interface ExecResult {
 
 /** Run a command. Node's, so only where there is one — the wasm engine is what a phone converts with. */
 export async function exec(cmd: string, options?: { cwd?: string; env?: Record<string, string> }): Promise<ExecResult> {
-  if (!isDesktop()) {
+  // Obsidian's own check, not this plugin's `isDesktop`: a phone being emulated is given no node to run anything
+  // with, so there is nothing here to run either. See `isDesktop`.
+  if (!Platform.isDesktop) {
     throw new Error('There is no Pandoc to run on this device — see the engine setting.');
   }
   const { exec: run } = await import('child_process');

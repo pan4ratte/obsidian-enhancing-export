@@ -1,6 +1,7 @@
 /* Whether this device can run pandoc's wasm build — and, on a desktop, making sure it can. */
 
-import { isDesktop, isEmulatingMobile } from '../platform';
+import { Platform } from 'obsidian';
+import { isEmulatingMobile } from '../platform';
 
 /**
  * A module whose only unusual instruction is `try_table` (opcode 0x1f) — wasm exception handling, which pandoc's
@@ -47,16 +48,21 @@ const probe = async (): Promise<WasmSupport> => {
  * only widens what the decoder will accept. It is set once, only on a desktop that is not pretending to be a phone,
  * and only after the plain probe has already failed.
  */
-const enableExceptionHandling = async (): Promise<boolean> => {
-  if (!isDesktop()) {
-    // A phone has no node to ask, and its engine either has the feature or does not.
-    return false;
-  }
+/**
+ * No node to ask, which is the answer on a phone and on a desktop being made to look like one — Obsidian holding it
+ * back from a plugin for as long as the emulation is on. A phone needs no saying; the emulation does, because the
+ * verdict that follows from it otherwise reads as one about the device.
+ */
+const noNode = (): boolean => {
   if (isEmulatingMobile()) {
-    // A phone being emulated has none either, Obsidian holding node back from a plugin for as long as it is on. Said
-    // here in the plugin's own words, rather than by asking anyway and taking the notice Obsidian answers with.
     console.warn('Pandoc GUI: a phone is being emulated, and a phone has no node to switch wasm exception handling on with.');
-    return false;
+  }
+  return false;
+};
+
+const enableExceptionHandling = async (): Promise<boolean> => {
+  if (!Platform.isDesktop) {
+    return noNode();
   }
   try {
     const v8 = await import('v8');

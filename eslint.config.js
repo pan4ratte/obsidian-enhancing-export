@@ -80,6 +80,15 @@ export default tseslint.config(
     ...tseslint.configs.disableTypeChecked,
   },
   {
+    // Node is what these are for. The rule against importing it is about what a
+    // phone loads: none of these are ever in it. The build config and the two
+    // loaders run under node at build time, the specs under vitest, and the
+    // hot-reload shim is injected into development builds only — `vite.config.ts`
+    // adds it when the mode is not production, so a release never carries it.
+    files: ['vite.config.ts', 'vitest.config.ts', 'text-loader.ts', 'version.mjs', 'scripts/**', 'tests/**', 'src/hmr.ts'],
+    rules: { 'obsidianmd/no-nodejs-modules': 'off' },
+  },
+  {
     // Repository tooling, run from a terminal by a maintainer and never shipped.
     // Obsidian's guideline against logging is about a plugin filling a user's
     // console; a command-line script reporting what it rewrote is the opposite.

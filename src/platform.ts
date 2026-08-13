@@ -39,6 +39,13 @@ export const isPhoneUi = (): boolean => Platform.isPhone;
  */
 export const isEmulatingMobile = (): boolean => typeof document !== 'undefined' && document.body.hasClass('emulate-mobile');
 
+/**
+ * Whether this is a desktop at all — which a desktop emulating a phone still is, and goes on exporting as.
+ *
+ * Not the question to ask before reaching for node: `Platform.isDesktop` is, being the one that turns over under
+ * emulation, where Obsidian withholds node from a plugin whatever the device really is. Every `import()` of a node
+ * package in this plugin is guarded by that one, which is also the guard Obsidian's own lint rule reads.
+ */
 export const isDesktop = (): boolean => !Platform.isMobileApp;
 
 /**

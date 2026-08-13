@@ -37,6 +37,7 @@
 * A group's heading is drawn as a heading again — it had been losing the class that says so and wearing the box every row in a modal wears.
 * Extensions are ticked off one to a line on a phone, where two columns cut their names in half.
 * The lua-filter store's search field keeps its height on a phone, rather than being squeezed by the list under it.
+* Every node package is reached behind `Platform.isDesktop`, which is also false while a phone is emulated — where Obsidian withholds node whatever the device is.
 
 
 ## 1.3.0
