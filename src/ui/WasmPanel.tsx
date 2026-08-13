@@ -1,11 +1,12 @@
 import { Notice, type App } from 'obsidian';
-import { Show, createMemo, createResource, createSignal } from 'solid-js';
+import { Show, createEffect, createMemo, createResource, createSignal } from 'solid-js';
 import { t } from '../lang/helpers';
 import { isNewerRelease, type PandocWasmManager, type WasmRelease } from '../wasm/install';
 import { pandocWasmSupport } from '../wasm/support';
 import { MessageBox } from './message_box';
 import Button from './components/Button';
 import Icon from './components/Icon';
+import type { PanelNotice } from './PandocNotices';
 
 const megabytes = (bytes: number) => Math.round(bytes / 1024 / 1024);
 
@@ -22,6 +23,8 @@ export default (props: {
   version?: string;
   /** The version now on disk, or nothing where it has just been removed. */
   onInstalled: (version?: string) => void;
+  /** What this half has to say at length, which the card says under both of them. */
+  onNotices: (notices: PanelNotice[]) => void;
 }) => {
   const [supported] = createResource(pandocWasmSupport);
   const [latest] = createResource(async () => {
@@ -59,22 +62,37 @@ export default (props: {
     return updatable() ? 'outdated' : 'ok';
   });
 
+  /** The short of it, beside the dot. Why a device will not run it, and what syncing it costs, go below the halves. */
   const statusText = createMemo(() => {
     if (busy()) {
       return busy();
     }
-    // What the binary said when it would not start beats what the probe guessed before it was ever downloaded.
-    if (failed()) {
-      return t.WASM_LOAD_FAILED(failed());
-    }
-    if (supported()?.ok === false) {
-      return t.WASM_UNAVAILABLE;
+    if (failed() || supported()?.ok === false) {
+      return undefined;
     }
     if (!installed()) {
       return t.WASM_ABSENT;
     }
-    return updatable() ? t.PANDOC_UPDATE_AVAILABLE(latest().version) : t.WASM_SYNC_WARNING;
+    if (updatable()) {
+      return t.PANDOC_UPDATE_AVAILABLE(latest().version);
+    }
+    // Installed and nothing newer — as far as a lookup that was made can say.
+    return latest() ? t.PANDOC_UP_TO_DATE : t.PANDOC_UPDATE_CHECK_FAILED;
   });
+
+  /** Only what is wrong: a card with nothing the matter with it carries no line under its halves. */
+  const notices = createMemo<PanelNotice[]>(() => {
+    // What the binary said when it would not start beats what the probe guessed before it was ever downloaded.
+    if (failed()) {
+      return [{ text: t.WASM_LOAD_FAILED(failed()), tone: 'error' }];
+    }
+    if (supported()?.ok === false) {
+      return [{ text: t.WASM_UNAVAILABLE, tone: 'error' }];
+    }
+    return [];
+  });
+
+  createEffect(() => props.onNotices(notices()));
 
   const install = async (release: WasmRelease) => {
     const said = { downloading: t.WASM_DOWNLOADING(megabytes(release.size)), extracting: t.WASM_EXTRACTING, writing: t.WASM_WRITING };
@@ -127,7 +145,10 @@ export default (props: {
 
       <div class="ex-pandoc-dashboard-status" classList={{ [`is-${status()}`]: true }}>
         <span class="ex-pandoc-dashboard-indicator" />
-        <span>{statusText()}</span>
+        {/* The dot keeps the state even where the words for it are too long to stand here. */}
+        <Show when={statusText()}>
+          <span>{statusText()}</span>
+        </Show>
 
         {/* What to do about what the line says, beside it. Nothing here yet is the one worth a word of its own;
             a newer build and the copy already installed are what the line has just named.

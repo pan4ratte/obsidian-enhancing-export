@@ -1,6 +1,6 @@
 import { App, Menu, Plugin, PluginManifest, TFile, Notice, debounce } from 'obsidian';
 import { PandocGuiSettings, ExportSetting, DEFAULT_SETTINGS, DEFAULT_ENV, restoreTemplates } from './settings';
-import { ExportSettingTab, ExportDialog, ImportDialog } from './ui';
+import { ExportSettingTab, ExportDialog, ImportDialog, UserGuideModal } from './ui';
 import { exportNote } from './export';
 import { getPlatformValue, PlatformKey, clone } from './utils';
 import { t } from './lang/helpers';
@@ -64,6 +64,14 @@ export default class PandocGuiPlugin extends Plugin {
       icon: 'file-input',
       callback: () => {
         ImportDialog.show(this);
+      },
+    });
+    this.addCommand({
+      id: 'user-guide',
+      name: t.CMD_USER_GUIDE,
+      icon: 'book-open',
+      callback: () => {
+        new UserGuideModal(this.app).open();
       },
     });
 

@@ -23,65 +23,34 @@ Word, OpenOffice, PDF, LaTeX (a whole document or a fragment to paste into an ex
 
 The plugin works around many of the problems of Pandoc itself and of other export plugins for Obsidian. Embedding `![[notes]]` and `![[notes#sections]]`, for one, works in full. `==Highlights==` survive, `$$…$$` blocks are put back together, and every `$today` in the note becomes today's date. Advanced settings and tweaks switch on the rest of the syntax — callouts, emoji shortcodes, bare URLs, hard line breaks and more.
 
-### 4. A store of lua filters
+### 4. Mobile support
 
-A lua filter is a small script Pandoc applies to the document on export, which lets you tune the document more finely still: page breaks in Word, diagrams from Mermaid code blocks, embedded notes, chemical formulas or sheet music. The filter store offers more than three dozen of them, grouped by the problem they solve, each naming what it requires.
+With Pandoc WASM supported, you can install it into the plugin if you like: the process is automatic and asks nothing of you. Pandoc WASM runs inside Obsidian itself and takes next to no room on disk. Exporting and importing on a phone work as they do on a computer, except that they happen in the vault, and some of the features are limited by the platform itself.
 
 ### 5. Import files to the vault
 
 The “Import a file and convert it to a note” command calls the import dialog and asks for the flavour of Markdown to format it in and the folder to put it in, and lets the reading and the writing be set more finely: Word's tracked changes, images extracted into a folder of the vault, the document's details kept as the note's properties, shifted headings, line wrapping and heading style.
 
-### 6. Pandoc, watched over
+### 6. A store of lua filters
 
-Your Pandoc stays at the current version, because the plugin tracks releases and offers to install a new one when it finds it. The manual and the changelog can be opened straight from the plugin too.
+A lua filter is a small script Pandoc applies to the document on export, which lets you tune the document more finely still: page breaks in Word, diagrams from Mermaid code blocks, embedded notes, chemical formulas or sheet music. The filter store offers more than three dozen of them, grouped by the problem they solve, each naming what it requires.
 
+### 7. Pandoc, watched over
 
-### 7. On a phone and a tablet
-
-The plugin runs on mobile: its settings will install a build of Pandoc that runs inside Obsidian itself, with nothing to install on the system. It is about 16 MB to download, and the plugin does the rest — unpacking it, putting it in place, starting it. Exporting and importing work as they do on a computer, except that the folders are the vault's own.
+The plugin tracks Pandoc releases and offers to install them: the installed Pandoc is updated by hand, while Pandoc WASM updates itself. Pandoc's manual and its changelog can be opened straight from the plugin too.
 
 
 ## Installation
 
 ### First of all, install Pandoc
 
+This is what you want if you are going to use the full Pandoc on a computer. For Pandoc WASM, see below.
+
 1. The plugin drives Pandoc, but Pandoc has to be installed first, from the official site: [https://pandoc.org/installing.html](https://pandoc.org/installing.html).
 
 2. Then either add it to your system `PATH`, or point the plugin at the installed program in its settings.
 
 3. Exporting straight to PDF additionally needs a LaTeX distribution — MiKTeX, TeX Live, the [TinyTeX](https://github.com/rstudio/tinytex-releases) I recommend, or any other engine Pandoc supports.
-
-### On a phone: the built-in Pandoc
-
-A program cannot be installed on a phone, so there the plugin uses a build of Pandoc compiled to WebAssembly.
-
-1. Open the plugin settings, find the "Pandoc WASM" card and choose "Install". The plugin downloads Pandoc's own official build, unpacks it and puts it in its folder. There is nothing else to do.
-
-2. "Use Pandoc WASM" decides when it runs: always, or — the default — on mobile only, leaving a computer to the installed program.
-
-Mind what the built-in build cannot do:
-
-* **No PDF.** A PDF needs a typesetting program (LaTeX, Typst), and the built-in Pandoc has no way to start one. Templates that write a PDF are left out of the export dialog. Export to Word, HTML, EPUB or LaTeX instead.
-* **No templates that run a command of your own**, for the same reason.
-* **Nothing is fetched from the network** while converting, so an image linked by URL will not make it into the document.
-* **Lua filters only** — which is what every filter in the plugin's store is.
-* The build takes about 56 MB in the plugin folder. With plugin syncing on, it will be copied to every device.
-* It needs a recent engine: iOS 18.4 or newer, or an up-to-date Android WebView. On a desktop the plugin switches on the wasm feature the build needs, which Obsidian's Chromium still keeps behind a flag.
-
-Templates the built-in Pandoc cannot run at all are left out of the export dialog. A template it can run, but only without some of its options, has them named in the dialog before the export, and the button asks to export anyway.
-
-Options you will be warned about:
-
-* `--filter` — filters that are programs, which there is nothing to run. Lua filters (`--lua-filter`) work, and every filter in the plugin's store is one.
-* `--defaults` — a Pandoc defaults file.
-* `--sandbox`, `--fail-if-warnings`.
-* Any option the plugin does not know, including deprecated ones such as `--atx-headers` and `--epub-chapter-level`.
-
-Options that simply do nothing, and are not warned about because they change no result:
-
-* `--pdf-engine`, `--pdf-engine-opt` — there is nothing to start.
-* `--request-header`, `--no-check-certificate` — there is no network.
-* `--data-dir`, `--log`, `--verbose`, `--quiet`, `--trace`, `--dump-args` — there are no system folders and no console to send them to.
 
 ### Option 1: Obsidian plugin store
 
@@ -102,6 +71,16 @@ If you want to test beta-versions of the plugin or use previous versions, you ca
 3. In the window that appears, paste the link to the `Pandoc GUI` plugin repository: [https://github.com/pan4ratte/obsidian-pandoc-gui](https://github.com/pan4ratte/obsidian-pandoc-gui)
 
 4. Under “Select a version” choose the desired version and click the “Add plugin” button. The plugin will be automatically installed and will be ready to use.
+
+### Mobile support: Pandoc WASM
+
+The full Pandoc runs on a computer only, so to use it on a phone or a tablet you can install Pandoc WASM into the plugin itself: the process is fully automatic and asks nothing of you.
+
+1. In the plugin settings find the “Pandoc WASM” card and press the install icon. The plugin downloads Pandoc's own official build, unpacks it and puts it in the plugin folder — there is nothing else to do.
+
+2. Under “Use Pandoc WASM” choose when it converts: on mobile only (the default) or always.
+
+So you need never install Pandoc on your computer at all, and can use the build inside the plugin instead. Pandoc WASM does have limits the ordinary version does not — they are built into the program itself. The user guide has the details.
 
 
 ## The lua-filter catalogue
@@ -181,11 +160,47 @@ The catalogue currently offers:
 Want to add a filter of your own? The folder's [readme](lua-filters/README.md) says what an entry carries and where the file goes; `npm run docs:catalogue` writes the tables above from it.
 
 
-## Custom export commands
+# User guide
+
+This guide is available inside the plugin too: the “Pandoc GUI: Open user guide” command in the command palette, or the “User guide” button in the settings.
+
+## 1. Pandoc WASM limitations
+
+Pandoc WASM works somewhat differently from the ordinary version because of how it is built. Before exporting with it, mind these limits:
+
+* **No PDF.** A PDF needs a typesetting program (LaTeX, Typst), and Pandoc WASM has no way to start one. Templates that write a PDF are left out of the export dialog. Export to Word, HTML, EPUB or LaTeX instead.
+* **No templates that run a command of your own**, for the same reason.
+* **Nothing is fetched from the network** while converting. An image embedded by URL will not make it into the exported file.
+* **Lua filters only.** Ordinary Pandoc takes filters of other kinds, Python among them; WASM does not. The good news: every filter in the plugin's store is a lua filter.
+
+What else to keep in mind:
+
+* The file takes about 56 MB in the plugin folder. If you sync your vault between devices, the WASM file is synced along with it.
+* WASM needs a recent phone: iOS 18.4 or newer, or an up-to-date Android WebView.
+* Templates Pandoc WASM cannot run are left out of the export dialog.
+
+### Options Pandoc WASM does not support
+
+A supported template can still hold options Pandoc WASM does not support: they are left out of the export, and the export dialog says so beforehand.
+
+Options you will be warned about:
+
+* `--filter` — filters that are programs, which there is nothing to run. Lua filters (`--lua-filter`) work, and every filter in the plugin's store is one.
+* `--defaults` — a Pandoc defaults file.
+* `--sandbox`, `--fail-if-warnings`.
+* Any option the plugin does not know, including deprecated ones such as `--atx-headers` and `--epub-chapter-level`.
+
+Options that simply do nothing, and are not warned about because they change no result:
+
+* `--pdf-engine`, `--pdf-engine-opt` — there is nothing to start.
+* `--request-header`, `--no-check-certificate` — there is no network.
+* `--data-dir`, `--log`, `--verbose`, `--quiet`, `--trace`, `--dump-args` — there are no system folders and no console to send them to.
+
+## 2. Custom export commands
 
 Choose `Custom` when creating an export template, and write whatever command you like — a Pandoc invocation the setting rows do not cover, or another program entirely. The variables below are filled in before it runs.
 
-## Variables
+### Variables
 
 You can use `${variables}` in your export command, their values are:
 

@@ -11,11 +11,11 @@ import { insert, Dynamic } from 'solid-js/web';
 import { t } from '../lang/helpers';
 
 import pandoc from '../pandoc';
-import { resolveEngine } from '../engine';
+import { resolveEngine, type EngineMode } from '../engine';
 import { chooseFile, documentsFolder, isMobile, vaultRoot } from '../platform';
-import PandocControls from './PandocControls';
 import PandocDashboard from './PandocDashboard';
 import PandocLinks from './PandocLinks';
+import PandocNotices, { type PanelNotice } from './PandocNotices';
 import WasmPanel from './WasmPanel';
 import TemplateActions from './TemplateActions';
 import TemplateTable from './TemplateTable';
@@ -1400,6 +1400,12 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
   // Which pandoc this vault exports with, and so which of the rows below are worth showing at all.
   const engine = createMemo(() => resolveEngine(settings.engineMode, isMobile()));
 
+  // What the two halves say at length, kept by the card rather than by either of them: the installed pandoc's
+  // notices come first, as its half does.
+  const [nativeNotices, setNativeNotices] = createSignal<PanelNotice[]>([]);
+  const [wasmNotices, setWasmNotices] = createSignal<PanelNotice[]>([]);
+  const panelNotices = createMemo(() => [...nativeNotices(), ...wasmNotices()]);
+
   // On a phone a folder is one of the vault's, and is stored as the path on the device all the same.
   const vaultDir = vaultRoot(app.vault.adapter);
   const vaultFolderOf = (path?: string) => (path?.startsWith(`${vaultDir}/`) ? path.substring(vaultDir.length + 1) : '');
@@ -1412,7 +1418,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         <div class="ex-pandoc-panel-row">
           {/* The installed program has nothing to say where it is not the one running. */}
           <Show when={engine() === 'native'}>
-            <PandocDashboard version={pandocVersion()} markdownLinks={app.vault.config.useMarkdownLinks} />
+            <PandocDashboard version={pandocVersion()} markdownLinks={app.vault.config.useMarkdownLinks} onNotices={setNativeNotices} />
           </Show>
 
           <WasmPanel
@@ -1420,24 +1426,52 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
             manager={plugin.wasm}
             version={settings.wasmVersion}
             onInstalled={version => setSettings('wasmVersion', version)}
+            onNotices={setWasmNotices}
           />
         </div>
 
-        <PandocControls
-          showFolder={engine() === 'native'}
-          path={getPlatformValue(settings.pandocPath) ?? ''}
-          onPathChange={value => setSettings('pandocPath', v => setPlatformValue(v, value))}
-          onChoosePath={() => void choosePandocPath()}
-          mode={settings.engineMode}
-          onModeChange={mode => setSettings('engineMode', mode)}
-        />
+        {/* Between the two pandocs and the pages to read: what neither half has the width to say. */}
+        <PandocNotices notices={panelNotices()} />
 
-        <PandocLinks />
+        <PandocLinks app={app} />
       </div>
 
       <Setting name={t.SECTION_DEFAULTS} heading={true} />
 
       <div class="ex-settings-card">
+        {/* Which pandoc converts, and where the installed one is: what every row below is answered under.
+            A phone has no installed program to point at, so that row belongs to the desktop. */}
+        <Show when={engine() === 'native'}>
+          {/* Nothing here means the export runs a bare `pandoc`, which is the system's PATH answering rather than a
+              search of the plugin's own — so the row claims it was found only once the binary has actually answered. */}
+          <Setting
+            name={t.PANDOC_FOLDER}
+            description={getPlatformValue(settings.pandocPath) || (pandocVersion() ? t.PANDOC_PATH_PLACEHOLDER : t.PANDOC_PATH_NOT_FOUND)}
+          >
+            <ExtraButton icon="folder" tooltip={t.CHOOSE_FILE} onClick={() => void choosePandocPath()} />
+            {/* The dialog cannot pick "nothing", so clearing needs its own control. */}
+            <Show when={getPlatformValue(settings.pandocPath)}>
+              <ExtraButton
+                icon="rotate-ccw"
+                tooltip={t.PANDOC_PATH_RESET}
+                onClick={() => setSettings('pandocPath', v => setPlatformValue(v, ''))}
+              />
+            </Show>
+          </Setting>
+        </Show>
+
+        {/* Asked whether or not the build is installed: it is the answer that says what to install for. */}
+        <Setting name={t.WASM_ENGINE}>
+          <DropDown
+            options={[
+              { name: t.WASM_ENGINE_AUTO, value: 'auto' },
+              { name: t.WASM_ENGINE_WASM, value: 'wasm' },
+            ]}
+            selected={settings.engineMode === 'wasm' ? 'wasm' : 'auto'}
+            onChange={(v: EngineMode) => setSettings('engineMode', v)}
+          />
+        </Setting>
+
         <Setting name={t.SETTING_EXPORT_DESTINATION}>
           <DropDown
             options={[
@@ -1583,6 +1617,7 @@ export default class extends PluginSettingTab {
             aliases: [
               t.PANDOC_DASHBOARD,
               t.PANDOC_PATH,
+              t.PANDOC_FOLDER,
               t.WASM_TITLE,
               t.WASM_ENGINE,
               t.SECTION_DEFAULTS,

@@ -3,6 +3,12 @@
 
 ## Unreleased
 
+### New feature: User guide
+
+* New command, “Open user guide”, and a button for it in the settings.
+* The guide ships with the plugin and opens in Obsidian: what Pandoc WASM cannot do, custom export commands and the variables they take.
+* Written in the vault's language, English where there is no translation.
+
 ### New feature: Pandoc on a phone and a tablet
 
 * The plugin runs on mobile. Exporting, importing, the template editor and the lua-filter store all work there.
@@ -16,7 +22,8 @@
 * The templates table marks the ones the built-in Pandoc will not run, and the ones it will run without some of their options.
 * `--natbib` and `--biblatex` are read by the built-in Pandoc, as `--citeproc` already was.
 * A newer built-in Pandoc is noticed at startup and said once, rather than only in the settings.
-* The settings open with one card holding everything about Pandoc: the installed one on the left of every row, the WebAssembly one on the right. Version and status first, with the update beside the line that reports it, then the Pandoc folder and “Use Pandoc WASM”, then Pandoc's manual and changelog.
+* The settings open with one card holding everything about Pandoc: the installed one on the left of every row, the WebAssembly one on the right. Version and status first, with the update beside the line that reports it, then the pages to read — the user guide, Pandoc's manual and its changelog.
+* “Pandoc folder” and “Use Pandoc WASM” are the first two rows of the general settings, where the rest of the answers are.
 
 
 ## 1.3.0

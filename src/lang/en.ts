@@ -3,6 +3,7 @@ export default {
   CMD_EXPORT: 'Export note',
   CMD_EXPORT_WITH_PREVIOUS: 'Export with previous settings',
   CMD_IMPORT: 'Import a file and convert it to a note',
+  CMD_USER_GUIDE: 'Open user guide',
   NOTICE_NO_FILE: 'Open a note first.',
   NOTICE_EXPORT_PREPARING: 'Preparing…',
   NOTICE_EXPORTING: (file: string) => `Generating “${file}”…`,
@@ -118,9 +119,11 @@ export default {
   PANDOC_UPDATE: 'Update',
   PANDOC_CHANGELOG: 'Changelog',
   PANDOC_MANUAL: 'Pandoc manual',
+  USER_GUIDE: 'User guide',
   PANDOC_FOLDER: 'Pandoc folder',
   PANDOC_PATH: 'Pandoc path',
   PANDOC_PATH_PLACEHOLDER: 'Detected automatically',
+  PANDOC_PATH_NOT_FOUND: 'Not found in the system environment variables',
   PANDOC_PATH_RESET: 'Reset to auto detect',
 
   // ─── Pandoc for mobile (wasm) ────────────────────────────────────────────────
@@ -144,7 +147,6 @@ export default {
   WASM_INSTALL_FAILED: 'The built-in Pandoc could not be installed — see the console for details.',
   WASM_UNAVAILABLE: 'This device looks unable to run the built-in Pandoc: it needs iOS 18.4, an up-to-date Android WebView, or a newer Obsidian. Installing anyway is allowed — if it will not start, the plugin will say why.',
   WASM_LOAD_FAILED: (reason: string) => `The built-in Pandoc is installed, but will not start on this device: ${reason}`,
-  WASM_SYNC_WARNING: 'The file is kept in the plugin folder. With plugin syncing on, it will be copied to every device.',
   WASM_PREPARING: 'Starting Pandoc…',
   WASM_NO_PDF: 'The built-in Pandoc cannot make a PDF: that needs a typesetting program it has no way to run. Export to Word, HTML or LaTeX instead, or switch to the installed Pandoc.',
   WASM_NO_COMMAND: 'The built-in Pandoc cannot run commands of your own, so this template needs the installed Pandoc.',

@@ -1,13 +1,14 @@
-import { Show, createMemo, createResource } from 'solid-js';
+import { Show, createEffect, createMemo, createResource, onCleanup } from 'solid-js';
 import type { SemVer } from 'semver';
 import { t } from '../lang/helpers';
 import pandoc, { type PandocRelease } from '../pandoc';
 import Button from './components/Button';
 import Icon from './components/Icon';
+import type { PanelNotice } from './PandocNotices';
 import { openExternal } from '../platform';
 
 /** Green / yellow / grey dot next to the version. */
-type Status = 'ok' | 'outdated' | 'checking' | 'missing';
+type Status = 'ok' | 'outdated' | 'checking' | 'absent';
 
 /** A lookup that could not be made is the same as "no newer release known". */
 const fetchLatestRelease = async (): Promise<PandocRelease | undefined> => {
@@ -23,6 +24,8 @@ export default (props: {
   version?: SemVer;
   /** Whether the vault writes Markdown links rather than wikilinks. */
   markdownLinks?: boolean;
+  /** What this half has to say at length, which the card says under both of them. */
+  onNotices: (notices: PanelNotice[]) => void;
 }) => {
   const [latest] = createResource(fetchLatestRelease);
 
@@ -33,8 +36,10 @@ export default (props: {
   });
 
   const status = createMemo<Status>(() => {
+    // Not a fault, and not read as one: exporting with the wasm build alone is an answer someone can have chosen,
+    // and the installed program is then simply not there to report on.
     if (!props.version) {
-      return 'missing';
+      return 'absent';
     }
     if (latest.loading) {
       return 'checking';
@@ -44,10 +49,11 @@ export default (props: {
 
   const versionText = createMemo(() => (props.version ? t.PANDOC_VERSION(props.version.version) : t.PANDOC_NOT_INSTALLED));
 
+  /** The short of it, beside the dot. What is longer than a line goes below the card's halves instead. */
   const statusText = createMemo(() => {
     switch (status()) {
-      case 'missing':
-        return t.PANDOC_NOT_FOUND;
+      case 'absent':
+        return undefined;
       case 'checking':
         return t.PANDOC_CHECKING;
       case 'outdated':
@@ -64,25 +70,41 @@ export default (props: {
       : undefined
   );
 
+  const notices = createMemo<PanelNotice[]>(() => {
+    const said: PanelNotice[] = [];
+    if (status() === 'absent') {
+      said.push({ text: t.PANDOC_NOT_FOUND, tone: 'muted' });
+    }
+    if (warning()) {
+      said.push({ text: warning(), tone: 'warning' });
+    }
+    return said;
+  });
+
+  createEffect(() => props.onNotices(notices()));
+  // A half that is no longer shown has nothing left to say — the wasm build is the one running.
+  onCleanup(() => props.onNotices([]));
+
   return (
     <div class="ex-pandoc-dashboard-half">
       <div class="ex-pandoc-dashboard-version">{versionText()}</div>
 
-      <div class="ex-pandoc-dashboard-status" classList={{ [`is-${status()}`]: true }}>
-        <span class="ex-pandoc-dashboard-indicator" />
-        <span>{statusText()}</span>
+      {/* Nothing to say and nothing to press is no line at all: the version above has already said it. */}
+      <Show when={statusText() || updateAvailable()}>
+        <div class="ex-pandoc-dashboard-status" classList={{ [`is-${status()}`]: true }}>
+          <span class="ex-pandoc-dashboard-indicator" />
+          <Show when={statusText()}>
+            <span>{statusText()}</span>
+          </Show>
 
-        {/* Beside the line that says there is one: it is only ever there when that line is, and it is what to do
-            about what the line just said. */}
-        <Show when={updateAvailable()}>
-          <Button class="ex-pandoc-dashboard-inline" tooltip={t.PANDOC_UPDATE} onClick={() => openExternal(latest().url)}>
-            <Icon name="download" />
-          </Button>
-        </Show>
-      </div>
-
-      <Show when={warning()}>
-        <div class="ex-pandoc-dashboard-warning">{warning()}</div>
+          {/* Beside the line that says there is one: it is only ever there when that line is, and it is what to do
+              about what the line just said. */}
+          <Show when={updateAvailable()}>
+            <Button class="ex-pandoc-dashboard-inline" tooltip={t.PANDOC_UPDATE} onClick={() => openExternal(latest().url)}>
+              <Icon name="download" />
+            </Button>
+          </Show>
+        </div>
       </Show>
     </div>
   );
