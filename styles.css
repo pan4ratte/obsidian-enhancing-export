@@ -1608,7 +1608,15 @@
   padding-bottom: var(--size-4-4);
 }
 
+/*
+ * A phone lays a modal's content out as a flex column, which the desktop does
+ * not — and a field standing in one is shrunk to make room for everything under
+ * it, the list of filters being as long as it likes. The height a field is
+ * given is a height, not an opening bid: it keeps it whatever else is in the
+ * column. `auto` is that height rather than a second copy of it.
+ */
 .ex-lua-search {
+  flex: 0 0 auto;
   width: 100%;
   margin-bottom: var(--size-4-3);
 }
@@ -1619,6 +1627,9 @@
  * relative wrapper, which also carries the gap below the row.
  */
 .ex-lua-filters-wrap {
+  /* Squeezed by the same column as the field above it, and with less to stand
+     on: the row inside it scrolls, so nothing in it argues for its height. */
+  flex: 0 0 auto;
   position: relative;
   margin-bottom: var(--size-4-3);
 }

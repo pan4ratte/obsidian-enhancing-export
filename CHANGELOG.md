@@ -36,6 +36,7 @@
 * A phone being emulated says the built-in Pandoc cannot be switched on because there is no node to do it with, rather than blaming the device.
 * A group's heading is drawn as a heading again — it had been losing the class that says so and wearing the box every row in a modal wears.
 * Extensions are ticked off one to a line on a phone, where two columns cut their names in half.
+* The lua-filter store's search field keeps its height on a phone, rather than being squeezed by the list under it.
 
 
 ## 1.3.0

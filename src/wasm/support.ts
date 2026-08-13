@@ -1,6 +1,6 @@
 /* Whether this device can run pandoc's wasm build — and, on a desktop, making sure it can. */
 
-import { isDesktop } from '../platform';
+import { isDesktop, isEmulatingMobile } from '../platform';
 
 /**
  * A module whose only unusual instruction is `try_table` (opcode 0x1f) — wasm exception handling, which pandoc's
@@ -44,26 +44,22 @@ const probe = async (): Promise<WasmSupport> => {
  *
  * V8 reads its wasm features when it decodes a module rather than when it starts, so a flag set now counts for
  * everything compiled after it. Nothing already compiled changes, and no module that used to compile stops: the flag
- * only widens what the decoder will accept. It is set once, only on a desktop, and only after the plain probe has
- * already failed.
+ * only widens what the decoder will accept. It is set once, only on a desktop that is not pretending to be a phone,
+ * and only after the plain probe has already failed.
  */
 const enableExceptionHandling = async (): Promise<boolean> => {
   if (!isDesktop()) {
     // A phone has no node to ask, and its engine either has the feature or does not.
     return false;
   }
+  if (isEmulatingMobile()) {
+    // A phone being emulated has none either, Obsidian holding node back from a plugin for as long as it is on. Said
+    // here in the plugin's own words, rather than by asking anyway and taking the notice Obsidian answers with.
+    console.warn('Pandoc GUI: a phone is being emulated, and a phone has no node to switch wasm exception handling on with.');
+    return false;
+  }
   try {
     const v8 = await import('v8');
-    // Obsidian hands a plugin `null` for every node package while it is emulating a phone, rather than refusing to
-    // resolve it — so this is a missing function rather than a throw. Nothing is wrong: a phone has no node either,
-    // and the emulation is showing what one would do. It is said out loud all the same, because the answer that
-    // follows from it looks like a verdict on the device.
-    if (typeof v8?.setFlagsFromString !== 'function') {
-      console.warn(
-        'Pandoc GUI: no node to switch wasm exception handling on with — a phone is being emulated, and this is what a phone gets.'
-      );
-      return false;
-    }
     v8.setFlagsFromString('--experimental-wasm-exnref');
     return true;
   } catch (e) {

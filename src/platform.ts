@@ -30,6 +30,15 @@ export const PATH_SEPARATOR = (): string => (Platform.isWin ? ';' : ':');
  */
 export const isPhoneUi = (): boolean => Platform.isPhone;
 
+/**
+ * Whether Obsidian is emulating a phone rather than running on one.
+ *
+ * It is the class Obsidian's own plugin loader reads: while it is set, a plugin's `require` answers nothing for every
+ * node package, with a notice on screen and an error in the console for the asking. That is the emulation doing its
+ * job — a phone has no node either — so anything reaching for node asks this first and takes the answer quietly.
+ */
+export const isEmulatingMobile = (): boolean => typeof document !== 'undefined' && document.body.hasClass('emulate-mobile');
+
 export const isDesktop = (): boolean => !Platform.isMobileApp;
 
 /**
