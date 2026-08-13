@@ -875,7 +875,9 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         {/* Ticking a box writes the extension into `-f`. Every one offered is a
             pandoc default-off, so a cleared box is the reader's own behaviour. */}
         <Setting name={t.EXTENSIONS} description={t.EXTENSIONS_DESC} class="ex-template-modal-extensions">
-          <CheckGrid items={extensions()} onToggle={toggleExtension} />
+          {/* One to a line where the width is a phone's: an extension is named the way pandoc names it, and two
+              columns of that is two columns of cut-off names. */}
+          <CheckGrid items={extensions()} onToggle={toggleExtension} single={isMobileUi()} />
         </Setting>
 
         {/* Not gated on the format: citations and variables are asked of every writer. */}

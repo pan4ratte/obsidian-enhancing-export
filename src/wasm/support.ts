@@ -54,6 +54,16 @@ const enableExceptionHandling = async (): Promise<boolean> => {
   }
   try {
     const v8 = await import('v8');
+    // Obsidian hands a plugin `null` for every node package while it is emulating a phone, rather than refusing to
+    // resolve it — so this is a missing function rather than a throw. Nothing is wrong: a phone has no node either,
+    // and the emulation is showing what one would do. It is said out loud all the same, because the answer that
+    // follows from it looks like a verdict on the device.
+    if (typeof v8?.setFlagsFromString !== 'function') {
+      console.warn(
+        'Pandoc GUI: no node to switch wasm exception handling on with — a phone is being emulated, and this is what a phone gets.'
+      );
+      return false;
+    }
     v8.setFlagsFromString('--experimental-wasm-exnref');
     return true;
   } catch (e) {
@@ -67,11 +77,12 @@ let cached: WasmSupport | undefined;
 /**
  * Whether pandoc's binary can be compiled here, having done what can be done to make it so.
  *
- * Asked before the download, and again before the binary is compiled — the flag above lasts only as long as the
- * process, so it has to be set again every time Obsidian starts.
+ * Asked before the download and again before the binary is compiled, and answered once for the process: the flag
+ * above is set for as long as Obsidian runs, so nothing a second ask could do is left to do. A no is kept as firmly
+ * as a yes — asking again would only set the same flag and print the same warning after it.
  */
 export async function pandocWasmSupport(): Promise<WasmSupport> {
-  if (cached?.ok) {
+  if (cached) {
     return cached;
   }
 
@@ -81,10 +92,16 @@ export async function pandocWasmSupport(): Promise<WasmSupport> {
     return cached;
   }
 
-  cached = (await enableExceptionHandling()) ? { ...(await probe()), enabled: true } : first;
+  const flagged = await enableExceptionHandling();
+  const second = flagged ? await probe() : first;
+  cached = second.ok ? { ...second, enabled: true } : second;
+
   if (!cached.ok) {
-    // Said out loud: this decides what the settings offer, and a wrong answer is otherwise a mystery.
-    console.warn(`Pandoc GUI: this engine refused a wasm module using exception handling — ${cached.reason}`);
+    // Said out loud, once: this decides what the settings offer, and a wrong answer is otherwise a mystery. Whether
+    // the flag was set is half that answer — it tells a build too old for the feature from one that has it and would
+    // not take it.
+    const despite = flagged ? ', even with the feature switched on' : '';
+    console.warn(`Pandoc GUI: this engine refused a wasm module using exception handling${despite} — ${cached.reason}`);
   }
   return cached;
 }

@@ -2,6 +2,7 @@ import { For, Show, createMemo } from 'solid-js';
 import { t } from '../lang/helpers';
 import { extractDefaultExtension, type ExportSetting } from '../settings';
 import { droppedBy, unsupportedBy, type Engine } from '../engine';
+import { isMobileUi, isPhoneUi } from '../platform';
 import Icon from './components/Icon';
 
 type Column = 'name' | 'output';
@@ -60,6 +61,11 @@ export default (props: {
   const column = () => props.sort?.column ?? 'name';
   const ascending = () => props.sort?.ascending ?? true;
 
+  /* A touch screen has no pointer to reveal the row actions with, so they are shown from the start there. */
+  const touch = isMobileUi();
+  /* And a phone has no room for three of them: the row itself opens the editor, and the pencil goes. */
+  const tapToEdit = isPhoneUi();
+
   // A second click on the column already sorted turns it around.
   const sortBy = (next: Column) =>
     props.onSort?.(column() === next ? { column: next, ascending: !ascending() } : { column: next, ascending: true });
@@ -95,7 +101,7 @@ export default (props: {
   );
 
   return (
-    <table class="ex-template-table">
+    <table class="ex-template-table" classList={{ 'is-touch': touch }}>
       <thead>
         <tr>
           <Heading column="name" label={t.TEMPLATE_NAME} />
@@ -114,7 +120,7 @@ export default (props: {
           }
         >
           {row => (
-            <tr>
+            <tr classList={{ 'is-tappable': tapToEdit }} onClick={tapToEdit ? () => props.onEdit?.(row.name) : undefined}>
               <td class="ex-template-table-name">
                 <span class="ex-template-table-label">
                   <span>{row.name}</span>
@@ -125,8 +131,11 @@ export default (props: {
               </td>
               <td class="ex-template-table-output">{row.output}</td>
               <td class="ex-template-table-actions">
-                <div class="ex-template-table-row-actions">
-                  <Icon class="ex-template-table-edit" name="pencil" tooltip={t.ACTION_EDIT} onClick={() => props.onEdit?.(row.name)} />
+                {/* Kept from the row's own handler, so a tap on the trash is not also a tap on the template. */}
+                <div class="ex-template-table-row-actions" onClick={e => e.stopPropagation()}>
+                  <Show when={!tapToEdit}>
+                    <Icon class="ex-template-table-edit" name="pencil" tooltip={t.ACTION_EDIT} onClick={() => props.onEdit?.(row.name)} />
+                  </Show>
                   <Icon
                     class="ex-template-table-duplicate"
                     name="copy"

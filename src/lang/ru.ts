@@ -133,6 +133,7 @@ export default {
   WASM_VERSION: (version: string) => `Pandoc WASM: ${version}`,
   WASM_NOT_INSTALLED: 'Встроенный Pandoc не установлен. Откройте настройки плагина и нажмите «Установить».',
   WASM_ABSENT: 'Не установлен',
+  WASM_UNSUPPORTED: 'Не поддерживается',
   WASM_SIZE: (megabytes: number) => `Загрузка займёт около ${megabytes} МБ, после распаковки — примерно 56 МБ.`,
   WASM_INSTALL: 'Установить',
   WASM_UPDATE: 'Обновить',

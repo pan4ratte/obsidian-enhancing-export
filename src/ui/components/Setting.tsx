@@ -27,9 +27,12 @@ export default (props: {
       <Context.Provider value={context}>
         <div
           ref={el => (context.settingEl = el)}
-          class={`setting-item ${props.class ?? ''}`.trimEnd()}
+          /* The heading class is written into `class` rather than toggled beside it: `class` is set by assigning the
+             whole attribute, `classList` toggles one name and remembers it as set, and a run that does both can
+             leave the name remembered but no longer on the element. A heading that has lost it is drawn as a row —
+             the box every row in a modal wears, on the one thing in the card that is not a row. */
+          class={['setting-item', props.heading ? 'setting-item-heading' : '', props.class ?? ''].filter(Boolean).join(' ')}
           classList={{
-            'setting-item-heading': props.heading,
             'is-disable': props.disabled,
           }}
         >

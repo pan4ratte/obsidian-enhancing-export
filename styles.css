@@ -335,15 +335,16 @@
  * otherwise set.
  */
 .ex-action.ex-action {
-  /* The label's own width to start from, so a card too narrow for all of them
-     wraps rather than lets a button shrink to a word a line; the growing then
-     shares the line out between however many landed on it. */
-  flex: 1 1 11rem;
+  /* Halves of whatever the card has, but never narrower than the label: the
+     line is broken on the labels' own widths, so a card too narrow to hold both
+     of them side by side stacks them instead of setting either one to a word a
+     line. Whichever label it is — the Russian ones are half again as long. */
+  flex: 1 1 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--size-4-2);
-  min-width: 0;
+  min-width: max-content;
   margin: 0;
   /* Tall enough to read as a panel of the card rather than a button sitting in
      it — the height is the point, so it is set rather than left to the label. */
@@ -706,6 +707,18 @@
 
 .ex-template-table tbody tr:hover .ex-template-table-row-actions {
   opacity: 1;
+}
+
+/* Nothing to hover with on a touch screen: an action nobody can reveal is an
+   action nobody has. Every row carries its own from the start there. */
+.ex-template-table.is-touch .ex-template-table-row-actions {
+  opacity: 1;
+}
+
+/* On a phone the row is the edit control, the pencil having gone with the width
+   it would have cost. */
+.ex-template-table tbody tr.is-tappable {
+  cursor: var(--cursor);
 }
 
 /* The accent for what edits the template, the error colour for what ends it. */
@@ -1108,6 +1121,13 @@
   background: var(--background-secondary);
 }
 
+/* One to a line, whatever the grid would otherwise fit across. Asked for by
+   what is in it rather than by the width: a name that has to be read in full is
+   worth the length the list runs to. */
+.ex-check-grid.is-single-column {
+  grid-template-columns: 1fr;
+}
+
 /* The whole row is the hit area, label included — a checkbox alone is a small
    target for a mouse. */
 .ex-check {
@@ -1125,14 +1145,31 @@
   color: var(--text-normal);
 }
 
-.ex-check input[type='checkbox'] {
+/*
+ * Its own size, said here rather than left to Obsidian's own `input` rule.
+ *
+ * Under `@container (max-width: 400px)` Obsidian gives every input in a row's
+ * control block `width: 100%` — meant for the text fields that are the usual
+ * thing to find there. A checkbox took it too: each box stretched the width of
+ * its column and left the name beside it nothing at all, so a grid of ticks
+ * read as a grid of empty fields. A narrow pane is enough to bring it on; a
+ * phone is only the surest way.
+ *
+ * The grid's class is written twice: that rule carries the same weight as this
+ * one, and a tie settled by which stylesheet loaded last is not settled.
+ */
+.ex-check-grid.ex-check-grid .ex-check input[type='checkbox'] {
   flex: 0 0 auto;
+  width: var(--checkbox-size);
+  height: var(--checkbox-size);
   margin: 0;
 }
 
 /* A filter's name can be longer than its column; it is cut rather than allowed
-   to push the grid wider than the card. */
+   to push the grid wider than the card. `min-width` is what lets it be cut: a
+   flex item is floored at its own content until it is told otherwise. */
 .ex-check-label {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

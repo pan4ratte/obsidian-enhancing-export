@@ -27,6 +27,15 @@
 * A narrow settings pane stacks the two Pandocs into one column and breaks the button rows over two or three lines.
 * A phone is not shown the installed Pandoc at all: no “Pandoc not found”, no engine choice, and nothing is looked up for a program that cannot be there. A desktop emulating a phone is shown the same settings, and goes on exporting with the Pandoc it really has.
 * A template the built-in Pandoc will not run says so without pointing at an installed Pandoc that a phone cannot have.
+* On a phone, a tap on a template row opens its editor and the pencil is dropped.
+* On a phone and a tablet the row actions are always shown, there being no pointer to reveal them with.
+* The lua-filter store and new-template buttons stack into a column where the card is too narrow for both.
+* The wasm check is made once per session instead of on every ask, and says whether the flag was set when it fails.
+* A device that will not run the built-in Pandoc reads “Unsupported” beside the status dot, rather than leaving it alone.
+* Checkboxes in a narrow pane are the size of a checkbox again, instead of stretching across the column and hiding the name beside them.
+* A phone being emulated says the built-in Pandoc cannot be switched on because there is no node to do it with, rather than blaming the device.
+* A group's heading is drawn as a heading again — it had been losing the class that says so and wearing the box every row in a modal wears.
+* Extensions are ticked off one to a line on a phone, where two columns cut their names in half.
 
 
 ## 1.3.0

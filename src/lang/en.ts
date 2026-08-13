@@ -133,6 +133,7 @@ export default {
   WASM_VERSION: (version: string) => `Pandoc WASM: ${version}`,
   WASM_NOT_INSTALLED: 'The built-in Pandoc is not installed. Open the plugin settings and choose Install.',
   WASM_ABSENT: 'Not installed',
+  WASM_UNSUPPORTED: 'Unsupported',
   WASM_SIZE: (megabytes: number) => `About ${megabytes} MB to download, and around 56 MB once unpacked.`,
   WASM_INSTALL: 'Install',
   WASM_UPDATE: 'Update',

@@ -67,8 +67,10 @@ export default (props: {
     if (busy()) {
       return busy();
     }
+    // One word for both the guess and the binary's own refusal — a dot with nothing beside it is a state nobody can
+    // read. Which of the two it was, and why, is the line under the halves.
     if (failed() || supported()?.ok === false) {
-      return undefined;
+      return t.WASM_UNSUPPORTED;
     }
     if (!installed()) {
       return t.WASM_ABSENT;

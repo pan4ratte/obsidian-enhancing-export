@@ -24,6 +24,12 @@ export const isMobileUi = (): boolean => Platform.isMobile;
 /** What separates one path from the next in a list of them, as this platform writes it. */
 export const PATH_SEPARATOR = (): string => (Platform.isWin ? ';' : ':');
 
+/**
+ * Whether that mobile UI is the narrow one. A tablet has the room a desktop has and only wants for a pointer; a phone
+ * wants for the width too, so a row of icons at the end of a table row is one thing too many there.
+ */
+export const isPhoneUi = (): boolean => Platform.isPhone;
+
 export const isDesktop = (): boolean => !Platform.isMobileApp;
 
 /**
