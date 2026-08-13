@@ -5,10 +5,12 @@ import { tooltip } from './tooltip';
 export default (props: {
   items: { value: string; label: string; checked: boolean; tooltip?: string }[];
   onToggle: (value: string, checked: boolean) => void;
+  /** One to a line, for names too long to share a line with anything. */
+  single?: boolean;
   /** Said in the card's place when there is nothing to tick. */
   empty?: string;
 }) => (
-  <div class="ex-check-grid">
+  <div class="ex-check-grid" classList={{ 'is-single-column': props.single }}>
     <Show when={props.items.length > 0} fallback={<span class="ex-check-empty">{props.empty}</span>}>
       <For each={props.items}>
         {item => (

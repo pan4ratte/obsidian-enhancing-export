@@ -1,6 +1,6 @@
 import type { Plugin } from 'obsidian';
 import { debounce, Platform } from 'obsidian';
-import { normalize, join } from 'path';
+import { resolve } from './paths';
 
 declare global {
   interface HmrOptions {
@@ -39,7 +39,9 @@ Window.prototype.hmr = function (plugin: Plugin, options?: HmrOptions): void {
     await plugins.enablePlugin(id);
   };
 
-  const entry = normalize(join(pluginDir, 'main.js'));
+  // The plugin's own joining rather than node's: this is a vault path, which is spelled the same way on every
+  // platform, and node is one import a file loaded on a phone cannot make.
+  const entry = resolve(pluginDir, 'main.js');
   const onChange = debounce(
     async (file: string) => {
       if (file.startsWith(pluginDir)) {

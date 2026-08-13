@@ -1,10 +1,6 @@
-import * as ct from 'electron';
-import * as fs from 'fs';
-import process from 'process';
-import path from 'path';
 import { Variables, ExportSetting, extractDefaultExtension as extractExtension, createEnv, today } from './settings';
-import { MessageBox } from './ui/message_box';
-import { TFile, getLinkpath, moment, type EmbedCache } from 'obsidian';
+import { MessageBox, confirm } from './ui/message_box';
+import { Platform, TFile, getLinkpath, moment, type EmbedCache } from 'obsidian';
 import type { SemVer } from 'semver';
 import { exec, renderTemplate, getPlatformValue, trimQuotes } from './utils';
 import { t } from './lang/helpers';
@@ -15,7 +11,11 @@ import pandoc from './pandoc';
 import { orderLuaFilters } from './lua_filters';
 import { renameHighlightFlags } from './writer_args';
 import { outputArg } from './output_arg';
-import { dialogWindow } from './dialog';
+import { resolveEngine, unsupportedBy } from './engine';
+import { convertWithWasm } from './wasm/convert';
+import { FileStore } from './file_store';
+import { basename, dirname, normalize, resolve, stem } from './paths';
+import { PATH_SEPARATOR, chooseSavePath, isDesktop, isMobile, openFile, showInFolder, vaultRoot } from './platform';
 
 export async function exportNote(
   plugin: PandocGuiPlugin,
@@ -46,8 +46,26 @@ export async function exportNote(
     showOverwriteConfirmation = globalSetting.showOverwriteConfirmation;
   }
 
+  // Which pandoc is doing this, and whether it is one that can.
+  const engine = resolveEngine(globalSetting.engineMode, isMobile());
+  const refuse = (message: string) => {
+    new MessageBox(plugin.app, { title: t.ERROR_TITLE, message, buttons: 'Ok' }).open();
+    onFailure?.();
+  };
+  const blocked = unsupportedBy(setting, engine);
+  if (blocked) {
+    // The other pandoc is only worth pointing at on a machine that can have one.
+    const why = blocked === 'pdf' ? t.WASM_NO_PDF : t.WASM_NO_COMMAND;
+    refuse(isMobile() ? why : `${why} ${t.WASM_USE_NATIVE}`);
+    return;
+  }
+  if (engine === 'wasm' && !(await plugin.wasm.isInstalled())) {
+    refuse(t.WASM_NOT_INSTALLED);
+    return;
+  }
+
   // The `${...}` a template can use — see the `Variables` interface in settings.ts.
-  const vaultDir = adapter.getBasePath();
+  const vaultDir = vaultRoot(adapter);
   const pluginDir = `${vaultDir}/${manifest.dir}`;
   const luaDir = `${pluginDir}/lua`;
   const outputDir = candidateOutputDirectory;
@@ -56,7 +74,7 @@ export async function exportNote(
   const outputFileFullName = candidateOutputFileName;
 
   const currentPath = adapter.getFullPath(currentFile.path);
-  const currentDir = path.dirname(currentPath);
+  const currentDir = dirname(currentPath);
   const currentFileName = currentFile.basename;
   const currentFileFullName = currentFile.name;
 
@@ -64,9 +82,9 @@ export async function exportNote(
   if (attachmentFolderPath === '/') {
     attachmentFolderPath = vaultDir;
   } else if (attachmentFolderPath.startsWith('.')) {
-    attachmentFolderPath = path.join(currentDir, attachmentFolderPath.substring(1));
+    attachmentFolderPath = resolve(currentDir, attachmentFolderPath.substring(1));
   } else {
-    attachmentFolderPath = path.join(vaultDir, attachmentFolderPath);
+    attachmentFolderPath = resolve(vaultDir, attachmentFolderPath);
   }
 
   let frontMatter: unknown = null;
@@ -87,16 +105,19 @@ export async function exportNote(
     const linkPath = embed.link;
     const targetFile = metadataCache.getFirstLinkpathDest(getLinkpath(linkPath), currentFile.path);
     if (targetFile instanceof TFile) {
-      targetDirArray.push(path.join(vaultDir, path.dirname(targetFile.path)));
+      targetDirArray.push(resolve(vaultDir, dirname(targetFile.path)));
     } else if (targetFile === null) {
       console.warn(`Could not resolve embedded file: ${linkPath}`);
     }
   }
   targetDirArray = [...new Set(targetDirArray)];
-  const embedDirs = targetDirArray.join(path.delimiter);
+  // One folder per `--resource-path`, so the separator is never a question: see the presets in export_templates.ts.
+  const embedDirs = targetDirArray.join(PATH_SEPARATOR());
 
   // Every embedded note, transitively, as the written link against the file it means.
   const noteEmbeds = new Map<string, string>();
+  // Every file the note reaches, notes and images alike — what a wasm run has to be handed, having no vault to look in.
+  const embeddedFiles = new Set<string>();
   const walkedForEmbeds = new Set<string>([currentFile.path]);
   const collectNoteEmbeds = (file: TFile, depth: number) => {
     if (depth > 8) {
@@ -104,7 +125,11 @@ export async function exportNote(
     }
     for (const embed of metadataCache.getCache(file.path)?.embeds ?? []) {
       const target = metadataCache.getFirstLinkpathDest(getLinkpath(embed.link), file.path);
-      if (!(target instanceof TFile) || target.extension !== 'md') {
+      if (!(target instanceof TFile)) {
+        continue;
+      }
+      embeddedFiles.add(adapter.getFullPath(target.path));
+      if (target.extension !== 'md') {
         continue;
       }
       // Keyed by the link as written, `#section` and all — that is what the filter reads.
@@ -147,21 +172,25 @@ export async function exportNote(
   const openExportedFileLocation = setting.openExportedFileLocation ?? globalSetting.openExportedFileLocation;
   const openExportedFile = setting.openExportedFile ?? globalSetting.openExportedFile;
 
-  if (showOverwriteConfirmation && fs.existsSync(outputPath)) {
-    const result = await ct.remote.dialog.showSaveDialog(dialogWindow(), {
-      title: t.OVERWRITE_TITLE(outputFileFullName),
-      defaultPath: outputPath,
-      properties: ['showOverwriteConfirmation', 'createDirectory'],
-    });
+  const files = new FileStore(plugin.app.vault, vaultDir);
 
-    if (result.canceled) {
+  if (showOverwriteConfirmation && (await files.exists(outputPath))) {
+    // The desktop asks with the system's own save dialog, which can be answered with another name; a phone has none,
+    // so there the question is put plainly and the answer is yes or no.
+    const chosen = isDesktop()
+      ? await chooseSavePath({ title: t.OVERWRITE_TITLE(outputFileFullName), defaultPath: outputPath })
+      : (await confirm(plugin.app, t.OVERWRITE_TITLE(outputFileFullName)))
+        ? outputPath
+        : undefined;
+
+    if (!chosen) {
       return;
     }
 
-    variables.outputPath = result.filePath;
-    variables.outputDir = path.dirname(variables.outputPath);
-    variables.outputFileFullName = path.basename(variables.outputPath);
-    variables.outputFileName = path.basename(variables.outputFileFullName, path.extname(variables.outputFileFullName));
+    variables.outputPath = chosen;
+    variables.outputDir = dirname(chosen);
+    variables.outputFileFullName = basename(chosen);
+    variables.outputFileName = stem(chosen);
   }
 
   // Shown for every export: a PDF engine on a long note takes long enough to look stuck.
@@ -190,7 +219,7 @@ export async function exportNote(
 
     let pandocPath = pandoc.normalizePath(getPlatformValue(globalSetting.pandocPath));
 
-    if (process.platform === 'win32') {
+    if (Platform.isWin) {
       // https://github.com/mokeyish/obsidian-enhancing-export/issues/153
       pandocPath = pandocPath.replaceAll('\\', '/');
       const pathKeys: Array<keyof Variables> = [
@@ -206,8 +235,7 @@ export async function exportNote(
       ];
 
       for (const pathKey of pathKeys) {
-        const path = variables[pathKey] as string;
-        variables[pathKey] = path.replaceAll('\\', '/');
+        variables[pathKey] = (variables[pathKey] as string).replaceAll('\\', '/');
       }
     }
 
@@ -224,15 +252,20 @@ export async function exportNote(
         : setting.command;
 
     if (setting.type === 'pandoc') {
-      // A pandoc that has renamed the highlighting options warns about the old names on every single run.
-      let installed: SemVer;
-      try {
-        installed = await pandoc.getCachedVersion(getPlatformValue(globalSetting.pandocPath), env);
-      } catch (e) {
-        // Not knowing the version is no reason to stop: the old spelling is the one every version takes.
-        console.warn(e);
+      // A pandoc that has renamed the highlighting options warns about the old names on every single run. The wasm
+      // build is newer than the rename, so there it is the new spelling either way.
+      let renamed = engine === 'wasm';
+      if (!renamed) {
+        let installed: SemVer;
+        try {
+          installed = await pandoc.getCachedVersion(getPlatformValue(globalSetting.pandocPath), env);
+        } catch (e) {
+          // Not knowing the version is no reason to stop: the old spelling is the one every version takes.
+          console.warn(e);
+        }
+        renamed = pandoc.takesSyntaxHighlighting(installed);
       }
-      if (pandoc.takesSyntaxHighlighting(installed)) {
+      if (renamed) {
         cmdTpl = renameHighlightFlags(cmdTpl);
       }
     }
@@ -242,30 +275,50 @@ export async function exportNote(
     if (output === undefined) {
       throw new Error('The command names no output file — check -o in the template.');
     }
-    const actualOutputPath = path.normalize(trimQuotes(output));
+    const actualOutputPath = normalize(trimQuotes(output));
 
-    const actualOutputDir = path.dirname(actualOutputPath);
-    if (!fs.existsSync(actualOutputDir)) {
-      fs.mkdirSync(actualOutputDir);
+    // Pandoc writes into a folder, it does not make one.
+    await files.mkdir(dirname(actualOutputPath));
+
+    let warnings: string;
+    if (engine === 'wasm') {
+      // Bringing the binary up is seconds on the first export of a session, and nothing on every one after it.
+      progress.starting();
+      const wasm = await plugin.wasm.load();
+      progress.running(variables.outputFileFullName);
+
+      // Everything the run needs has to be put in front of it: the note, what the note reaches, and the embed list
+      // that would have gone in the environment.
+      const result = await convertWithWasm(wasm, files, {
+        command: cmd,
+        vaultDir,
+        resources: [...embeddedFiles],
+        embeds: noteEmbeds,
+      });
+      // Counted as a warning so the notice finishes orange and the console keeps the detail, but not said again: the
+      // export dialog names these before it runs, and the quick export repeats a template that was agreed to there.
+      const dropped = result.unsupported.length > 0 ? t.WASM_DROPPED(result.unsupported.join(' ')) : '';
+      warnings = [dropped, result.stderr.trim()].filter(Boolean).join('\n\n');
+    } else {
+      progress.running(variables.outputFileFullName);
+      const { stderr } = await exec(cmd, { cwd: variables.currentDir, env });
+      warnings = stderr.trim();
     }
 
-    progress.running(variables.outputFileFullName);
-    const { stderr } = await exec(cmd, { cwd: variables.currentDir, env });
-
     // Pandoc writes its warnings here and exports the file all the same, so they are reported rather than thrown.
-    const warnings = stderr.trim();
     if (warnings) {
       console.warn(cmd, warnings);
     }
 
     const next = async () => {
+      // Both are the system's to do, and a phone has no system to ask — see `platform.ts`.
       if (openExportedFileLocation) {
         window.setTimeout(() => {
-          ct.remote.shell.showItemInFolder(actualOutputPath);
+          void showInFolder(actualOutputPath);
         }, 1000);
       }
       if (openExportedFile) {
-        await ct.remote.shell.openPath(actualOutputPath);
+        await openFile(actualOutputPath);
       }
       onSuccess?.();
     };

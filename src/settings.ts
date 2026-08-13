@@ -3,6 +3,7 @@ import { setPlatformValue, PlatformValue, renderTemplate, getPlatformValue, clon
 import type { PropertyGridMeta } from './ui/components/PropertyGrid';
 import type { InstalledLuaFilter } from './lua_filters';
 import type { TodayFormat } from './filter_args';
+import type { EngineMode } from './engine';
 
 // What a template's `${...}` are filled in with. For `/User/aaa/Documents/test.pdf`:
 // `outputDir` is the folder, `outputPath` the whole path, `outputFileName` is `test`,
@@ -52,6 +53,14 @@ export function today(locale: string, now = new Date()): Record<TodayFormat, str
 
 export interface PandocGuiSettings {
   pandocPath?: PlatformValue<string>;
+
+  /** Which pandoc runs an export — see `src/engine.ts`. Unset is `auto`. */
+  engineMode?: EngineMode;
+  /** The version of the wasm build that is installed, or nothing where none is. */
+  wasmVersion?: string;
+  /** The newer version already announced, so the same release is not brought up at every start. */
+  wasmUpdateSeen?: string;
+
   showOverwriteConfirmation?: boolean;
   defaultExportDirectoryMode: 'Same' | 'Custom';
   customDefaultExportDirectory?: PlatformValue<string>;
@@ -238,7 +247,10 @@ export function extractDefaultExtension(s: ExportSetting): string {
 
 export function createEnv(env: Record<string, string>, envVars?: Record<string, unknown>) {
   env = Object.assign({}, getPlatformValue(DEFAULT_ENV), env);
-  envVars = Object.assign({ HOME: process.env['HOME'] ?? process.env['USERPROFILE'] }, process.env, envVars ?? {});
+  // A phone has no process to take an environment from, and nothing that reads one — the wasm build is handed its
+  // files rather than started with variables. So the defaults are rendered against whatever the caller passes alone.
+  const system: Record<string, string | undefined> = typeof process === 'undefined' ? {} : process.env;
+  envVars = Object.assign({ HOME: system['HOME'] ?? system['USERPROFILE'] }, system, envVars ?? {});
   return Object.fromEntries(Object.entries(env).map(([n, v]) => [n, renderTemplate(v, envVars)]));
 }
 

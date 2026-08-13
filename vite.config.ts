@@ -4,6 +4,7 @@ import solidPlugin from 'vite-plugin-solid';
 import { builtinModules as builtins } from 'node:module';
 import path from 'path';
 import * as fsp from 'fs/promises';
+import { TEXT_FILES, textLoader } from './text-loader.ts';
 
 
 
@@ -41,11 +42,7 @@ export default defineConfig(({ mode }) => {
           { src: 'styles.css', dest: '.' },
         ]
       }) : undefined,
-      loader({
-        '.lua': 'text',
-        '.tex': 'text',
-        '.sty': 'text'
-      }), // src/resources.ts
+      textLoader(TEXT_FILES), // src/resources.ts, src/lang/helpers.ts
       prod ? undefined : inject(['src/hmr.ts']),
     ],
     build: {
@@ -64,6 +61,11 @@ export default defineConfig(({ mode }) => {
           exports: 'named',
           // `banner` is prepended before minification, which drops the comment.
           postBanner: banner,
+          // Node and electron are reached by dynamic import, so that a phone — which has neither — can still load the
+          // plugin. Left as a native `import()`, the renderer refuses a bare specifier it has no resolver for
+          // ("Failed to resolve module specifier 'electron'"); this emits `require()` for them instead, which is how
+          // the same modules were reached when they were imported at the top of a file.
+          dynamicImportInCjs: false,
         },
         external: [
           'obsidian',
@@ -114,24 +116,6 @@ const silence = (pattern: RegExp) => {
     }
   };
   return logger;
-};
-
-
-// The embedded resources are all UTF-8 text, so they go in as string literals: base64 would cost a third again in
-// bundle size, plus an atob pass on every load.
-const loader = (config: { [extention: string]: 'text' }): Plugin => {
-  const { extname } = path;
-  return {
-    name: 'text-loader',
-    enforce: 'pre',
-    async load(id) {
-      const format = config[extname(id)];
-      if (format === 'text') {
-        const text = await fsp.readFile(id, 'utf-8');
-        return { code: `export default ${JSON.stringify(text)};` };
-      }
-    },
-  };
 };
 
 

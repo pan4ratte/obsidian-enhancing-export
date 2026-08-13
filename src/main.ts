@@ -1,15 +1,17 @@
 import { App, Menu, Plugin, PluginManifest, TFile, Notice, debounce } from 'obsidian';
 import { PandocGuiSettings, ExportSetting, DEFAULT_SETTINGS, DEFAULT_ENV, restoreTemplates } from './settings';
-import { ExportSettingTab, ExportDialog, ImportDialog } from './ui';
+import { ExportSettingTab, ExportDialog, ImportDialog, UserGuideModal } from './ui';
 import { exportNote } from './export';
 import { getPlatformValue, PlatformKey, clone } from './utils';
 import { t } from './lang/helpers';
-import path from 'path';
 import resources, { BUNDLED_LUA_FILES } from './resources';
+import { PandocWasmManager } from './wasm/install';
 // `styles.css` is not imported: Obsidian loads the plugin folder's stylesheet itself.
 
 export default class PandocGuiPlugin extends Plugin {
   settings: PandocGuiSettings;
+  /** Pandoc's wasm build: the copy on disk, and the one running. */
+  readonly wasm = new PandocWasmManager(this);
 
   constructor(app: App, manifest: PluginManifest) {
     super(app, manifest);
@@ -64,6 +66,14 @@ export default class PandocGuiPlugin extends Plugin {
         ImportDialog.show(this);
       },
     });
+    this.addCommand({
+      id: 'user-guide',
+      name: t.CMD_USER_GUIDE,
+      icon: 'book-open',
+      callback: () => {
+        new UserGuideModal(this.app).open();
+      },
+    });
 
     this.registerEvent(
       this.app.workspace.on('file-menu', (menu: Menu, file) => {
@@ -81,9 +91,26 @@ export default class PandocGuiPlugin extends Plugin {
         }
       })
     );
+    this.app.workspace.onLayoutReady(() => void this.announceWasmUpdate());
+
     if (import.meta.env.DEV) {
       window.hmr?.(this);
     }
+  }
+
+  /**
+   * Say once that there is a newer wasm build to install. The install itself stays a deliberate act — it is a 56 MB
+   * download that then travels to every synced device — so this only points at the settings, and only for a version
+   * it has not pointed at before.
+   */
+  private async announceWasmUpdate(): Promise<void> {
+    const release = await this.wasm.update();
+    if (!release || release.version === this.settings.wasmUpdateSeen) {
+      return;
+    }
+    this.settings.wasmUpdateSeen = release.version;
+    await this.saveSettings();
+    new Notice(t.WASM_UPDATE_AVAILABLE(release.version));
   }
 
   public async resetSettings(): Promise<void> {
@@ -151,10 +178,10 @@ export default class PandocGuiPlugin extends Plugin {
   async releaseResources(): Promise<void> {
     const { adapter } = this.app.vault;
     for (const [dir, res] of resources) {
-      const resDir = path.join(this.manifest.dir, dir);
+      const resDir = `${this.manifest.dir}/${dir}`;
       await adapter.mkdir(resDir);
       for (const [fileName, text] of res) {
-        const filePath = path.join(resDir, fileName);
+        const filePath = `${resDir}/${fileName}`;
         await adapter.write(filePath, text);
       }
     }

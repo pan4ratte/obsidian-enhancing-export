@@ -28,6 +28,28 @@ export interface MessageBoxOptions {
   };
 }
 
+/**
+ * A yes-or-no question, answered before anything else happens.
+ *
+ * Closed rather than answered is a no: the buttons answer first and close after, so by the time the close is seen the
+ * question has already been settled.
+ */
+export const confirm = (app: App, message: string, title?: string): Promise<boolean> =>
+  new Promise(resolve => {
+    const box = new MessageBox(app, {
+      title,
+      message,
+      buttons: 'YesNo',
+      callback: { yes: () => resolve(true), no: () => resolve(false) },
+    });
+    const close = box.onClose.bind(box);
+    box.onClose = () => {
+      close();
+      resolve(false);
+    };
+    box.open();
+  });
+
 export class MessageBox extends Modal {
   readonly options: MessageBoxOptions;
 

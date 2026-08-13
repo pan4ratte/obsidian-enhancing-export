@@ -27,6 +27,9 @@
   someone typed — quotes, backslashes, semicolons, a `$` — and a command line
   is the wrong place to find that out.
 
+  Pandoc's wasm build has no environment to read, so there the plugin writes the
+  same list into `.obsidian-embeds`, in the folder pandoc runs from.
+
   ---------------------------------------------------------------------------
   What is embedded
 
@@ -58,7 +61,23 @@ local MAX_DEPTH = 8
 --- link -> absolute path, as the plugin resolved them.
 local targets = {}
 
-for line in (os.getenv('OBSIDIAN_EMBEDS') or ''):gmatch('[^\n]+') do
+--- The list as the plugin passed it: in the environment, or in a file in the
+--- folder pandoc runs from where there is no environment to pass it in.
+local function embeds()
+  local given = os.getenv('OBSIDIAN_EMBEDS')
+  if given and given ~= '' then
+    return given
+  end
+  local file = io.open('.obsidian-embeds', 'r')
+  if not file then
+    return ''
+  end
+  local text = file:read('a')
+  file:close()
+  return text
+end
+
+for line in embeds():gmatch('[^\n]+') do
   local link, path = line:match('^(.-)\t(.+)$')
   if link and path then
     targets[link] = path

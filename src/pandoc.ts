@@ -74,7 +74,7 @@ export interface PandocRelease {
  * Pandoc ships a few times a year, so one lookup per plugin session is plenty and leaves GitHub's unauthenticated
  * rate limit alone.
  */
-const RELEASE_CACHE_TTL = 6 * 60 * 60 * 1000;
+export const RELEASE_CACHE_TTL = 6 * 60 * 60 * 1000;
 
 let releaseCache: { fetchedAt: number; release: PandocRelease } | undefined;
 

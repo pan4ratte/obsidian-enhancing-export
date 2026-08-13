@@ -80,6 +80,17 @@ export default tseslint.config(
     ...tseslint.configs.disableTypeChecked,
   },
   {
+    // Node is what these are for. The rule against importing it is about what a
+    // phone loads: the build config runs under node while the bundle is made,
+    // and the specs under vitest, so neither is ever in one.
+    //
+    // Written here rather than in the files because a reviewer's own eslint run
+    // does not read this config — anything that has to be said to that run is
+    // said in the file itself, as `text-loader.ts` does.
+    files: ['vite.config.ts', 'vitest.config.ts', 'version.mjs', 'scripts/**', 'tests/**'],
+    rules: { 'obsidianmd/no-nodejs-modules': 'off' },
+  },
+  {
     // Repository tooling, run from a terminal by a maintainer and never shipped.
     // Obsidian's guideline against logging is about a plugin filling a user's
     // console; a command-line script reporting what it rewrote is the opposite.

@@ -1,6 +1,47 @@
 # Changelog
 
 
+## Unreleased
+
+### New feature: User guide
+
+* New command, “Open user guide”, and a button for it in the settings.
+* The guide ships with the plugin and opens in Obsidian: what Pandoc WASM cannot do, custom export commands and the variables they take.
+* Written in the vault's language, English where there is no translation.
+
+### New feature: Pandoc on a phone and a tablet
+
+* The plugin runs on mobile. Exporting, importing, the template editor and the lua-filter store all work there.
+* New card in the settings: “Pandoc WASM” installs Pandoc's official WebAssembly build with one press — downloaded, unpacked and put in place by the plugin.
+* New setting, “Use Pandoc WASM on this computer”: off, and the installed Pandoc converts; on, and the built-in build does. A phone runs the built-in build either way.
+* The built-in Pandoc makes no PDF, runs no commands of your own and fetches nothing from the network; templates it cannot run are left out of the export dialog, and settings that mean nothing to it are hidden.
+* Export and import on a phone write into the vault, and its folders are suggested as you type.
+* The device is checked before anything is downloaded, and on a desktop the wasm feature the build needs is switched on where Obsidian's Chromium still keeps it behind a flag. A device that cannot run it is told so by the binary itself rather than by a guess.
+* The export dialog names the options the built-in Pandoc cannot do before the export, and the button asks to export anyway. Nothing is dropped in silence.
+* The dialog says so when it can run none of your templates, rather than reading as though you had written none.
+* The templates table marks the ones the built-in Pandoc will not run, and the ones it will run without some of their options.
+* `--natbib` and `--biblatex` are read by the built-in Pandoc, as `--citeproc` already was.
+* A newer built-in Pandoc is noticed at startup and said once, rather than only in the settings.
+* The settings open with one card holding everything about Pandoc: the installed one on the left of every row, the WebAssembly one on the right. Version and status first, with the update beside the line that reports it, then the pages to read — the user guide, Pandoc's manual and its changelog.
+* “Pandoc folder” and “Use Pandoc WASM” are the first two rows of the general settings, where the rest of the answers are.
+* A narrow settings pane stacks the two Pandocs into one column and breaks the button rows over two or three lines.
+* A phone is not shown the installed Pandoc at all: no “Pandoc not found”, no engine choice, and nothing is looked up for a program that cannot be there. A desktop emulating a phone is shown the same settings, and goes on exporting with the Pandoc it really has.
+* A template the built-in Pandoc will not run says so without pointing at an installed Pandoc that a phone cannot have.
+* On a phone, a tap on a template row opens its editor and the pencil is dropped.
+* On a phone and a tablet the row actions are always shown, there being no pointer to reveal them with.
+* The lua-filter store and new-template buttons stack into a column where the card is too narrow for both.
+* The wasm check is made once per session instead of on every ask, and says whether the flag was set when it fails.
+* A device that will not run the built-in Pandoc reads “Unsupported” beside the status dot, rather than leaving it alone.
+* Checkboxes in a narrow pane are the size of a checkbox again, instead of stretching across the column and hiding the name beside them.
+* A phone being emulated says the built-in Pandoc cannot be switched on because there is no node to do it with, rather than blaming the device.
+* A group's heading is drawn as a heading again — it had been losing the class that says so and wearing the box every row in a modal wears.
+* Extensions are ticked off one to a line on a phone, where two columns cut their names in half.
+* The lua-filter store's search field keeps its height on a phone, rather than being squeezed by the list under it.
+* Every node package is reached behind `Platform.isDesktop`, which is also false while a phone is emulated — where Obsidian withholds node whatever the device is.
+* “Pandoc WASM” carries a question mark saying what the build is for and what the download costs, until it is installed. Pressed rather than hovered on a phone.
+* The user guide is read at the size the settings are.
+
+
 ## 1.3.0
 
 ### New feature: Import document and convert it to Markdown

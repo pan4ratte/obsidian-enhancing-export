@@ -1,5 +1,4 @@
 import { moment, requestUrl } from 'obsidian';
-import path from 'path';
 import type PandocGuiPlugin from './main';
 
 /* The lua-filter store. */
@@ -168,7 +167,7 @@ export class LuaFilterManager {
 
   /** Where a filter is written, vault-relative. */
   private filePath(fileName: string): string {
-    return path.join(this.plugin.manifest.dir, 'lua', fileName);
+    return `${this.plugin.manifest.dir}/lua/${fileName}`;
   }
 
   /** The filters this plugin ships with, which a download must never replace. */

@@ -77,14 +77,12 @@
  */
 
 /*
- * One card divided into blocks by the lines between them, the way the templates
- * table's actions card is: what pandoc is, and then what can be done about it.
- * `overflow` keeps a block's hover fill inside the rounded corners.
+ * Everything about pandoc in one card: a row to each thing it is read for, and a
+ * pandoc to each half of a row — the installed one on the left, the wasm build
+ * on the right, all the way down. `overflow` keeps a half's hover fill inside
+ * the rounded corners.
  */
-.ex-pandoc-dashboard {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
+.ex-pandoc-panel {
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--setting-items-radius);
   background: var(--setting-items-background);
@@ -92,28 +90,111 @@
   margin-bottom: 24px;
 }
 
-/* The section the card opens with, and the only one that is read rather than
-   pressed: it takes the width the actions leave, and the card's padding with it.
-   `min-width` is what lets it be the one that gives way when the pane narrows. */
-.ex-pandoc-dashboard-info {
-  flex: 1 1 auto;
+.ex-pandoc-panel-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+/* A row narrower than the things in it need side by side breaks onto a second
+   line rather than squeezing them: the basis is the width each wants, and what
+   is left over is shared out equally, so a line holding one is one full-width
+   half. */
+.ex-pandoc-panel-row.ex-pandoc-engines,
+.ex-pandoc-panel-row.ex-pandoc-links {
+  flex-wrap: wrap;
+  /* The lines down the row, drawn as the gaps between its halves over a
+     background of that colour. A border would have to be taken off again at the
+     start of every wrapped line, and no selector can pick those out. */
+  gap: 1px;
+  background-color: var(--background-modifier-border);
+}
+
+/* `min-width` so nothing inside — a long status, a dropdown as wide as its
+   longest option — can argue for more than the half it stands in. */
+.ex-pandoc-engines > * {
+  flex: 1 1 15rem;
   min-width: 0;
+}
+
+/* The line across, between one row of the card and the next. */
+.ex-pandoc-panel-row + .ex-pandoc-panel-row {
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+/* A button standing as a half is as tall as the row, whatever the half beside
+   it holds. */
+.ex-pandoc-panel-row .ex-action {
+  align-self: stretch;
+  height: auto;
+}
+
+/* The pages to read are the foot of the card rather than a half of it: they
+   answer nothing, so they take the height of their own label and no more. Both
+   of the row's classes are named, to outrank the `.ex-action.ex-action` below
+   that gives every other button in the card its height. */
+.ex-pandoc-panel-row.ex-pandoc-links .ex-action {
+  min-height: 0;
+  padding-block: var(--size-4-2);
+}
+
+/* Opaque, so the colour the row is divided by is only ever seen in the gaps. */
+.ex-pandoc-dashboard-half {
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: var(--size-4-4);
+  background-color: var(--setting-items-background, var(--background-primary));
 }
 
+/* The name of the pandoc this half is about, and — while there is one to ask —
+   the mark that says what it is. They share a line and wrap together, a half
+   this narrow having nowhere else to put the second of them. */
 .ex-pandoc-dashboard-version {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-4-1);
   font-size: var(--font-ui-medium);
   font-weight: var(--font-semibold);
   color: var(--text-normal);
   line-height: 1.2;
 }
 
-/* Status line: the dot and its label share the state colour. */
+/* Faint: it is there to be found by whoever is wondering, not to be read by
+   everyone who is not. */
+.ex-pandoc-dashboard-hint {
+  display: flex;
+  align-items: center;
+  color: var(--text-faint);
+  transition: color 100ms ease-in-out;
+}
+
+.ex-pandoc-dashboard-hint:hover {
+  color: var(--text-muted);
+}
+
+.ex-pandoc-dashboard-hint .svg-icon {
+  width: var(--icon-s);
+  height: var(--icon-s);
+}
+
+/* A press needs something to land on, which a hover does not — so on a phone,
+   where the mark is pressed rather than pointed at, it is given the room.
+   `clickable-icon` is Obsidian's own, and is only on it where there is a press
+   to make. */
+.ex-pandoc-dashboard-hint.clickable-icon {
+  padding: var(--size-2-2);
+  margin: calc(-1 * var(--size-2-2));
+  margin-inline-start: 0;
+}
+
+/* Status line: the dot and its label share the state colour. What can be done
+   about the state follows the label, and drops below it where a long enough
+   status leaves no room. */
 .ex-pandoc-dashboard-status {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--size-4-2);
   font-size: var(--font-ui-smaller);
@@ -146,41 +227,167 @@
   color: var(--text-error);
 }
 
+/* Nothing installed yet is not a fault, and does not read as one — neither the
+   wasm build that has not been asked for, nor the program someone using that
+   build exclusively never installed. The error colour is kept for a pandoc that
+   is there and will not run. */
+.ex-pandoc-dashboard-status.is-absent {
+  color: var(--text-muted);
+}
+
 .ex-pandoc-dashboard-status.is-checking .ex-pandoc-dashboard-indicator {
   box-shadow: none;
 }
 
-.ex-pandoc-dashboard-warning {
+/* A line too long to stand in a half of the card beside a version and a button.
+   It is a row of the card like any other, so the rule above it is the one the
+   rows are already divided by. */
+.ex-pandoc-panel-row.ex-pandoc-notice {
+  /* One run of text rather than two halves. */
+  display: block;
+  padding: var(--size-4-2) var(--size-4-4);
   font-size: var(--font-ui-smaller);
+  line-height: var(--line-height-tight);
+  color: var(--text-muted);
+}
+
+/* The dot beside the version keeps the state; the notice repeats it only where
+   the state is something gone wrong or something to do. */
+.ex-pandoc-notice.is-warning {
   color: var(--text-warning);
-  margin-top: var(--size-2-2);
 }
 
-/* The sections after it, one per action, each as wide as what it says. */
-.ex-pandoc-dashboard-actions {
+.ex-pandoc-notice.is-error {
+  color: var(--text-error);
+}
+
+/* The buttons that stand in the status line rather than in a card of their own:
+   no fill, no border, and the colour of the line they belong to. */
+.ex-pandoc-dashboard-inline.ex-pandoc-dashboard-inline {
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  /* One line of the status, exactly: `1lh` is the button's own line-height, and
+     a button is handed a font of its own — so both are taken from the line the
+     button stands in. Left to the button's font, the box is taller than the
+     text beside it and the row's `flex-start` drops the icon below its middle. */
+  font-size: inherit;
+  line-height: inherit;
+  height: 1lh;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  color: inherit;
+  cursor: var(--cursor);
+}
+
+/* Removing what is installed is not what the line is about, so it says less. */
+.ex-pandoc-dashboard-inline.is-quiet.is-quiet {
+  color: var(--text-muted);
+}
+
+/* The one the card is waiting on: nothing is installed until it is pressed, so
+   it takes the colour of something to press. */
+.ex-pandoc-dashboard-inline.is-cta.is-cta {
+  color: var(--text-accent);
+}
+
+.ex-pandoc-dashboard-inline.ex-pandoc-dashboard-inline:hover {
+  color: var(--text-accent);
+}
+
+.ex-pandoc-dashboard-inline.ex-pandoc-dashboard-inline:disabled {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+/* Laid out rather than typeset: an inline svg sits on a baseline, and the space
+   the baseline leaves under it is what tips the icon off the middle of the line
+   even inside a box the right height. */
+.ex-pandoc-dashboard-inline .svg-icon {
+  display: block;
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+
+/* On a phone the export folder is one of the vault's, typed into a field that
+   suggests them — which wants the width the folder button would have taken. */
+.ex-export-modal-folder input[type='text'] {
+  width: 100%;
+}
+
+/* Stands between the template that caused it and the button that agrees to it,
+   so it is read on the way from one to the other rather than found afterwards. */
+.ex-export-modal-warning {
   display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  border-inline-start: 1px solid var(--background-modifier-border);
+  align-items: flex-start;
+  gap: var(--size-4-2);
+  margin-bottom: var(--size-4-3);
+  padding: var(--setting-items-padding-x);
+  border: 1px solid var(--text-warning);
+  border-radius: var(--setting-items-radius);
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  line-height: var(--line-height-tight);
 }
 
-/* Two-class specificity throughout: these are `button` elements, and every
-   property below is one the theme's button rules would otherwise set. */
-.ex-pandoc-dashboard-button.ex-pandoc-dashboard-button {
-  flex: none;
+/* Kept off the first line's baseline: the triangle marks the whole block, not
+   the word it happens to sit beside. */
+.ex-export-modal-warning .svg-icon {
+  width: var(--icon-s);
+  height: var(--icon-s);
+  color: var(--text-warning);
+}
+
+/*
+ * A card that is nothing but the things it can be asked to do: equal halves of
+ * one card, told apart by the rule between them rather than by any chrome of
+ * their own — and stacked, where the card is too narrow to hold them side by
+ * side. The background is the colour of that rule, which the buttons cover but
+ * for the gaps they are divided by. `overflow` keeps a half's hover fill inside
+ * the rounded corners.
+ */
+.ex-actions-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 1px;
+  margin-bottom: var(--size-4-4);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--setting-items-radius);
+  background-color: var(--background-modifier-border);
+  overflow: hidden;
+}
+
+/*
+ * Written at two-class specificity throughout: these are `button` elements, and
+ * every one of these properties is something the theme's button rules would
+ * otherwise set.
+ */
+.ex-action.ex-action {
+  /* Halves of whatever the card has, but never narrower than the label: the
+     line is broken on the labels' own widths, so a card too narrow to hold both
+     of them side by side stacks them instead of setting either one to a word a
+     line. Whichever label it is — the Russian ones are half again as long. */
+  flex: 1 1 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--size-4-2);
-  min-width: 0;
-  /* The section is the full height of the card, not a button standing in one. */
-  align-self: stretch;
-  height: auto;
-  min-height: 42px;
+  min-width: max-content;
   margin: 0;
-  padding: var(--size-4-2) var(--size-4-4);
-  background-color: transparent;
+  /* Tall enough to read as a panel of the card rather than a button sitting in
+     it — the height is the point, so it is set rather than left to the label. */
+  min-height: 42px;
+  padding: var(--size-4-5) var(--size-4-4);
+  /* Opaque, so the colour the card is divided by is only ever seen in the
+     gaps. */
+  background-color: var(--setting-items-background, var(--background-primary));
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -190,40 +397,22 @@
   transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
 }
 
-/* The lines the card is divided by. */
-.ex-pandoc-dashboard-actions .ex-pandoc-dashboard-button + .ex-pandoc-dashboard-button {
-  border-inline-start: 1px solid var(--background-modifier-border);
-}
-
 /* Accent under the pointer only: these are what the card is for, but not what
    it is about. */
-.ex-pandoc-dashboard-button.ex-pandoc-dashboard-button:hover,
-.ex-pandoc-dashboard-button.ex-pandoc-dashboard-button:focus-visible {
+.ex-action.ex-action:hover,
+.ex-action.ex-action:focus-visible {
   background-color: var(--background-modifier-hover);
   color: var(--text-accent);
 }
 
 /* Reached by tab, so it has to show where it is — but inside the card, where an
    outline would otherwise be clipped by the corners. */
-.ex-pandoc-dashboard-button.ex-pandoc-dashboard-button:focus-visible {
+.ex-action.ex-action:focus-visible {
   outline: none;
   box-shadow: inset 0 0 0 2px var(--background-modifier-border-focus);
 }
 
-/* An update to offer wears the colour the status line is already wearing, in
-   place of the accent the other sections take. */
-.ex-pandoc-dashboard-button.is-outdated.is-outdated,
-.ex-pandoc-dashboard-button.is-outdated.is-outdated:hover {
-  color: var(--text-warning);
-}
-
-/* A section with an icon and no label needs less width around it. */
-.ex-pandoc-dashboard-button.is-icon.is-icon {
-  padding-inline: var(--size-4-3);
-}
-
-/* `setIcon` sizes to the font, which is too big for a button label. */
-.ex-pandoc-dashboard-button .svg-icon {
+.ex-action .svg-icon {
   width: var(--icon-s);
   height: var(--icon-s);
 }
@@ -401,73 +590,6 @@
  * Export templates.
  */
 
-/*
- * The actions card above the table: two equal halves of one card, told apart by
- * the rule between them rather than by any chrome of their own. `overflow`
- * keeps a half's hover fill inside the card's rounded corners.
- */
-.ex-template-actions {
-  display: flex;
-  align-items: stretch;
-  margin-bottom: var(--size-4-4);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--setting-items-radius);
-  background: var(--setting-items-background);
-  overflow: hidden;
-}
-
-/*
- * Written at two-class specificity throughout: these are `button` elements, and
- * every one of these properties is something the theme's button rules would
- * otherwise set.
- */
-.ex-template-actions .ex-template-action {
-  flex: 1 1 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--size-4-2);
-  min-width: 0;
-  margin: 0;
-  /* Tall enough to read as a panel of the card rather than a button sitting in
-     it — the height is the point, so it is set rather than left to the label. */
-  min-height: 42px;
-  padding: var(--size-4-5) var(--size-4-4);
-  background-color: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  color: var(--text-normal);
-  font-size: var(--font-ui-small);
-  cursor: var(--cursor);
-  transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
-}
-
-/* The one line the card is divided by. */
-.ex-template-actions .ex-template-action + .ex-template-action {
-  border-inline-start: 1px solid var(--background-modifier-border);
-}
-
-/* Accent under the pointer only: these are what the section is for, but not
-   what it is about. */
-.ex-template-actions .ex-template-action:hover,
-.ex-template-actions .ex-template-action:focus-visible {
-  background-color: var(--background-modifier-hover);
-  color: var(--text-accent);
-}
-
-/* Reached by tab, so it has to show where it is — but inside the card, where an
-   outline would otherwise be clipped by the corners. */
-.ex-template-actions .ex-template-action:focus-visible {
-  outline: none;
-  box-shadow: inset 0 0 0 2px var(--background-modifier-border-focus);
-}
-
-.ex-template-action .svg-icon {
-  width: var(--icon-s);
-  height: var(--icon-s);
-}
-
 .ex-template-table {
     width: 100%;
     margin-bottom: var(--size-4-4);
@@ -572,6 +694,20 @@
   font-size: var(--font-ui-small);
 }
 
+/* Always visible, unlike the row actions: it is about the template rather than
+   about what can be done to it, and a warning that appears on hover is one
+   nobody was looking for. */
+.ex-template-table-warning {
+  display: flex;
+  align-items: center;
+  color: var(--text-warning);
+}
+
+.ex-template-table-warning .svg-icon {
+  width: var(--icon-s);
+  height: var(--icon-s);
+}
+
 /* Takes what the half above it leaves, less the icons at the end of the row.
    No longer sized to its own content: a column that shrinks to fit is a column
    that starts somewhere different on every table. */
@@ -606,6 +742,18 @@
 
 .ex-template-table tbody tr:hover .ex-template-table-row-actions {
   opacity: 1;
+}
+
+/* Nothing to hover with on a touch screen: an action nobody can reveal is an
+   action nobody has. Every row carries its own from the start there. */
+.ex-template-table.is-touch .ex-template-table-row-actions {
+  opacity: 1;
+}
+
+/* On a phone the row is the edit control, the pencil having gone with the width
+   it would have cost. */
+.ex-template-table tbody tr.is-tappable {
+  cursor: var(--cursor);
 }
 
 /* The accent for what edits the template, the error colour for what ends it. */
@@ -1008,6 +1156,13 @@
   background: var(--background-secondary);
 }
 
+/* One to a line, whatever the grid would otherwise fit across. Asked for by
+   what is in it rather than by the width: a name that has to be read in full is
+   worth the length the list runs to. */
+.ex-check-grid.is-single-column {
+  grid-template-columns: 1fr;
+}
+
 /* The whole row is the hit area, label included — a checkbox alone is a small
    target for a mouse. */
 .ex-check {
@@ -1025,14 +1180,31 @@
   color: var(--text-normal);
 }
 
-.ex-check input[type='checkbox'] {
+/*
+ * Its own size, said here rather than left to Obsidian's own `input` rule.
+ *
+ * Under `@container (max-width: 400px)` Obsidian gives every input in a row's
+ * control block `width: 100%` — meant for the text fields that are the usual
+ * thing to find there. A checkbox took it too: each box stretched the width of
+ * its column and left the name beside it nothing at all, so a grid of ticks
+ * read as a grid of empty fields. A narrow pane is enough to bring it on; a
+ * phone is only the surest way.
+ *
+ * The grid's class is written twice: that rule carries the same weight as this
+ * one, and a tie settled by which stylesheet loaded last is not settled.
+ */
+.ex-check-grid.ex-check-grid .ex-check input[type='checkbox'] {
   flex: 0 0 auto;
+  width: var(--checkbox-size);
+  height: var(--checkbox-size);
   margin: 0;
 }
 
 /* A filter's name can be longer than its column; it is cut rather than allowed
-   to push the grid wider than the card. */
+   to push the grid wider than the card. `min-width` is what lets it be cut: a
+   flex item is floored at its own content until it is told otherwise. */
 .ex-check-label {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1471,7 +1643,15 @@
   padding-bottom: var(--size-4-4);
 }
 
+/*
+ * A phone lays a modal's content out as a flex column, which the desktop does
+ * not — and a field standing in one is shrunk to make room for everything under
+ * it, the list of filters being as long as it likes. The height a field is
+ * given is a height, not an opening bid: it keeps it whatever else is in the
+ * column. `auto` is that height rather than a second copy of it.
+ */
 .ex-lua-search {
+  flex: 0 0 auto;
   width: 100%;
   margin-bottom: var(--size-4-3);
 }
@@ -1482,6 +1662,9 @@
  * relative wrapper, which also carries the gap below the row.
  */
 .ex-lua-filters-wrap {
+  /* Squeezed by the same column as the field above it, and with less to stand
+     on: the row inside it scrolls, so nothing in it argues for its height. */
+  flex: 0 0 auto;
   position: relative;
   margin-bottom: var(--size-4-3);
 }
@@ -1958,6 +2141,57 @@
     animation: none;
     opacity: 0.5;
   }
+}
+
+/* ─── User guide ──────────────────────────────────────────────────────────────
+ *
+ * The guide is a note rather than a form, so it is left to look like one: the
+ * rules below only give it a column narrow enough to read and let it be copied
+ * out of.
+ */
+
+.ex-user-guide-modal {
+  max-width: 680px;
+  /* Obsidian turns selection off inside a modal, which a page meant to be read
+     and quoted from has no use for. */
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: auto;
+}
+
+.ex-user-guide-modal * {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Prose at the size the rest of the settings are read at, rather than the
+   note's own — this is a panel of the plugin, not a note. Set on the page as
+   well as on its paragraphs, so everything the renderer leaves at the base size
+   is read at it too. Headings keep the sizes the renderer gives them, which is
+   what makes them headings.
+   The class is written twice: a theme's stylesheet loads after a plugin's, and
+   a rule of the same weight in one would otherwise be the one that lands. */
+.ex-user-guide-modal.ex-user-guide-modal,
+.ex-user-guide-modal.ex-user-guide-modal p,
+.ex-user-guide-modal.ex-user-guide-modal li {
+  font-size: var(--font-ui-small);
+}
+
+/* The variables table is the widest thing in the guide: held to the column, so
+   its cells wrap instead of the page growing sideways. */
+.ex-user-guide-modal table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-block: var(--size-4-2) var(--size-4-4);
+  font-size: var(--font-ui-smaller);
+}
+
+.ex-user-guide-modal th,
+.ex-user-guide-modal td {
+  padding: var(--size-4-1) var(--size-4-2);
+  border: 1px solid var(--background-modifier-border);
+  text-align: start;
+  vertical-align: top;
 }
 
 *[hidden] {

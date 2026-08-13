@@ -1,12 +1,9 @@
-import * as ct from 'electron';
-import process from 'process';
-import { Notice, PluginSettingTab, moment } from 'obsidian';
+import { Notice, Platform, PluginSettingTab, moment } from 'obsidian';
 import type { SettingDefinitionItem } from 'obsidian';
 import type { SemVer } from 'semver';
 import type PandocGuiPlugin from '../main';
 import { CustomExportSetting, ExportSetting, PandocExportSetting, createEnv, today, DEFAULT_ENV } from '../settings';
 import { setPlatformValue, getPlatformValue, clone } from '../utils';
-import { dialogWindow } from '../dialog';
 
 import { createSignal, createRoot, onCleanup, createMemo, createEffect, For, Index, Show, batch, Match, Switch, JSX } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
@@ -14,7 +11,12 @@ import { insert, Dynamic } from 'solid-js/web';
 import { t } from '../lang/helpers';
 
 import pandoc from '../pandoc';
+import { resolveEngine } from '../engine';
+import { chooseFile, documentsFolder, isMobileUi, vaultRoot } from '../platform';
 import PandocDashboard from './PandocDashboard';
+import PandocLinks from './PandocLinks';
+import PandocNotices, { type PanelNotice } from './PandocNotices';
+import WasmPanel from './WasmPanel';
 import TemplateActions from './TemplateActions';
 import TemplateTable from './TemplateTable';
 import LuaFilterStore from './LuaFilterStore';
@@ -204,6 +206,7 @@ import Collapsible from './components/Collapsible';
 import Section from './components/Section';
 import Setting, { Text, Toggle, ExtraButton, DropDown, TextArea } from './components/Setting';
 import FileInput from './components/FileInput';
+import FolderInput from './components/FolderInput';
 import export_templates from '../export_templates';
 import { BUNDLED_LUA_FILES } from '../resources';
 
@@ -872,7 +875,9 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         {/* Ticking a box writes the extension into `-f`. Every one offered is a
             pandoc default-off, so a cleared box is the reader's own behaviour. */}
         <Setting name={t.EXTENSIONS} description={t.EXTENSIONS_DESC} class="ex-template-modal-extensions">
-          <CheckGrid items={extensions()} onToggle={toggleExtension} />
+          {/* One to a line where the width is a phone's: an extension is named the way pandoc names it, and two
+              columns of that is two columns of cut-off names. */}
+          <CheckGrid items={extensions()} onToggle={toggleExtension} single={isMobileUi()} />
         </Setting>
 
         {/* Not gated on the format: citations and variables are asked of every writer. */}
@@ -996,7 +1001,8 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
             </div>
           </Show>
 
-          <Show when={isPdfOutput(format())}>
+          {/* No engine to choose between where none can be run. */}
+          <Show when={isPdfOutput(format()) && engine() === 'native'}>
             <Setting name={t.PDF_ENGINE} description={t.PDF_ENGINE_DESC} class="ex-template-modal-pdf-engine">
               <DropDown
                 options={engineOptions()}
@@ -1369,30 +1375,31 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
   };
 
   const chooseCustomDefaultExportDirectory = async () => {
-    const retval = await ct.remote.dialog.showOpenDialog(dialogWindow(), {
-      defaultPath: customDefaultExportDirectory() ?? ct.remote.app.getPath('documents'),
-      properties: ['createDirectory', 'openDirectory'],
-    });
-
-    if (!retval.canceled && retval.filePaths.length > 0) {
-      setSettings('customDefaultExportDirectory', v => setPlatformValue(v, retval.filePaths[0]));
+    const chosen = await chooseFile({ folder: true, defaultPath: customDefaultExportDirectory() ?? (await documentsFolder()) });
+    if (chosen) {
+      setSettings('customDefaultExportDirectory', v => setPlatformValue(v, chosen));
     }
   };
 
   const choosePandocPath = async () => {
-    const retval = await ct.remote.dialog.showOpenDialog(dialogWindow(), {
-      filters: process.platform == 'win32' ? [{ extensions: ['exe'], name: 'pandoc' }] : undefined,
-      properties: ['openFile'],
-    });
-
-    if (!retval.canceled && retval.filePaths.length > 0) {
-      setSettings('pandocPath', v => setPlatformValue(v, retval.filePaths[0]));
+    const chosen = await chooseFile({ filters: Platform.isWin ? [{ extensions: ['exe'], name: 'pandoc' }] : undefined });
+    if (chosen) {
+      setSettings('pandocPath', v => setPlatformValue(v, chosen));
     }
   };
 
+  // Which pandoc this vault exports with, and so which of the rows below are worth showing at all. Read from the UI
+  // Obsidian is drawing rather than from the device, so a desktop emulating a phone is shown the phone's settings.
+  const engine = createMemo(() => resolveEngine(settings.engineMode, isMobileUi()));
+
   // Asked on every open, answered from the session cache after the first success. Still an
-  // effect, so a changed path or environment re-asks the binary it now points at.
+  // effect, so a changed path or environment re-asks the binary it now points at — and asks
+  // nothing at all where no installed pandoc runs the exports, a phone above all.
   createEffect(async () => {
+    if (engine() !== 'native') {
+      setPandocVersion(undefined);
+      return;
+    }
     try {
       const env = createEnv(getPlatformValue(settings.env) ?? {});
       setPandocVersion(await pandoc.getCachedVersion(getPlatformValue(settings.pandocPath), env));
@@ -1401,19 +1408,75 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
     }
   });
 
+  // What the two halves say at length, kept by the card rather than by either of them: the installed pandoc's
+  // notices come first, as its half does.
+  const [nativeNotices, setNativeNotices] = createSignal<PanelNotice[]>([]);
+  const [wasmNotices, setWasmNotices] = createSignal<PanelNotice[]>([]);
+  const panelNotices = createMemo(() => [...nativeNotices(), ...wasmNotices()]);
+
+  // On a phone a folder is one of the vault's, and is stored as the path on the device all the same.
+  const vaultDir = vaultRoot(app.vault.adapter);
+  const vaultFolderOf = (path?: string) => (path?.startsWith(`${vaultDir}/`) ? path.substring(vaultDir.length + 1) : '');
+  const fullPathOf = (folder: string) => (folder ? `${vaultDir}/${folder}` : vaultDir);
+
   return (
     <>
-      <PandocDashboard
-        version={pandocVersion()}
-        markdownLinks={app.vault.config.useMarkdownLinks}
-        path={getPlatformValue(settings.pandocPath) ?? ''}
-        onPathChange={value => setSettings('pandocPath', v => setPlatformValue(v, value))}
-        onChoosePath={() => void choosePandocPath()}
-      />
+      {/* One card: a pandoc to each half of it, and a row to each thing it is read for. */}
+      <div class="ex-pandoc-panel">
+        <div class="ex-pandoc-panel-row ex-pandoc-engines">
+          {/* The installed program has nothing to say where it is not the one running. */}
+          <Show when={engine() === 'native'}>
+            <PandocDashboard version={pandocVersion()} markdownLinks={app.vault.config.useMarkdownLinks} onNotices={setNativeNotices} />
+          </Show>
+
+          <WasmPanel
+            app={app}
+            manager={plugin.wasm}
+            version={settings.wasmVersion}
+            onInstalled={version => setSettings('wasmVersion', version)}
+            onNotices={setWasmNotices}
+          />
+        </div>
+
+        {/* Between the two pandocs and the pages to read: what neither half has the width to say. */}
+        <PandocNotices notices={panelNotices()} />
+
+        <PandocLinks app={app} />
+      </div>
 
       <Setting name={t.SECTION_DEFAULTS} heading={true} />
 
       <div class="ex-settings-card">
+        {/* Which pandoc converts, and where the installed one is: what every row below is answered under.
+            A phone has no installed program to point at, so that row belongs to the desktop. */}
+        <Show when={engine() === 'native'}>
+          {/* Nothing here means the export runs a bare `pandoc`, which is the system's PATH answering rather than a
+              search of the plugin's own — so the row claims it was found only once the binary has actually answered. */}
+          <Setting
+            name={t.PANDOC_FOLDER}
+            description={getPlatformValue(settings.pandocPath) || (pandocVersion() ? t.PANDOC_PATH_PLACEHOLDER : t.PANDOC_PATH_NOT_FOUND)}
+          >
+            <ExtraButton icon="folder" tooltip={t.CHOOSE_FILE} onClick={() => void choosePandocPath()} />
+            {/* The dialog cannot pick "nothing", so clearing needs its own control. */}
+            <Show when={getPlatformValue(settings.pandocPath)}>
+              <ExtraButton
+                icon="rotate-ccw"
+                tooltip={t.PANDOC_PATH_RESET}
+                onClick={() => setSettings('pandocPath', v => setPlatformValue(v, ''))}
+              />
+            </Show>
+          </Setting>
+        </Show>
+
+        {/* Asked whether or not the build is installed: it is the answer that says what to install for. The question
+            is only ever about this computer — a phone runs the wasm build whichever way it is set, and is not asked
+            at all, an answer there being a claim that there is an installed pandoc to choose instead. */}
+        <Show when={!isMobileUi()}>
+          <Setting name={t.WASM_ENGINE} description={t.WASM_ENGINE_DESC}>
+            <Toggle checked={settings.engineMode === 'wasm'} onChange={on => setSettings('engineMode', on ? 'wasm' : 'auto')} />
+          </Setting>
+        </Show>
+
         <Setting name={t.SETTING_EXPORT_DESTINATION}>
           <DropDown
             options={[
@@ -1427,24 +1490,45 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
 
         <Collapsible when={settings.defaultExportDirectoryMode === 'Custom'}>
           <Setting class="ex-export-destination-path">
-            <Text style="width: 100%" value={customDefaultExportDirectory() ?? ''} tooltip={customDefaultExportDirectory()} />
-            <ExtraButton icon="folder" onClick={() => void chooseCustomDefaultExportDirectory()} />
+            {/* A folder of the vault on a phone, where nothing outside it can be written to anyway. */}
+            <Show
+              when={isMobileUi()}
+              fallback={
+                <>
+                  <Text style="width: 100%" value={customDefaultExportDirectory() ?? ''} tooltip={customDefaultExportDirectory()} />
+                  <ExtraButton icon="folder" onClick={() => void chooseCustomDefaultExportDirectory()} />
+                </>
+              }
+            >
+              <FolderInput
+                app={app}
+                value={vaultFolderOf(customDefaultExportDirectory())}
+                placeholder={t.IMPORT_DIALOG_FOLDER_PLACEHOLDER}
+                onChange={folder => setSettings('customDefaultExportDirectory', v => setPlatformValue(v, fullPathOf(folder)))}
+              />
+            </Show>
           </Setting>
         </Collapsible>
 
-        <Setting name={t.SETTING_OPEN_LOCATION}>
-          <Toggle checked={settings.openExportedFileLocation} onChange={v => setSettings('openExportedFileLocation', v)} />
-        </Setting>
+        {/* Both hand the file to the system, and a phone has none of that to hand it to. */}
+        <Show when={!isMobileUi()}>
+          <Setting name={t.SETTING_OPEN_LOCATION}>
+            <Toggle checked={settings.openExportedFileLocation} onChange={v => setSettings('openExportedFileLocation', v)} />
+          </Setting>
 
-        <Setting name={t.SETTING_OPEN_FILE}>
-          <Toggle checked={settings.openExportedFile} onChange={v => setSettings('openExportedFile', v)} />
-        </Setting>
+          <Setting name={t.SETTING_OPEN_FILE}>
+            <Toggle checked={settings.openExportedFile} onChange={v => setSettings('openExportedFile', v)} />
+          </Setting>
+        </Show>
 
-        <Setting name={t.SETTING_ENV_VARS} description={t.SETTING_ENV_VARS_DESC}>
-          <ExtraButton icon="pencil" tooltip={t.ACTION_EDIT} onClick={() => setEditingEnvVars(v => !v)} />
-        </Setting>
+        {/* The environment is what a program is started with, and the wasm build is not started. */}
+        <Show when={engine() === 'native'}>
+          <Setting name={t.SETTING_ENV_VARS} description={t.SETTING_ENV_VARS_DESC}>
+            <ExtraButton icon="pencil" tooltip={t.ACTION_EDIT} onClick={() => setEditingEnvVars(v => !v)} />
+          </Setting>
+        </Show>
 
-        <Collapsible when={editingEnvVars()}>
+        <Collapsible when={editingEnvVars() && engine() === 'native'}>
           <Setting class="ex-nameless-setting ex-env-panel">
             <Show when={envVarsAsText()} fallback={<EnvVars env={envVars()} onChange={setEnvVars} />}>
               <TextArea
@@ -1490,6 +1574,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
 
       <TemplateTable
         templates={settings.items}
+        engine={engine()}
         sort={settings.lastTemplateSort}
         onSort={sort => setSettings('lastTemplateSort', sort)}
         onEdit={editCommandTemplate}
@@ -1536,7 +1621,10 @@ export default class extends PluginSettingTab {
             desc: this.plugin.manifest.description,
             aliases: [
               t.PANDOC_DASHBOARD,
-              t.PANDOC_PATH,
+              // The rows a phone does not have. Searching them there would answer with a tab that says nothing
+              // about the installed pandoc, because there is none to say anything about.
+              ...(isMobileUi() ? [] : [t.PANDOC_PATH, t.PANDOC_FOLDER, t.WASM_ENGINE, t.SETTING_ENV_VARS]),
+              t.WASM_TITLE,
               t.SECTION_DEFAULTS,
               t.SETTING_EXPORT_DESTINATION,
               t.SETTING_OPEN_LOCATION,
@@ -1589,7 +1677,6 @@ export default class extends PluginSettingTab {
               t.TEMPLATE_TARGET_EXTENSIONS,
               t.TEMPLATE_SHOW_OUTPUT,
               t.TEMPLATE_OUTPUT,
-              t.SETTING_ENV_VARS,
               'pandoc',
             ],
             render: setting => {

@@ -64,6 +64,13 @@ export class PandocProgress {
     }
   }
 
+  /** Said instead while the wasm build is starting up, which the first export of a session waits seconds for. */
+  starting(): void {
+    if (!this.ended) {
+      this.labelEl.setText(t.WASM_PREPARING);
+    }
+  }
+
   /** The file was written, and the notice bows out by itself. */
   succeed(file: string): void {
     this.finish(this.messages.done(file), 'is-done');

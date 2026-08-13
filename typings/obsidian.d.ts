@@ -15,7 +15,8 @@ declare global {
 declare module 'obsidian' {
 
   export interface DataAdapter {
-    getBasePath(): string;
+    /** The desktop adapter's alone — a phone's has no such thing. Reach it through `vaultRoot` in src/platform.ts. */
+    getBasePath?(): string;
     getFullPath(path: string): string;
     startWatchPath(path: string): void;
     stopWatchPath(path: string): void;

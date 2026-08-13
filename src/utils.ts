@@ -1,7 +1,11 @@
-import { ExecOptions, exec as node_exec } from 'child_process';
-import process from 'process';
+import { Platform } from 'obsidian';
+import { currentPlatform } from './platform';
 
-export type PlatformKey = typeof process.platform | '*';
+/**
+ * The platforms a setting can be given a value of its own on: node's own names for the desktops, which is what vaults
+ * have stored since before there was a phone to run on, plus one for each phone.
+ */
+export type PlatformKey = NodeJS.Platform | 'ios' | 'android' | '*';
 
 export type PlatformValue<T> = { [k in PlatformKey]?: T };
 
@@ -14,7 +18,7 @@ export function setPlatformValue<T>(obj: PlatformValue<T>, value: T, platform?: 
     return platform.reduce((o, p) => setPlatformValue(o, value, p), obj);
   }
 
-  platform ??= process.platform;
+  platform ??= currentPlatform();
 
   return {
     ...(obj ?? {}),
@@ -24,7 +28,7 @@ export function setPlatformValue<T>(obj: PlatformValue<T>, value: T, platform?: 
 
 export function getPlatformValue<T>(obj: PlatformValue<T>, platform?: PlatformKey): T {
   obj ??= {};
-  const val = obj[platform ?? process.platform];
+  const val = obj[platform ?? currentPlatform()];
   const all = obj['*'];
   if (all && typeof all === 'object') {
     return Object.assign({}, all, val);
@@ -38,10 +42,17 @@ export interface ExecResult {
   stderr: string;
 }
 
-export function exec(cmd: string, options?: ExecOptions): Promise<ExecResult> {
-  return new Promise((resolve, reject) => {
+/** Run a command. Node's, so only where there is one — the wasm engine is what a phone converts with. */
+export async function exec(cmd: string, options?: { cwd?: string; env?: Record<string, string> }): Promise<ExecResult> {
+  // Obsidian's own check, not this plugin's `isDesktop`: a phone being emulated is given no node to run anything
+  // with, so there is nothing here to run either. See `isDesktop`.
+  if (!Platform.isDesktop) {
+    throw new Error('There is no Pandoc to run on this device — see the engine setting.');
+  }
+  const { exec: run } = await import('child_process');
+  return await new Promise((resolve, reject) => {
     // Naming the encoding picks the overload that returns text rather than a Buffer.
-    node_exec(cmd, { ...options, encoding: 'utf8' }, (error, stdout, stderr) => {
+    run(cmd, { ...options, encoding: 'utf8' }, (error, stdout, stderr) => {
       if (error) {
         console.error(stdout, stderr, error);
         reject(error);
