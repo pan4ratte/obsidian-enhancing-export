@@ -1,4 +1,4 @@
-import path from 'path';
+import { stem } from '../paths';
 import { Notice } from 'obsidian';
 import { JSX, Show, createMemo, createRoot, createSignal, onCleanup, untrack } from 'solid-js';
 import { createStore } from 'solid-js/store';
@@ -6,6 +6,7 @@ import { insert } from 'solid-js/web';
 import type PandocGuiPlugin from '../main';
 import { t } from '../lang/helpers';
 import { importFile } from '../import';
+import { isMobile, vaultRoot } from '../platform';
 import {
   DEFAULT_MARKDOWN_FLAVOUR,
   IMPORT_EXTENSIONS,
@@ -24,6 +25,7 @@ import { supportsMarkdownHeadings, supportsReferenceLinks, supportsWrap } from '
 import Modal from './components/Modal';
 import Button from './components/Button';
 import FileInput from './components/FileInput';
+import VaultFileInput from './components/VaultFileInput';
 import FolderInput from './components/FolderInput';
 import Setting, { DropDown, Text, Toggle } from './components/Setting';
 
@@ -77,7 +79,12 @@ const Dialog = (props: { plugin: PandocGuiPlugin; onClose?: () => void }) => {
   });
 
   const reader = createMemo(() => readerFor(source()));
-  const noteName = createMemo(() => (source() ? `${path.basename(source(), path.extname(source()))}.md` : ''));
+  // What the vault calls the chosen file, for the field that names one of its own.
+  const vaultFile = createMemo(() => {
+    const root = `${vaultRoot(app.vault.adapter)}/`;
+    return source().startsWith(root) ? source().substring(root.length) : source();
+  });
+  const noteName = createMemo(() => (source() ? `${stem(source())}.md` : ''));
 
   const sourceDescription = () => {
     if (!source()) {
@@ -140,7 +147,20 @@ const Dialog = (props: { plugin: PandocGuiPlugin; onClose?: () => void }) => {
       </Setting>
 
       <PathSetting name={t.IMPORT_DIALOG_SOURCE} description={sourceDescription()}>
-        <FileInput value={source()} filters={SOURCE_FILES} tooltip={t.CHOOSE_FILE} onChange={setSource} />
+        {/* A file from anywhere on a desktop; on a phone, one that is already in the vault — there is no other
+            document it could reach. */}
+        <Show
+          when={isMobile()}
+          fallback={<FileInput value={source()} filters={SOURCE_FILES} tooltip={t.CHOOSE_FILE} onChange={setSource} />}
+        >
+          <VaultFileInput
+            app={app}
+            value={vaultFile()}
+            extensions={IMPORT_EXTENSIONS}
+            placeholder={t.IMPORT_DIALOG_SOURCE_NONE}
+            onChange={path => setSource(path ? `${vaultRoot(app.vault.adapter)}/${path}` : '')}
+          />
+        </Show>
       </PathSetting>
 
       <PathSetting

@@ -1,6 +1,5 @@
-import { FileFilter, remote } from 'electron';
 import { For, JSX, createEffect, createSignal, untrack } from 'solid-js';
-import { dialogWindow } from '../../dialog';
+import { chooseFile as chooseFromSystem, type FileFilter } from '../../platform';
 import Setting, { Toggle, DropDown, Text, ExtraButton } from './Setting';
 
 const editors = {
@@ -35,13 +34,9 @@ const editors = {
     const [filePath, setFilePath] = createSignal<string>(getDefaultValue(props.meta));
 
     const chooseFile = async () => {
-      const retval = await remote.dialog.showOpenDialog(dialogWindow(), {
-        properties: ['openFile'],
-        filters: props.meta.filters,
-      });
-
-      if (!retval.canceled && retval.filePaths.length > 0) {
-        setFilePath(retval.filePaths[0]);
+      const chosen = await chooseFromSystem({ filters: props.meta.filters });
+      if (chosen) {
+        setFilePath(chosen);
         props.onChange?.(untrack(filePath));
       }
     };

@@ -1,6 +1,18 @@
 # Changelog
 
 
+## Unreleased
+
+### New feature: Pandoc on a phone and a tablet
+
+* The plugin runs on mobile. Exporting, importing, the template editor and the lua-filter store all work there.
+* New section in the settings: “Pandoc for mobile” installs Pandoc's official WebAssembly build with one press — downloaded, unpacked and put in place by the plugin.
+* New setting, “What converts”: the installed Pandoc, the built-in one, or the installed one on a computer and the built-in one on a phone.
+* The built-in Pandoc makes no PDF, runs no commands of your own and fetches nothing from the network; templates it cannot run are left out of the export dialog, and settings that mean nothing to it are hidden.
+* Export and import on a phone write into the vault, and its folders are suggested as you type.
+* The device is checked before anything is downloaded: the build needs iOS 18.4, an up-to-date Android WebView, or a recent Obsidian.
+
+
 ## 1.3.0
 
 ### New feature: Import document and convert it to Markdown

@@ -1,11 +1,11 @@
-import process from 'process';
 import { Index } from 'solid-js';
 import { t } from '../lang/helpers';
+import { PATH_SEPARATOR } from '../platform';
 import FileInput, { choosePath } from './components/FileInput';
 import { ExtraButton } from './components/Setting';
 
 /** What this platform lists folders with. */
-const SEPARATOR = process.platform === 'win32' ? ';' : ':';
+const SEPARATOR = PATH_SEPARATOR();
 
 /** The folders a value names. */
 const folders = (value: string) => value.split(SEPARATOR).filter(folder => folder !== '');

@@ -6,5 +6,5 @@
   "description": "Export and import notes via Pandoc with a modern GUI. Create templates for Word, PDF, LaTeX, HTML, EPUB, and many other formats, and install dozens of lua filters from the store.",
   "author": "pan4ratte",
   "authorUrl": "https://github.com/pan4ratte/",
-  "isDesktopOnly": true
+  "isDesktopOnly": false
 }

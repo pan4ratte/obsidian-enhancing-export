@@ -1,17 +1,13 @@
-import * as ct from 'electron';
 import { Show, createMemo, createResource } from 'solid-js';
 import type { SemVer } from 'semver';
 import { t } from '../lang/helpers';
 import pandoc, { type PandocRelease } from '../pandoc';
 import Button from './components/Button';
 import Icon from './components/Icon';
+import { openExternal } from '../platform';
 
 /** Green / yellow / grey dot next to the version. */
 type Status = 'ok' | 'outdated' | 'checking' | 'missing';
-
-const openExternal = (url: string) => {
-  void ct.remote.shell.openExternal(url);
-};
 
 /** A lookup that could not be made is the same as "no newer release known". */
 const fetchLatestRelease = async (): Promise<PandocRelease | undefined> => {

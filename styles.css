@@ -228,6 +228,26 @@
   height: var(--icon-s);
 }
 
+/* The wasm build's card is the same card, and sits under a heading of its own
+   rather than at the top of the tab. */
+.ex-wasm-panel {
+  margin-block: var(--size-4-2) 24px;
+}
+
+/* On a phone the export folder is one of the vault's, typed into a field that
+   suggests them — which wants the width the folder button would have taken. */
+.ex-export-modal-folder input[type='text'] {
+  width: 100%;
+}
+
+/* An install takes a while and cannot be hurried along, so the buttons say so
+   by standing down rather than by disappearing. */
+.ex-pandoc-dashboard-button.ex-pandoc-dashboard-button:disabled {
+  color: var(--text-faint);
+  background-color: transparent;
+  cursor: default;
+}
+
 /*
  * Card holding a section's rows, matching the one the templates table draws.
  * The rows inside keep the vertical rhythm of the reset above and only take the

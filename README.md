@@ -36,6 +36,11 @@ The “Import a file and convert it to a note” command calls the import dialog
 Your Pandoc stays at the current version, because the plugin tracks releases and offers to install a new one when it finds it. The manual and the changelog can be opened straight from the plugin too.
 
 
+### 7. On a phone and a tablet
+
+The plugin runs on mobile: its settings will install a build of Pandoc that runs inside Obsidian itself, with nothing to install on the system. It is about 16 MB to download, and the plugin does the rest — unpacking it, putting it in place, starting it. Exporting and importing work as they do on a computer, except that the folders are the vault's own.
+
+
 ## Installation
 
 ### First of all, install Pandoc
@@ -45,6 +50,23 @@ Your Pandoc stays at the current version, because the plugin tracks releases and
 2. Then either add it to your system `PATH`, or point the plugin at the installed program in its settings.
 
 3. Exporting straight to PDF additionally needs a LaTeX distribution — MiKTeX, TeX Live, the [TinyTeX](https://github.com/rstudio/tinytex-releases) I recommend, or any other engine Pandoc supports.
+
+### On a phone: the built-in Pandoc
+
+A program cannot be installed on a phone, so there the plugin uses a build of Pandoc compiled to WebAssembly.
+
+1. Open the plugin settings, find the "Pandoc for mobile" section and choose "Install". The plugin downloads Pandoc's own official build, unpacks it and puts it in its folder. There is nothing else to do.
+
+2. "What converts" decides which one runs: the installed program, the built-in build, or — the default — the installed one on a computer and the built-in one on a phone.
+
+Mind what the built-in build cannot do:
+
+* **No PDF.** A PDF needs a typesetting program (LaTeX, Typst), and the built-in Pandoc has no way to start one. Templates that write a PDF are left out of the export dialog. Export to Word, HTML, EPUB or LaTeX instead.
+* **No templates that run a command of your own**, for the same reason.
+* **Nothing is fetched from the network** while converting, so an image linked by URL will not make it into the document.
+* **Lua filters only** — which is what every filter in the plugin's store is.
+* The build takes about 56 MB in the plugin folder. With plugin syncing on, it will be copied to every device.
+* It needs a recent device: iOS 18.4 or newer, or an up-to-date Android WebView. The plugin checks this itself and says so when the device is too old.
 
 ### Option 1: Obsidian plugin store
 

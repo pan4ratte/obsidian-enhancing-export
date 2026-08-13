@@ -1,12 +1,9 @@
-import * as ct from 'electron';
-import process from 'process';
-import { Notice, PluginSettingTab, moment } from 'obsidian';
+import { Notice, Platform, PluginSettingTab, moment } from 'obsidian';
 import type { SettingDefinitionItem } from 'obsidian';
 import type { SemVer } from 'semver';
 import type PandocGuiPlugin from '../main';
 import { CustomExportSetting, ExportSetting, PandocExportSetting, createEnv, today, DEFAULT_ENV } from '../settings';
 import { setPlatformValue, getPlatformValue, clone } from '../utils';
-import { dialogWindow } from '../dialog';
 
 import { createSignal, createRoot, onCleanup, createMemo, createEffect, For, Index, Show, batch, Match, Switch, JSX } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
@@ -14,7 +11,10 @@ import { insert, Dynamic } from 'solid-js/web';
 import { t } from '../lang/helpers';
 
 import pandoc from '../pandoc';
+import { resolveEngine } from '../engine';
+import { chooseFile, documentsFolder, isMobile, vaultRoot } from '../platform';
 import PandocDashboard from './PandocDashboard';
+import WasmPanel from './WasmPanel';
 import TemplateActions from './TemplateActions';
 import TemplateTable from './TemplateTable';
 import LuaFilterStore from './LuaFilterStore';
@@ -204,6 +204,7 @@ import Collapsible from './components/Collapsible';
 import Section from './components/Section';
 import Setting, { Text, Toggle, ExtraButton, DropDown, TextArea } from './components/Setting';
 import FileInput from './components/FileInput';
+import FolderInput from './components/FolderInput';
 import export_templates from '../export_templates';
 import { BUNDLED_LUA_FILES } from '../resources';
 
@@ -996,7 +997,8 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
             </div>
           </Show>
 
-          <Show when={isPdfOutput(format())}>
+          {/* No engine to choose between where none can be run. */}
+          <Show when={isPdfOutput(format()) && engine() === 'native'}>
             <Setting name={t.PDF_ENGINE} description={t.PDF_ENGINE_DESC} class="ex-template-modal-pdf-engine">
               <DropDown
                 options={engineOptions()}
@@ -1369,24 +1371,16 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
   };
 
   const chooseCustomDefaultExportDirectory = async () => {
-    const retval = await ct.remote.dialog.showOpenDialog(dialogWindow(), {
-      defaultPath: customDefaultExportDirectory() ?? ct.remote.app.getPath('documents'),
-      properties: ['createDirectory', 'openDirectory'],
-    });
-
-    if (!retval.canceled && retval.filePaths.length > 0) {
-      setSettings('customDefaultExportDirectory', v => setPlatformValue(v, retval.filePaths[0]));
+    const chosen = await chooseFile({ folder: true, defaultPath: customDefaultExportDirectory() ?? (await documentsFolder()) });
+    if (chosen) {
+      setSettings('customDefaultExportDirectory', v => setPlatformValue(v, chosen));
     }
   };
 
   const choosePandocPath = async () => {
-    const retval = await ct.remote.dialog.showOpenDialog(dialogWindow(), {
-      filters: process.platform == 'win32' ? [{ extensions: ['exe'], name: 'pandoc' }] : undefined,
-      properties: ['openFile'],
-    });
-
-    if (!retval.canceled && retval.filePaths.length > 0) {
-      setSettings('pandocPath', v => setPlatformValue(v, retval.filePaths[0]));
+    const chosen = await chooseFile({ filters: Platform.isWin ? [{ extensions: ['exe'], name: 'pandoc' }] : undefined });
+    if (chosen) {
+      setSettings('pandocPath', v => setPlatformValue(v, chosen));
     }
   };
 
@@ -1401,14 +1395,34 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
     }
   });
 
+  // Which pandoc this vault exports with, and so which of the rows below are worth showing at all.
+  const engine = createMemo(() => resolveEngine(settings.engineMode, isMobile()));
+
+  // On a phone a folder is one of the vault's, and is stored as the path on the device all the same.
+  const vaultDir = vaultRoot(app.vault.adapter);
+  const vaultFolderOf = (path?: string) => (path?.startsWith(`${vaultDir}/`) ? path.substring(vaultDir.length + 1) : '');
+  const fullPathOf = (folder: string) => (folder ? `${vaultDir}/${folder}` : vaultDir);
+
   return (
     <>
-      <PandocDashboard
-        version={pandocVersion()}
-        markdownLinks={app.vault.config.useMarkdownLinks}
-        path={getPlatformValue(settings.pandocPath) ?? ''}
-        onPathChange={value => setSettings('pandocPath', v => setPlatformValue(v, value))}
-        onChoosePath={() => void choosePandocPath()}
+      {/* The installed program has nothing to say where it is not the one running. */}
+      <Show when={engine() === 'native'}>
+        <PandocDashboard
+          version={pandocVersion()}
+          markdownLinks={app.vault.config.useMarkdownLinks}
+          path={getPlatformValue(settings.pandocPath) ?? ''}
+          onPathChange={value => setSettings('pandocPath', v => setPlatformValue(v, value))}
+          onChoosePath={() => void choosePandocPath()}
+        />
+      </Show>
+
+      <WasmPanel
+        app={app}
+        manager={plugin.wasm}
+        version={settings.wasmVersion}
+        mode={settings.engineMode}
+        onModeChange={mode => setSettings('engineMode', mode)}
+        onInstalled={() => setSettings('wasmVersion', plugin.settings.wasmVersion)}
       />
 
       <Setting name={t.SECTION_DEFAULTS} heading={true} />
@@ -1427,24 +1441,45 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
 
         <Collapsible when={settings.defaultExportDirectoryMode === 'Custom'}>
           <Setting class="ex-export-destination-path">
-            <Text style="width: 100%" value={customDefaultExportDirectory() ?? ''} tooltip={customDefaultExportDirectory()} />
-            <ExtraButton icon="folder" onClick={() => void chooseCustomDefaultExportDirectory()} />
+            {/* A folder of the vault on a phone, where nothing outside it can be written to anyway. */}
+            <Show
+              when={isMobile()}
+              fallback={
+                <>
+                  <Text style="width: 100%" value={customDefaultExportDirectory() ?? ''} tooltip={customDefaultExportDirectory()} />
+                  <ExtraButton icon="folder" onClick={() => void chooseCustomDefaultExportDirectory()} />
+                </>
+              }
+            >
+              <FolderInput
+                app={app}
+                value={vaultFolderOf(customDefaultExportDirectory())}
+                placeholder={t.IMPORT_DIALOG_FOLDER_PLACEHOLDER}
+                onChange={folder => setSettings('customDefaultExportDirectory', v => setPlatformValue(v, fullPathOf(folder)))}
+              />
+            </Show>
           </Setting>
         </Collapsible>
 
-        <Setting name={t.SETTING_OPEN_LOCATION}>
-          <Toggle checked={settings.openExportedFileLocation} onChange={v => setSettings('openExportedFileLocation', v)} />
-        </Setting>
+        {/* Both hand the file to the system, and a phone has none of that to hand it to. */}
+        <Show when={!isMobile()}>
+          <Setting name={t.SETTING_OPEN_LOCATION}>
+            <Toggle checked={settings.openExportedFileLocation} onChange={v => setSettings('openExportedFileLocation', v)} />
+          </Setting>
 
-        <Setting name={t.SETTING_OPEN_FILE}>
-          <Toggle checked={settings.openExportedFile} onChange={v => setSettings('openExportedFile', v)} />
-        </Setting>
+          <Setting name={t.SETTING_OPEN_FILE}>
+            <Toggle checked={settings.openExportedFile} onChange={v => setSettings('openExportedFile', v)} />
+          </Setting>
+        </Show>
 
-        <Setting name={t.SETTING_ENV_VARS} description={t.SETTING_ENV_VARS_DESC}>
-          <ExtraButton icon="pencil" tooltip={t.ACTION_EDIT} onClick={() => setEditingEnvVars(v => !v)} />
-        </Setting>
+        {/* The environment is what a program is started with, and the wasm build is not started. */}
+        <Show when={engine() === 'native'}>
+          <Setting name={t.SETTING_ENV_VARS} description={t.SETTING_ENV_VARS_DESC}>
+            <ExtraButton icon="pencil" tooltip={t.ACTION_EDIT} onClick={() => setEditingEnvVars(v => !v)} />
+          </Setting>
+        </Show>
 
-        <Collapsible when={editingEnvVars()}>
+        <Collapsible when={editingEnvVars() && engine() === 'native'}>
           <Setting class="ex-nameless-setting ex-env-panel">
             <Show when={envVarsAsText()} fallback={<EnvVars env={envVars()} onChange={setEnvVars} />}>
               <TextArea
@@ -1537,6 +1572,8 @@ export default class extends PluginSettingTab {
             aliases: [
               t.PANDOC_DASHBOARD,
               t.PANDOC_PATH,
+              t.WASM_TITLE,
+              t.WASM_ENGINE,
               t.SECTION_DEFAULTS,
               t.SETTING_EXPORT_DESTINATION,
               t.SETTING_OPEN_LOCATION,

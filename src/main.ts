@@ -4,12 +4,14 @@ import { ExportSettingTab, ExportDialog, ImportDialog } from './ui';
 import { exportNote } from './export';
 import { getPlatformValue, PlatformKey, clone } from './utils';
 import { t } from './lang/helpers';
-import path from 'path';
 import resources, { BUNDLED_LUA_FILES } from './resources';
+import { PandocWasmManager } from './wasm/install';
 // `styles.css` is not imported: Obsidian loads the plugin folder's stylesheet itself.
 
 export default class PandocGuiPlugin extends Plugin {
   settings: PandocGuiSettings;
+  /** Pandoc's wasm build: the copy on disk, and the one running. */
+  readonly wasm = new PandocWasmManager(this);
 
   constructor(app: App, manifest: PluginManifest) {
     super(app, manifest);
@@ -151,10 +153,10 @@ export default class PandocGuiPlugin extends Plugin {
   async releaseResources(): Promise<void> {
     const { adapter } = this.app.vault;
     for (const [dir, res] of resources) {
-      const resDir = path.join(this.manifest.dir, dir);
+      const resDir = `${this.manifest.dir}/${dir}`;
       await adapter.mkdir(resDir);
       for (const [fileName, text] of res) {
-        const filePath = path.join(resDir, fileName);
+        const filePath = `${resDir}/${fileName}`;
         await adapter.write(filePath, text);
       }
     }

@@ -1,17 +1,19 @@
-import * as fs from 'fs';
-import path from 'path';
-import process from 'process';
-import { App, Notice, TFile, normalizePath } from 'obsidian';
+import { App, Notice, Platform, TFile, normalizePath } from 'obsidian';
 import { createEnv } from './settings';
 import { exec, getPlatformValue } from './utils';
 import { t } from './lang/helpers';
-import { MessageBox } from './ui/message_box';
+import { MessageBox, confirm } from './ui/message_box';
 import { IMPORT_MESSAGES, PandocProgress } from './ui/progress';
 import { describeExportFailure } from './export_error';
 import type PandocGuiPlugin from './main';
 import pandoc from './pandoc';
 import { readerFor } from './import_format';
 import { importCommand, type ImportOptions } from './import_args';
+import { resolveEngine } from './engine';
+import { convertWithWasm } from './wasm/convert';
+import { FileStore } from './file_store';
+import { basename, dirname, relativeTo, stem } from './paths';
+import { isMobile, vaultRoot } from './platform';
 
 export interface ImportRequest {
   /** The file on disk, as the dialog was given it. */
@@ -24,28 +26,7 @@ export interface ImportRequest {
 }
 
 /** The note a source file becomes: its own name, written as markdown, in the chosen folder. */
-export const importedNotePath = (source: string, folder: string): string =>
-  normalizePath(`${folder}/${path.basename(source, path.extname(source))}.md`);
-
-/** A path as pandoc is to be handed it: from the folder the command runs in, with the separators a command line takes. */
-const relativeTo = (from: string, to: string): string => (path.relative(from, to) || '.').replaceAll('\\', '/');
-
-const confirmOverwrite = (app: App, note: string): Promise<boolean> =>
-  new Promise(resolve => {
-    const box = new MessageBox(app, {
-      title: t.IMPORT_DIALOG_TITLE,
-      message: t.OVERWRITE_TITLE(note),
-      buttons: 'YesNo',
-      callback: { yes: () => resolve(true), no: () => resolve(false) },
-    });
-    // Closed rather than answered is a no. The buttons answer first and close after, so this settles nothing then.
-    const close = box.onClose.bind(box);
-    box.onClose = () => {
-      close();
-      resolve(false);
-    };
-    box.open();
-  });
+export const importedNotePath = (source: string, folder: string): string => normalizePath(`${folder}/${stem(source)}.md`);
 
 /**
  * The note as Obsidian sees it, once it does.
@@ -81,12 +62,19 @@ export async function importFile(plugin: PandocGuiPlugin, request: ImportRequest
     return false;
   }
 
-  const notePath = importedNotePath(request.source, request.folder);
-  const noteName = path.basename(notePath);
-  const outputPath = adapter.getFullPath(notePath);
-  const outputDir = path.dirname(outputPath);
+  const engine = resolveEngine(globalSetting.engineMode, isMobile());
+  if (engine === 'wasm' && !(await plugin.wasm.isInstalled())) {
+    new MessageBox(app, { title: t.IMPORT_ERROR_TITLE, message: t.WASM_NOT_INSTALLED, buttons: 'Ok' }).open();
+    return false;
+  }
 
-  if (fs.existsSync(outputPath) && !(await confirmOverwrite(app, noteName))) {
+  const notePath = importedNotePath(request.source, request.folder);
+  const noteName = basename(notePath);
+  const outputPath = adapter.getFullPath(notePath);
+  const outputDir = dirname(outputPath);
+  const files = new FileStore(app.vault, vaultRoot(adapter));
+
+  if ((await files.exists(outputPath)) && !(await confirm(app, t.OVERWRITE_TITLE(noteName), t.IMPORT_DIALOG_TITLE))) {
     return false;
   }
 
@@ -97,12 +85,12 @@ export async function importFile(plugin: PandocGuiPlugin, request: ImportRequest
     options.extractMedia = relativeTo(outputDir, adapter.getFullPath(normalizePath(request.mediaFolder)));
   }
 
-  const pluginDir = `${adapter.getBasePath()}/${manifest.dir}`;
+  const pluginDir = `${vaultRoot(adapter)}/${manifest.dir}`;
   const env = createEnv(getPlatformValue(globalSetting.env) ?? {}, { pluginDir });
 
   let pandocPath = pandoc.normalizePath(getPlatformValue(globalSetting.pandocPath));
   let source = request.source;
-  if (process.platform === 'win32') {
+  if (Platform.isWin) {
     // https://github.com/mokeyish/obsidian-enhancing-export/issues/153
     pandocPath = pandocPath.replaceAll('\\', '/');
     source = source.replaceAll('\\', '/');
@@ -113,12 +101,25 @@ export async function importFile(plugin: PandocGuiPlugin, request: ImportRequest
 
   const progress = new PandocProgress(IMPORT_MESSAGES);
   try {
-    fs.mkdirSync(outputDir, { recursive: true });
-    progress.running(noteName);
-    const { stderr } = await exec(cmd, { cwd: outputDir, env });
+    await files.mkdir(outputDir);
+    let warnings: string;
+    if (engine === 'wasm') {
+      progress.starting();
+      const wasm = await plugin.wasm.load();
+      progress.running(noteName);
+      // The command names the note relatively, as it is run from the folder the note goes in.
+      const result = await convertWithWasm(wasm, files, {
+        command: cmd,
+        vaultDir: vaultRoot(adapter),
+        cwd: outputDir,
+      });
+      warnings = result.stderr.trim();
+    } else {
+      const { stderr } = await exec(cmd, { cwd: outputDir, env });
+      warnings = stderr.trim();
+    }
 
     // Pandoc warns here and writes the file all the same, so a warning is reported rather than thrown.
-    const warnings = stderr.trim();
     if (warnings) {
       console.warn(cmd, warnings);
       progress.warn(noteName);
@@ -141,7 +142,7 @@ export async function importFile(plugin: PandocGuiPlugin, request: ImportRequest
             el.createSpan({ cls: 'ex-export-error-label', text: label });
             el.createSpan({ cls: 'ex-export-error-value', text: value, title: title ?? value });
           });
-        fact(t.IMPORT_ERROR_SOURCE, path.basename(request.source), request.source);
+        fact(t.IMPORT_ERROR_SOURCE, basename(request.source), request.source);
         fact(t.ERROR_FILE, noteName, outputPath);
         root.createDiv({ cls: 'ex-export-error-detail', text: detail });
         if (recommendation) {

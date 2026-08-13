@@ -1,7 +1,7 @@
-import * as ct from 'electron';
 import { Notice, Platform, type App } from 'obsidian';
 import { For, Match, Show, Switch, createEffect, createMemo, createResource, createSignal, onCleanup } from 'solid-js';
 import { t } from '../lang/helpers';
+import { openExternal } from '../platform';
 import {
   DEFAULT_LUA_FILTER_CATEGORY,
   LUA_FILTER_CATEGORIES,
@@ -26,10 +26,6 @@ const CATEGORY_ICON: Record<LuaFilterCategory, string> = {
   latex: 'printer',
   tools: 'wrench',
   other: 'package',
-};
-
-const openExternal = (url: string) => {
-  void ct.remote.shell.openExternal(url);
 };
 
 /** What went wrong, in the words of whatever threw — an object gets its shape, not `[object Object]`. */

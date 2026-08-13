@@ -1,19 +1,16 @@
-import { FileFilter, remote } from 'electron';
-import { dialogWindow } from '../../dialog';
+import { Show } from 'solid-js';
+import { chooseFile, isDesktop, type FileFilter } from '../../platform';
 import { Text, ExtraButton } from './Setting';
 
 /** Ask for a path, and answer with it — or with nothing, where the dialog was closed. */
-export const choosePath = async (options: { value?: string; folder?: boolean; filters?: FileFilter[] }) => {
-  const retval = await remote.dialog.showOpenDialog(dialogWindow(), {
+export const choosePath = async (options: { value?: string; folder?: boolean; filters?: FileFilter[] }) =>
+  await chooseFile({
     // A path with `${...}` in it names nothing until an export resolves it, so the dialog is left to open wherever it
     // opened last.
     defaultPath: options.value && !options.value.includes('${') ? options.value : undefined,
-    properties: options.folder ? ['createDirectory', 'openDirectory'] : ['openFile'],
-    filters: options.folder ? undefined : options.filters,
+    folder: options.folder,
+    filters: options.filters,
   });
-
-  return retval.canceled ? undefined : retval.filePaths[0];
-};
 
 /** A path, typed or chosen — to a file, or to a folder where `folder` says so. */
 export default (props: {
@@ -37,7 +34,10 @@ export default (props: {
   return (
     <>
       <Text style="width: 100%" value={props.value ?? ''} tooltip={props.value} placeholder={props.placeholder} onChange={props.onChange} />
-      <ExtraButton icon={props.folder ? 'folder' : 'folder-open'} tooltip={props.tooltip} onClick={() => void pick()} />
+      {/* Typed rather than chosen on a phone, which has no dialog to open. */}
+      <Show when={isDesktop()}>
+        <ExtraButton icon={props.folder ? 'folder' : 'folder-open'} tooltip={props.tooltip} onClick={() => void pick()} />
+      </Show>
     </>
   );
 };
