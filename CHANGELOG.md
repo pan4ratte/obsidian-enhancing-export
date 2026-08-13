@@ -15,6 +15,7 @@
 * The dialog says so when it can run none of your templates, rather than reading as though you had written none.
 * The templates table marks the ones the built-in Pandoc will not run, and the ones it will run without some of their options.
 * `--natbib` and `--biblatex` are read by the built-in Pandoc, as `--citeproc` already was.
+* A newer built-in Pandoc is noticed at startup and said once, rather than only in the settings.
 
 
 ## 1.3.0

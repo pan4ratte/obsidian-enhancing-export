@@ -2,7 +2,7 @@ import { Notice, type App } from 'obsidian';
 import { Show, createMemo, createResource, createSignal } from 'solid-js';
 import { t } from '../lang/helpers';
 import type { EngineMode } from '../engine';
-import type { PandocWasmManager, WasmRelease } from '../wasm/install';
+import { isNewerRelease, type PandocWasmManager, type WasmRelease } from '../wasm/install';
 import { pandocWasmSupport } from '../wasm/support';
 import { MessageBox } from './message_box';
 import Button from './components/Button';
@@ -50,7 +50,7 @@ export default (props: {
 
   const updatable = createMemo(() => {
     const release = latest();
-    return installed() && !!release && release.version !== props.version;
+    return installed() && !!release && isNewerRelease(release, props.version);
   });
 
   const status = createMemo(() => {

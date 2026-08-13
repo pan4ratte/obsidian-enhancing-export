@@ -58,6 +58,8 @@ export interface PandocGuiSettings {
   engineMode?: EngineMode;
   /** The version of the wasm build that is installed, or nothing where none is. */
   wasmVersion?: string;
+  /** The newer version already announced, so the same release is not brought up at every start. */
+  wasmUpdateSeen?: string;
 
   showOverwriteConfirmation?: boolean;
   defaultExportDirectoryMode: 'Same' | 'Custom';

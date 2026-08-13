@@ -142,6 +142,7 @@ export default {
   WASM_EXTRACTING: 'Распаковка…',
   WASM_WRITING: 'Сохранение…',
   WASM_INSTALLED: (version: string) => `Встроенный Pandoc ${version} установлен.`,
+  WASM_UPDATE_AVAILABLE: (version: string) => `Вышел встроенный Pandoc ${version}. Обновить можно в настройках плагина.`,
   WASM_INSTALL_FAILED: 'Не удалось установить встроенный Pandoc — подробности в консоли.',
   WASM_UNAVAILABLE: 'Похоже, устройство не поддерживает встроенный Pandoc: нужен iOS 18.4, Android с обновлённым WebView или свежая версия Obsidian. Установить всё равно можно — если не запустится, плагин скажет почему.',
   WASM_LOAD_FAILED: (reason: string) => `Встроенный Pandoc установлен, но не запускается на этом устройстве: ${reason}`,

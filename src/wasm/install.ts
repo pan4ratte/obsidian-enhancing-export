@@ -6,6 +6,7 @@
 
 import { requestUrl } from 'obsidian';
 import type PandocGuiPlugin from '../main';
+import { parsePandocVersion, RELEASE_CACHE_TTL } from '../pandoc';
 import { extractFromZip } from './zip';
 import { PandocWasm } from './runtime';
 import { pandocWasmSupport } from './support';
@@ -45,6 +46,19 @@ interface Release {
   assets?: Asset[];
 }
 
+/** Whether a release is worth offering over what is on disk. An unreadable version on either side is not. */
+export const isNewerRelease = (release: WasmRelease, installed?: string): boolean => {
+  const there = installed ? parsePandocVersion(installed) : undefined;
+  const found = parsePandocVersion(release.version);
+  return !!there && !!found && found.compare(there) === 1;
+};
+
+/**
+ * The lookup answers the same thing for hours, and is now made from two places — startup and the settings panel — so
+ * it is held onto. A lookup that failed is not: it means offline or rate limited, and the next one may well work.
+ */
+let releaseCache: { fetchedAt: number; release: WasmRelease } | undefined;
+
 /** The wasm archive a release carries, if it has one — pandoc only started publishing one with 3.9. */
 const assetOf = (release: Release): WasmRelease | undefined => {
   for (const asset of release.assets ?? []) {
@@ -80,6 +94,9 @@ export class PandocWasmManager {
 
   /** The newest release that publishes a wasm build, or nothing when the lookup cannot be made. */
   async latest(): Promise<WasmRelease | undefined> {
+    if (releaseCache && Date.now() - releaseCache.fetchedAt < RELEASE_CACHE_TTL) {
+      return releaseCache.release;
+    }
     const response = await requestUrl({
       url: `${RELEASES_API}?per_page=10`,
       headers: { Accept: 'application/vnd.github+json' },
@@ -91,10 +108,27 @@ export class PandocWasmManager {
     for (const release of (response.json ?? []) as Release[]) {
       const asset = assetOf(release);
       if (asset) {
+        releaseCache = { fetchedAt: Date.now(), release: asset };
         return asset;
       }
     }
     return undefined;
+  }
+
+  /**
+   * The newer release there is to install, if there is one — asked at startup, where nothing is on screen to wait for
+   * it and a lookup that cannot be made is simply no answer.
+   */
+  async update(): Promise<WasmRelease | undefined> {
+    if (!this.plugin.settings.wasmVersion || !(await this.isInstalled())) {
+      return undefined;
+    }
+    try {
+      const release = await this.latest();
+      return release && isNewerRelease(release, this.plugin.settings.wasmVersion) ? release : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   /**

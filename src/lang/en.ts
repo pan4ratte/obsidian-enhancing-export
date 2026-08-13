@@ -142,6 +142,7 @@ export default {
   WASM_EXTRACTING: 'Unpacking…',
   WASM_WRITING: 'Saving…',
   WASM_INSTALLED: (version: string) => `Built-in Pandoc ${version} is installed.`,
+  WASM_UPDATE_AVAILABLE: (version: string) => `Built-in Pandoc ${version} is out. You can update it in the plugin settings.`,
   WASM_INSTALL_FAILED: 'The built-in Pandoc could not be installed — see the console for details.',
   WASM_UNAVAILABLE: 'This device looks unable to run the built-in Pandoc: it needs iOS 18.4, an up-to-date Android WebView, or a newer Obsidian. Installing anyway is allowed — if it will not start, the plugin will say why.',
   WASM_LOAD_FAILED: (reason: string) => `The built-in Pandoc is installed, but will not start on this device: ${reason}`,

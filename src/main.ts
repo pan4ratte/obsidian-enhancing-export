@@ -83,9 +83,26 @@ export default class PandocGuiPlugin extends Plugin {
         }
       })
     );
+    this.app.workspace.onLayoutReady(() => void this.announceWasmUpdate());
+
     if (import.meta.env.DEV) {
       window.hmr?.(this);
     }
+  }
+
+  /**
+   * Say once that there is a newer wasm build to install. The install itself stays a deliberate act — it is a 56 MB
+   * download that then travels to every synced device — so this only points at the settings, and only for a version
+   * it has not pointed at before.
+   */
+  private async announceWasmUpdate(): Promise<void> {
+    const release = await this.wasm.update();
+    if (!release || release.version === this.settings.wasmUpdateSeen) {
+      return;
+    }
+    this.settings.wasmUpdateSeen = release.version;
+    await this.saveSettings();
+    new Notice(t.WASM_UPDATE_AVAILABLE(release.version));
   }
 
   public async resetSettings(): Promise<void> {
