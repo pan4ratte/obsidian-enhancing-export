@@ -7,7 +7,7 @@ import { extractDefaultExtension as extractExtension } from '../settings';
 import { setPlatformValue, getPlatformValue } from '../utils';
 import { exportNote } from '../export';
 import { droppedBy, resolveEngine, unsupportedBy } from '../engine';
-import { chooseFile, documentsFolder, isMobile, vaultRoot } from '../platform';
+import { chooseFile, documentsFolder, isMobile, isMobileUi, vaultRoot } from '../platform';
 import FolderInput from './components/FolderInput';
 import Modal from './components/Modal';
 import Button from './components/Button';
@@ -131,10 +131,11 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
           <Text tooltip={outputFileFullName()} value={candidateOutputFileName()} onChange={value => setCandidateOutputFileName(value)} />
         </Setting>
 
-        <Setting name={t.EXPORT_DIALOG_LOCATION} class={isMobile() ? 'ex-export-modal-folder' : undefined}>
-          {/* The system's folder dialog where there is one; the vault's own folders where there is not. */}
+        <Setting name={t.EXPORT_DIALOG_LOCATION} class={isMobileUi() ? 'ex-export-modal-folder' : undefined}>
+          {/* The system's folder dialog where there is one; the vault's own folders where there is not — and where a
+              desktop is drawing a phone's UI, which the vault's own folders are the honest answer for. */}
           <Show
-            when={isMobile()}
+            when={isMobileUi()}
             fallback={
               <>
                 <Text tooltip={candidateOutputDirectory()} value={candidateOutputDirectory()} disabled />

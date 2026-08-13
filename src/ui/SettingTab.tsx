@@ -11,8 +11,8 @@ import { insert, Dynamic } from 'solid-js/web';
 import { t } from '../lang/helpers';
 
 import pandoc from '../pandoc';
-import { resolveEngine, type EngineMode } from '../engine';
-import { chooseFile, documentsFolder, isMobile, vaultRoot } from '../platform';
+import { resolveEngine } from '../engine';
+import { chooseFile, documentsFolder, isMobileUi, vaultRoot } from '../platform';
 import PandocDashboard from './PandocDashboard';
 import PandocLinks from './PandocLinks';
 import PandocNotices, { type PanelNotice } from './PandocNotices';
@@ -1386,9 +1386,18 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
     }
   };
 
+  // Which pandoc this vault exports with, and so which of the rows below are worth showing at all. Read from the UI
+  // Obsidian is drawing rather than from the device, so a desktop emulating a phone is shown the phone's settings.
+  const engine = createMemo(() => resolveEngine(settings.engineMode, isMobileUi()));
+
   // Asked on every open, answered from the session cache after the first success. Still an
-  // effect, so a changed path or environment re-asks the binary it now points at.
+  // effect, so a changed path or environment re-asks the binary it now points at — and asks
+  // nothing at all where no installed pandoc runs the exports, a phone above all.
   createEffect(async () => {
+    if (engine() !== 'native') {
+      setPandocVersion(undefined);
+      return;
+    }
     try {
       const env = createEnv(getPlatformValue(settings.env) ?? {});
       setPandocVersion(await pandoc.getCachedVersion(getPlatformValue(settings.pandocPath), env));
@@ -1396,9 +1405,6 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
       setPandocVersion(undefined);
     }
   });
-
-  // Which pandoc this vault exports with, and so which of the rows below are worth showing at all.
-  const engine = createMemo(() => resolveEngine(settings.engineMode, isMobile()));
 
   // What the two halves say at length, kept by the card rather than by either of them: the installed pandoc's
   // notices come first, as its half does.
@@ -1415,7 +1421,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
     <>
       {/* One card: a pandoc to each half of it, and a row to each thing it is read for. */}
       <div class="ex-pandoc-panel">
-        <div class="ex-pandoc-panel-row">
+        <div class="ex-pandoc-panel-row ex-pandoc-engines">
           {/* The installed program has nothing to say where it is not the one running. */}
           <Show when={engine() === 'native'}>
             <PandocDashboard version={pandocVersion()} markdownLinks={app.vault.config.useMarkdownLinks} onNotices={setNativeNotices} />
@@ -1460,17 +1466,14 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
           </Setting>
         </Show>
 
-        {/* Asked whether or not the build is installed: it is the answer that says what to install for. */}
-        <Setting name={t.WASM_ENGINE}>
-          <DropDown
-            options={[
-              { name: t.WASM_ENGINE_AUTO, value: 'auto' },
-              { name: t.WASM_ENGINE_WASM, value: 'wasm' },
-            ]}
-            selected={settings.engineMode === 'wasm' ? 'wasm' : 'auto'}
-            onChange={(v: EngineMode) => setSettings('engineMode', v)}
-          />
-        </Setting>
+        {/* Asked whether or not the build is installed: it is the answer that says what to install for. The question
+            is only ever about this computer — a phone runs the wasm build whichever way it is set, and is not asked
+            at all, an answer there being a claim that there is an installed pandoc to choose instead. */}
+        <Show when={!isMobileUi()}>
+          <Setting name={t.WASM_ENGINE} description={t.WASM_ENGINE_DESC}>
+            <Toggle checked={settings.engineMode === 'wasm'} onChange={on => setSettings('engineMode', on ? 'wasm' : 'auto')} />
+          </Setting>
+        </Show>
 
         <Setting name={t.SETTING_EXPORT_DESTINATION}>
           <DropDown
@@ -1487,7 +1490,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
           <Setting class="ex-export-destination-path">
             {/* A folder of the vault on a phone, where nothing outside it can be written to anyway. */}
             <Show
-              when={isMobile()}
+              when={isMobileUi()}
               fallback={
                 <>
                   <Text style="width: 100%" value={customDefaultExportDirectory() ?? ''} tooltip={customDefaultExportDirectory()} />
@@ -1506,7 +1509,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         </Collapsible>
 
         {/* Both hand the file to the system, and a phone has none of that to hand it to. */}
-        <Show when={!isMobile()}>
+        <Show when={!isMobileUi()}>
           <Setting name={t.SETTING_OPEN_LOCATION}>
             <Toggle checked={settings.openExportedFileLocation} onChange={v => setSettings('openExportedFileLocation', v)} />
           </Setting>
@@ -1616,10 +1619,10 @@ export default class extends PluginSettingTab {
             desc: this.plugin.manifest.description,
             aliases: [
               t.PANDOC_DASHBOARD,
-              t.PANDOC_PATH,
-              t.PANDOC_FOLDER,
+              // The rows a phone does not have. Searching them there would answer with a tab that says nothing
+              // about the installed pandoc, because there is none to say anything about.
+              ...(isMobileUi() ? [] : [t.PANDOC_PATH, t.PANDOC_FOLDER, t.WASM_ENGINE, t.SETTING_ENV_VARS]),
               t.WASM_TITLE,
-              t.WASM_ENGINE,
               t.SECTION_DEFAULTS,
               t.SETTING_EXPORT_DESTINATION,
               t.SETTING_OPEN_LOCATION,
@@ -1672,7 +1675,6 @@ export default class extends PluginSettingTab {
               t.TEMPLATE_TARGET_EXTENSIONS,
               t.TEMPLATE_SHOW_OUTPUT,
               t.TEMPLATE_OUTPUT,
-              t.SETTING_ENV_VARS,
               'pandoc',
             ],
             render: setting => {

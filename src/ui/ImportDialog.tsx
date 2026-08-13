@@ -6,7 +6,7 @@ import { insert } from 'solid-js/web';
 import type PandocGuiPlugin from '../main';
 import { t } from '../lang/helpers';
 import { importFile } from '../import';
-import { isMobile, vaultRoot } from '../platform';
+import { isMobileUi, vaultRoot } from '../platform';
 import {
   DEFAULT_MARKDOWN_FLAVOUR,
   IMPORT_EXTENSIONS,
@@ -150,7 +150,7 @@ const Dialog = (props: { plugin: PandocGuiPlugin; onClose?: () => void }) => {
         {/* A file from anywhere on a desktop; on a phone, one that is already in the vault — there is no other
             document it could reach. */}
         <Show
-          when={isMobile()}
+          when={isMobileUi()}
           fallback={<FileInput value={source()} filters={SOURCE_FILES} tooltip={t.CHOOSE_FILE} onChange={setSource} />}
         >
           <VaultFileInput

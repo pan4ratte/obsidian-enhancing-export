@@ -128,9 +128,8 @@ export default {
 
   // ─── Pandoc for mobile (wasm) ────────────────────────────────────────────────
   WASM_TITLE: 'Pandoc WASM',
-  WASM_ENGINE: 'Use Pandoc WASM',
-  WASM_ENGINE_AUTO: 'On mobile only',
-  WASM_ENGINE_WASM: 'Always',
+  WASM_ENGINE: 'Use Pandoc WASM on this computer',
+  WASM_ENGINE_DESC: 'Exports and imports run on the built-in build rather than the installed Pandoc. On mobile it is used either way.',
   WASM_VERSION: (version: string) => `Pandoc WASM: ${version}`,
   WASM_NOT_INSTALLED: 'The built-in Pandoc is not installed. Open the plugin settings and choose Install.',
   WASM_ABSENT: 'Not installed',
@@ -148,8 +147,10 @@ export default {
   WASM_UNAVAILABLE: 'This device looks unable to run the built-in Pandoc: it needs iOS 18.4, an up-to-date Android WebView, or a newer Obsidian. Installing anyway is allowed — if it will not start, the plugin will say why.',
   WASM_LOAD_FAILED: (reason: string) => `The built-in Pandoc is installed, but will not start on this device: ${reason}`,
   WASM_PREPARING: 'Starting Pandoc…',
-  WASM_NO_PDF: 'The built-in Pandoc cannot make a PDF: that needs a typesetting program it has no way to run. Export to Word, HTML or LaTeX instead, or switch to the installed Pandoc.',
-  WASM_NO_COMMAND: 'The built-in Pandoc cannot run commands of your own, so this template needs the installed Pandoc.',
+  WASM_NO_PDF: 'The built-in Pandoc cannot make a PDF: that needs a typesetting program it has no way to run. Export to Word, HTML or LaTeX instead.',
+  WASM_NO_COMMAND: 'The built-in Pandoc cannot run commands of your own, so this template will not run.',
+  // Added to the two above only where an installed Pandoc is a thing that can exist.
+  WASM_USE_NATIVE: 'Or switch to the installed Pandoc.',
   WASM_TEMPLATE_UNAVAILABLE: 'Not available with the built-in Pandoc',
   WASM_TEMPLATE_DROPPED: (options: string) => `The built-in Pandoc has no answer for: ${options}. They are left out of the export.`,
   WASM_DROPPED: (options: string) => `The built-in Pandoc has no answer for: ${options}. The file was written without them.`,

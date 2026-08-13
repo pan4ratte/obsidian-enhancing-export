@@ -96,26 +96,30 @@
   align-items: stretch;
 }
 
-/* Halves that are halves whatever they hold: half the row to start from, and
-   `min-width` so nothing inside — a long status, a dropdown as wide as its
-   longest option — can argue for more than that. The second selector is the
-   same rule at the specificity a button needs, its own being two classes deep
-   to outrank the theme. */
-.ex-pandoc-panel-row > *,
-.ex-pandoc-panel-row > .ex-action {
-  flex: 1 1 50%;
+/* A row narrower than the things in it need side by side breaks onto a second
+   line rather than squeezing them: the basis is the width each wants, and what
+   is left over is shared out equally, so a line holding one is one full-width
+   half. */
+.ex-pandoc-panel-row.ex-pandoc-engines,
+.ex-pandoc-panel-row.ex-pandoc-links {
+  flex-wrap: wrap;
+  /* The lines down the row, drawn as the gaps between its halves over a
+     background of that colour. A border would have to be taken off again at the
+     start of every wrapped line, and no selector can pick those out. */
+  gap: 1px;
+  background-color: var(--background-modifier-border);
+}
+
+/* `min-width` so nothing inside — a long status, a dropdown as wide as its
+   longest option — can argue for more than the half it stands in. */
+.ex-pandoc-engines > * {
+  flex: 1 1 15rem;
   min-width: 0;
 }
 
-/* The lines the card is divided by: across, between one row and the next, and
-   down, between the two halves of a row. */
+/* The line across, between one row of the card and the next. */
 .ex-pandoc-panel-row + .ex-pandoc-panel-row {
   border-top: 1px solid var(--background-modifier-border);
-}
-
-.ex-pandoc-panel-row > * + *,
-.ex-pandoc-panel-row > .ex-action + .ex-action {
-  border-inline-start: 1px solid var(--background-modifier-border);
 }
 
 /* A button standing as a half is as tall as the row, whatever the half beside
@@ -134,11 +138,13 @@
   padding-block: var(--size-4-2);
 }
 
+/* Opaque, so the colour the row is divided by is only ever seen in the gaps. */
 .ex-pandoc-dashboard-half {
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: var(--size-4-4);
+  background-color: var(--setting-items-background, var(--background-primary));
 }
 
 .ex-pandoc-dashboard-version {
@@ -306,15 +312,20 @@
 /*
  * A card that is nothing but the things it can be asked to do: equal halves of
  * one card, told apart by the rule between them rather than by any chrome of
- * their own. `overflow` keeps a half's hover fill inside the rounded corners.
+ * their own — and stacked, where the card is too narrow to hold them side by
+ * side. The background is the colour of that rule, which the buttons cover but
+ * for the gaps they are divided by. `overflow` keeps a half's hover fill inside
+ * the rounded corners.
  */
 .ex-actions-card {
   display: flex;
+  flex-wrap: wrap;
   align-items: stretch;
+  gap: 1px;
   margin-bottom: var(--size-4-4);
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--setting-items-radius);
-  background: var(--setting-items-background);
+  background-color: var(--background-modifier-border);
   overflow: hidden;
 }
 
@@ -324,7 +335,10 @@
  * otherwise set.
  */
 .ex-action.ex-action {
-  flex: 1 1 0;
+  /* The label's own width to start from, so a card too narrow for all of them
+     wraps rather than lets a button shrink to a word a line; the growing then
+     shares the line out between however many landed on it. */
+  flex: 1 1 11rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -335,7 +349,9 @@
      it — the height is the point, so it is set rather than left to the label. */
   min-height: 42px;
   padding: var(--size-4-5) var(--size-4-4);
-  background-color: transparent;
+  /* Opaque, so the colour the card is divided by is only ever seen in the
+     gaps. */
+  background-color: var(--setting-items-background, var(--background-primary));
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -343,13 +359,6 @@
   font-size: var(--font-ui-small);
   cursor: var(--cursor);
   transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
-}
-
-/* The line the card is divided by, whether a half is a button or not — and
-   again at the specificity the button's own `border: none` is written at. */
-.ex-actions-card > * + *,
-.ex-actions-card > .ex-action + .ex-action {
-  border-inline-start: 1px solid var(--background-modifier-border);
 }
 
 /* Accent under the pointer only: these are what the card is for, but not what

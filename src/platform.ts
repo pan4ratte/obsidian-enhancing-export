@@ -9,7 +9,17 @@ import { Platform, type DataAdapter } from 'obsidian';
 import { normalize } from './paths';
 import type { PlatformKey } from './utils';
 
+/** Whether this device is a phone or a tablet — what can be run on it, and nothing about how it is drawn. */
 export const isMobile = (): boolean => Platform.isMobileApp;
+
+/**
+ * Whether Obsidian is drawing its mobile UI, which a desktop emulating a phone is doing too.
+ *
+ * What the plugin shows follows this, so that emulation is worth something: a desktop set to emulate a phone gets the
+ * settings a phone gets, the installed pandoc and all of its rows left out. What the plugin can actually do follows
+ * `isMobile` — under emulation there is still a node to run pandoc with, and exports go on running it.
+ */
+export const isMobileUi = (): boolean => Platform.isMobile;
 
 /** What separates one path from the next in a list of them, as this platform writes it. */
 export const PATH_SEPARATOR = (): string => (Platform.isWin ? ';' : ':');

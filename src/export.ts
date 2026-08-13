@@ -54,7 +54,9 @@ export async function exportNote(
   };
   const blocked = unsupportedBy(setting, engine);
   if (blocked) {
-    refuse(blocked === 'pdf' ? t.WASM_NO_PDF : t.WASM_NO_COMMAND);
+    // The other pandoc is only worth pointing at on a machine that can have one.
+    const why = blocked === 'pdf' ? t.WASM_NO_PDF : t.WASM_NO_COMMAND;
+    refuse(isMobile() ? why : `${why} ${t.WASM_USE_NATIVE}`);
     return;
   }
   if (engine === 'wasm' && !(await plugin.wasm.isInstalled())) {

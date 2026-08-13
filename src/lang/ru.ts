@@ -128,9 +128,8 @@ export default {
 
   // ─── Pandoc для мобильных (wasm) ─────────────────────────────────────────────
   WASM_TITLE: 'Pandoc WASM',
-  WASM_ENGINE: 'Использовать Pandoc WASM',
-  WASM_ENGINE_AUTO: 'Только на мобильных',
-  WASM_ENGINE_WASM: 'Всегда',
+  WASM_ENGINE: 'Использовать Pandoc WASM на компьютере',
+  WASM_ENGINE_DESC: 'Экспорт и импорт будет выполнять встроенная сборка, а не установленный Pandoc. На мобильных устройствах она используется в любом случае.',
   WASM_VERSION: (version: string) => `Pandoc WASM: ${version}`,
   WASM_NOT_INSTALLED: 'Встроенный Pandoc не установлен. Откройте настройки плагина и нажмите «Установить».',
   WASM_ABSENT: 'Не установлен',
@@ -148,8 +147,10 @@ export default {
   WASM_UNAVAILABLE: 'Похоже, устройство не поддерживает встроенный Pandoc: нужен iOS 18.4, Android с обновлённым WebView или свежая версия Obsidian. Установить всё равно можно — если не запустится, плагин скажет почему.',
   WASM_LOAD_FAILED: (reason: string) => `Встроенный Pandoc установлен, но не запускается на этом устройстве: ${reason}`,
   WASM_PREPARING: 'Подготовка Pandoc…',
-  WASM_NO_PDF: 'Pandoc WASM не умеет создавать PDF: для этого нужна программа вёрстки, которую он не может запустить. Экспортируйте в Word, HTML или LaTeX — либо переключитесь на установленный Pandoc.',
-  WASM_NO_COMMAND: 'Pandoc WASM не может выполнять произвольные команды, поэтому этот шаблон работает только с установленным Pandoc.',
+  WASM_NO_PDF: 'Pandoc WASM не умеет создавать PDF: для этого нужна программа вёрстки, которую он не может запустить. Экспортируйте в Word, HTML или LaTeX.',
+  WASM_NO_COMMAND: 'Pandoc WASM не может выполнять произвольные команды, поэтому этот шаблон не запустится.',
+  // Совет добавляется к двум предыдущим только там, где установленный Pandoc вообще бывает.
+  WASM_USE_NATIVE: 'Либо переключитесь на установленный Pandoc.',
   WASM_TEMPLATE_UNAVAILABLE: 'Недоступно со встроенным Pandoc',
   WASM_TEMPLATE_DROPPED: (options: string) => `Встроенный Pandoc не поддерживает: ${options}. При экспорте эти параметры будут пропущены.`,
   WASM_DROPPED: (options: string) => `Встроенный Pandoc не поддерживает: ${options}. Файл создан без них.`,

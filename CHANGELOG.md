@@ -13,7 +13,7 @@
 
 * The plugin runs on mobile. Exporting, importing, the template editor and the lua-filter store all work there.
 * New card in the settings: “Pandoc WASM” installs Pandoc's official WebAssembly build with one press — downloaded, unpacked and put in place by the plugin.
-* New setting, “Use Pandoc WASM”: always, or on mobile only.
+* New setting, “Use Pandoc WASM on this computer”: off, and the installed Pandoc converts; on, and the built-in build does. A phone runs the built-in build either way.
 * The built-in Pandoc makes no PDF, runs no commands of your own and fetches nothing from the network; templates it cannot run are left out of the export dialog, and settings that mean nothing to it are hidden.
 * Export and import on a phone write into the vault, and its folders are suggested as you type.
 * The device is checked before anything is downloaded, and on a desktop the wasm feature the build needs is switched on where Obsidian's Chromium still keeps it behind a flag. A device that cannot run it is told so by the binary itself rather than by a guess.
@@ -24,6 +24,9 @@
 * A newer built-in Pandoc is noticed at startup and said once, rather than only in the settings.
 * The settings open with one card holding everything about Pandoc: the installed one on the left of every row, the WebAssembly one on the right. Version and status first, with the update beside the line that reports it, then the pages to read — the user guide, Pandoc's manual and its changelog.
 * “Pandoc folder” and “Use Pandoc WASM” are the first two rows of the general settings, where the rest of the answers are.
+* A narrow settings pane stacks the two Pandocs into one column and breaks the button rows over two or three lines.
+* A phone is not shown the installed Pandoc at all: no “Pandoc not found”, no engine choice, and nothing is looked up for a program that cannot be there. A desktop emulating a phone is shown the same settings, and goes on exporting with the Pandoc it really has.
+* A template the built-in Pandoc will not run says so without pointing at an installed Pandoc that a phone cannot have.
 
 
 ## 1.3.0
