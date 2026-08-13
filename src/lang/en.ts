@@ -122,14 +122,14 @@ export default {
   USER_GUIDE: 'User guide',
   PANDOC_FOLDER: 'Pandoc folder',
   PANDOC_PATH: 'Pandoc path',
-  PANDOC_PATH_PLACEHOLDER: 'Detected automatically',
+  PANDOC_PATH_PLACEHOLDER: 'Was detected automatically',
   PANDOC_PATH_NOT_FOUND: 'Not found in the system environment variables',
   PANDOC_PATH_RESET: 'Reset to auto detect',
 
   // ─── Pandoc for mobile (wasm) ────────────────────────────────────────────────
   WASM_TITLE: 'Pandoc WASM',
-  WASM_ENGINE: 'Use Pandoc WASM on this computer',
-  WASM_ENGINE_DESC: 'Exports and imports run on Pandoc WASM rather than the installed Pandoc. On mobile it is used either way.',
+  WASM_ENGINE: 'Use Pandoc WASM on computers',
+  WASM_ENGINE_DESC: 'Exports and imports on computers will run on Pandoc WASM rather than the local Pandoc.',
   WASM_VERSION: (version: string) => `Pandoc WASM: ${version}`,
   WASM_NOT_INSTALLED: 'Pandoc WASM is not installed. Open the plugin settings and choose Install.',
   WASM_ABSENT: 'Not installed',

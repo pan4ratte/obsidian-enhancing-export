@@ -129,7 +129,7 @@ export default {
   // ─── Pandoc для мобильных (wasm) ─────────────────────────────────────────────
   WASM_TITLE: 'Pandoc WASM',
   WASM_ENGINE: 'Использовать Pandoc WASM на компьютере',
-  WASM_ENGINE_DESC: 'Экспорт и импорт будет выполнять Pandoc WASM, а не установленный Pandoc. На мобильных устройствах он используется в любом случае.',
+  WASM_ENGINE_DESC: 'Экспорт и импорт на компьютерах будет выполнять Pandoc WASM, а не локальный Pandoc.',
   WASM_VERSION: (version: string) => `Pandoc WASM: ${version}`,
   WASM_NOT_INSTALLED: 'Pandoc WASM не установлен. Откройте настройки плагина и нажмите «Установить».',
   WASM_ABSENT: 'Не установлен',
