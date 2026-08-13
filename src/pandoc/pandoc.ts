@@ -1,5 +1,5 @@
 import { requestUrl } from 'obsidian';
-import { exec } from './utils';
+import { exec } from '../system/utils';
 // `parse` is the only entry point used — it returns a SemVer, whose `compare` covers the rest. The package root
 // re-exports ranges, comparators and coercion too, none of which this plugin needs.
 import semverParse from 'semver/functions/parse';

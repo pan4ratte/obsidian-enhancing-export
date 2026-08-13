@@ -6,7 +6,7 @@
  */
 
 import { Platform, type Vault } from 'obsidian';
-import { VirtualPaths } from './wasm/paths';
+import { VirtualPaths } from '../wasm/paths';
 import { isDesktop } from './platform';
 import { dirname } from './paths';
 

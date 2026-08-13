@@ -1,8 +1,8 @@
 import { moment } from 'obsidian';
 import en from './en';
 import ru from './ru';
-import userGuideEn from '../../USER_GUIDE.md';
-import userGuideRu from '../../USER_GUIDE_RU.md';
+import userGuideEn from '../../docs/USER_GUIDE.md';
+import userGuideRu from '../../docs/USER_GUIDE_RU.md';
 
 export type Lang = typeof en;
 

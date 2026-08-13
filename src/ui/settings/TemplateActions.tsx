@@ -1,5 +1,5 @@
-import { t } from '../lang/helpers';
-import Icon from './components/Icon';
+import { t } from '../../lang/helpers';
+import Icon from '../components/Icon';
 
 /** The card above the templates table: the actions that are not about a template already in it. */
 export default (props: { onAdd?: () => void; onBrowseLuaFilters?: () => void }) => (

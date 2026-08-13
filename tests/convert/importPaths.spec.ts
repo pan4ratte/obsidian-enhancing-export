@@ -1,5 +1,5 @@
-import { importedNotePath } from '../src/import';
-import { relativeTo } from '../src/paths';
+import { importedNotePath } from '../../src/convert/import';
+import { relativeTo } from '../../src/system/paths';
 
 describe('importedNotePath', () => {
   test('the note takes the document’s own name, in the folder that was asked for', () => {

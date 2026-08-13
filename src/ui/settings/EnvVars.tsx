@@ -1,8 +1,8 @@
 import { Index } from 'solid-js';
-import { t } from '../lang/helpers';
-import { PATH_SEPARATOR } from '../platform';
-import FileInput, { choosePath } from './components/FileInput';
-import { ExtraButton } from './components/Setting';
+import { t } from '../../lang/helpers';
+import { PATH_SEPARATOR } from '../../system/platform';
+import FileInput, { choosePath } from '../components/FileInput';
+import { ExtraButton } from '../components/Setting';
 
 /** What this platform lists folders with. */
 const SEPARATOR = PATH_SEPARATOR();

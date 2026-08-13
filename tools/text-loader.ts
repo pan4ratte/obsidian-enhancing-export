@@ -1,5 +1,6 @@
 import type { Plugin } from 'vite';
-import { extname } from './src/paths';
+// Spelled with its extension: vite's native config loader reads this file, and that is how it wants an import written.
+import { extname } from '../src/system/paths.ts';
 
 /**
  * The embedded resources are all UTF-8 text, so they go in as string literals: base64 would cost a third again in

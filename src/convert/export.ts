@@ -1,21 +1,21 @@
-import { Variables, ExportSetting, extractDefaultExtension as extractExtension, createEnv, today } from './settings';
-import { MessageBox, confirm } from './ui/message_box';
+import { Variables, ExportSetting, extractDefaultExtension as extractExtension, createEnv, today } from '../settings';
+import { MessageBox, confirm } from '../ui/message_box';
 import { Platform, TFile, getLinkpath, moment, type EmbedCache } from 'obsidian';
 import type { SemVer } from 'semver';
-import { exec, renderTemplate, getPlatformValue, trimQuotes } from './utils';
-import { t } from './lang/helpers';
-import { PandocProgress } from './ui/progress';
+import { exec, renderTemplate, getPlatformValue, trimQuotes } from '../system/utils';
+import { t } from '../lang/helpers';
+import { PandocProgress } from '../ui/progress';
 import { describeExportFailure } from './export_error';
-import type PandocGuiPlugin from './main';
-import pandoc from './pandoc';
-import { orderLuaFilters } from './lua_filters';
-import { renameHighlightFlags } from './writer_args';
-import { outputArg } from './output_arg';
-import { resolveEngine, unsupportedBy } from './engine';
-import { convertWithWasm } from './wasm/convert';
-import { FileStore } from './file_store';
-import { basename, dirname, normalize, resolve, stem } from './paths';
-import { PATH_SEPARATOR, chooseSavePath, isDesktop, isMobile, openFile, showInFolder, vaultRoot } from './platform';
+import type PandocGuiPlugin from '../main';
+import pandoc from '../pandoc/pandoc';
+import { orderLuaFilters } from '../filters/lua_filters';
+import { renameHighlightFlags } from '../args/writer_args';
+import { outputArg } from '../args/output_arg';
+import { resolveEngine, unsupportedBy } from '../pandoc/engine';
+import { convertWithWasm } from '../wasm/convert';
+import { FileStore } from '../system/file_store';
+import { basename, dirname, normalize, resolve, stem } from '../system/paths';
+import { PATH_SEPARATOR, chooseSavePath, isDesktop, isMobile, openFile, showInFolder, vaultRoot } from '../system/platform';
 
 export async function exportNote(
   plugin: PandocGuiPlugin,

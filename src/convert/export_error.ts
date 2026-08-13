@@ -1,5 +1,5 @@
-import { t } from './lang/helpers';
-import { TemplateError } from './template';
+import { t } from '../lang/helpers';
+import { TemplateError } from '../templates/template';
 
 /** A failed export, with the command line stripped out and a suggestion where one is known. */
 export interface ExportFailure {

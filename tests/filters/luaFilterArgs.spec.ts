@@ -1,4 +1,4 @@
-import { addLuaFilterArg, hasLuaFilterArg, luaFilterArg, removeLuaFilterArg } from '../src/lua_filters';
+import { addLuaFilterArg, hasLuaFilterArg, luaFilterArg, removeLuaFilterArg } from '../../src/filters/lua_filters';
 
 /*
  * The flag carries `${luaDir}` as literal text — the export fills it in later.

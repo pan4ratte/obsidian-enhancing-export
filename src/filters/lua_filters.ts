@@ -1,5 +1,5 @@
 import { moment, requestUrl } from 'obsidian';
-import type PandocGuiPlugin from './main';
+import type PandocGuiPlugin from '../main';
 
 /* The lua-filter store. */
 

@@ -34,7 +34,7 @@ const filterDir = path.join(root, 'lua-filters');
 const indexPath = path.join(filterDir, 'index.json');
 
 // The shelves, in the order the store shows them. Kept in step with
-// `LUA_FILTER_CATEGORIES` in src/lua_filters.ts and with the `category` labels
+// `LUA_FILTER_CATEGORIES` in src/filters/lua_filters.ts and with the `category` labels
 // in src/lang/en.ts — an entry on a shelf that is not here is an error
 // rather than a row quietly dropped from the tables.
 const CATEGORIES = [
@@ -67,7 +67,7 @@ const READMES = [
     outro: 'Want to add a filter of your own?',
   },
   {
-    file: 'README_RU.md',
+    file: 'docs/README_RU.md',
     lang: 'ru',
     columns: ['Фильтр', 'Что делает', 'Нужно'],
     headings: {

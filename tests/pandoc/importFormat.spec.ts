@@ -9,7 +9,7 @@ import {
   supportsTabStop,
   supportsTrackChanges,
   writerFor,
-} from '../src/import_format';
+} from '../../src/pandoc/import_format';
 
 /*
  * The import dialog asks its questions of the reader the chosen file names, so what matters is that a file is read as

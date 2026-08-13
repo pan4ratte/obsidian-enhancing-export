@@ -1,6 +1,6 @@
-import { describeExportFailure } from '../src/export_error';
-import { TemplateError } from '../src/utils';
-import { t } from '../src/lang/helpers';
+import { describeExportFailure } from '../../src/convert/export_error';
+import { TemplateError } from '../../src/system/utils';
+import { t } from '../../src/lang/helpers';
 
 // Two things are tested: that the command line never reaches the box, and that the errors people actually hit are
 // recognised as themselves.

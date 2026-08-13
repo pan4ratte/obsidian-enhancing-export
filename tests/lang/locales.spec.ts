@@ -1,14 +1,15 @@
 import { readFileSync } from 'fs';
 import path from 'path';
-import en from '../src/lang/en';
-import ru from '../src/lang/ru';
+import en from '../../src/lang/en';
+import ru from '../../src/lang/ru';
 
 /*
  * The two locales are read side by side, so a key sits on the same line in both. Prettier is told to keep every string
  * on one line however long the translation (see `.prettierrc`); this is what notices a key added to one file only.
  */
 
-const read = (locale: string) => readFileSync(path.join(import.meta.dirname, '..', 'src', 'lang', `${locale}.ts`), 'utf8').split(/\r?\n/);
+const read = (locale: string) =>
+  readFileSync(path.join(import.meta.dirname, '..', '..', 'src', 'lang', `${locale}.ts`), 'utf8').split(/\r?\n/);
 
 /** What a line holds, ignoring the value: an indented key, a comment, or nothing — a blank line trims to nothing. */
 const shape = (line: string) => {

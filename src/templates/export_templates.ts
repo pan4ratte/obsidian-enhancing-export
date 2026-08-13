@@ -1,4 +1,4 @@
-import type { ExportSetting } from './settings';
+import type { ExportSetting } from '../settings';
 
 // Template variables, for `/User/aaa/Documents/test.pdf`: `${outputDir}` is the folder,
 // `${outputPath}` the whole path, `${outputFileName}` is `test`, `${outputFileFullName}` is

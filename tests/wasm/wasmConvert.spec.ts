@@ -11,10 +11,10 @@
  */
 
 import { existsSync, readFileSync } from 'fs';
-import { convertWithWasm } from '../src/wasm/convert';
-import { PandocWasm } from '../src/wasm/runtime';
-import { pandocWasmSupport } from '../src/wasm/support';
-import type { FileStore } from '../src/file_store';
+import { convertWithWasm } from '../../src/wasm/convert';
+import { PandocWasm } from '../../src/wasm/runtime';
+import { pandocWasmSupport } from '../../src/wasm/support';
+import type { FileStore } from '../../src/system/file_store';
 
 const binary = process.env['PANDOC_WASM'];
 const available = !!binary && existsSync(binary);

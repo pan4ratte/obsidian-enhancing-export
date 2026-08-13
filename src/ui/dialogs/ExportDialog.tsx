@@ -1,18 +1,18 @@
 import { Notice, TFile } from 'obsidian';
 import { createSignal, createRoot, onCleanup, createMemo, untrack, Show } from 'solid-js';
 import { insert } from 'solid-js/web';
-import type PandocGuiPlugin from '../main';
-import { t } from '../lang/helpers';
-import { extractDefaultExtension as extractExtension } from '../settings';
-import { setPlatformValue, getPlatformValue } from '../utils';
-import { exportNote } from '../export';
-import { droppedBy, resolveEngine, unsupportedBy } from '../engine';
-import { chooseFile, documentsFolder, isMobile, isMobileUi, vaultRoot } from '../platform';
-import FolderInput from './components/FolderInput';
-import Modal from './components/Modal';
-import Button from './components/Button';
-import Icon from './components/Icon';
-import Setting, { Text, DropDown, ExtraButton, Toggle } from './components/Setting';
+import type PandocGuiPlugin from '../../main';
+import { t } from '../../lang/helpers';
+import { extractDefaultExtension as extractExtension } from '../../settings';
+import { setPlatformValue, getPlatformValue } from '../../system/utils';
+import { exportNote } from '../../convert/export';
+import { droppedBy, resolveEngine, unsupportedBy } from '../../pandoc/engine';
+import { chooseFile, documentsFolder, isMobile, isMobileUi, vaultRoot } from '../../system/platform';
+import FolderInput from '../components/FolderInput';
+import Modal from '../components/Modal';
+import Button from '../components/Button';
+import Icon from '../components/Icon';
+import Setting, { Text, DropDown, ExtraButton, Toggle } from '../components/Setting';
 
 const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: () => void }) => {
   const {

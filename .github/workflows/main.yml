@@ -94,12 +94,12 @@ jobs:
             manifest.json
             styles.css
 
-      # Step 5: Extract release notes from CHANGELOG.md for this version
+      # Step 5: Extract release notes from docs/CHANGELOG.md for this version
       - name: Extract release notes
         id: changelog
         run: |
           VERSION="${{ needs.check.outputs.version }}"
-          NOTES=$(awk "/^## $VERSION/{flag=1; next} /^## /{flag=0} flag" CHANGELOG.md)
+          NOTES=$(awk "/^## $VERSION/{flag=1; next} /^## /{flag=0} flag" docs/CHANGELOG.md)
           echo "notes<<EOF" >> $GITHUB_OUTPUT
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT

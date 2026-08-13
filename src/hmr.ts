@@ -1,6 +1,6 @@
 import type { Plugin } from 'obsidian';
 import { debounce, Platform } from 'obsidian';
-import { resolve } from './paths';
+import { resolve } from './system/paths';
 
 declare global {
   interface HmrOptions {

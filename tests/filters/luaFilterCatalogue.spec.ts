@@ -14,10 +14,15 @@ vi.mock('obsidian', () => ({
 
 import { existsSync, readdirSync } from 'fs';
 import path from 'path';
-import { DEFAULT_LUA_FILTER_REPO_URL, LUA_FILTER_CATEGORIES, LuaFilterManager, type RawLuaFilterEntry } from '../src/lua_filters';
-import { FORMAT_FAMILIES } from '../src/pandoc_format';
-import type PandocGuiPlugin from '../src/main';
-import catalogue from '../lua-filters/index.json';
+import {
+  DEFAULT_LUA_FILTER_REPO_URL,
+  LUA_FILTER_CATEGORIES,
+  LuaFilterManager,
+  type RawLuaFilterEntry,
+} from '../../src/filters/lua_filters';
+import { FORMAT_FAMILIES } from '../../src/pandoc/pandoc_format';
+import type PandocGuiPlugin from '../../src/main';
+import catalogue from '../../lua-filters/index.json';
 
 const plugin = { settings: {}, manifest: { dir: 'plugins/x' } } as unknown as PandocGuiPlugin;
 const manager = (bundled: string[] = []) => new LuaFilterManager(plugin, bundled);
@@ -145,7 +150,7 @@ describe('the catalogue in this repository', () => {
   const entries = catalogue.filters as RawLuaFilterEntry[];
 
   test('every entry points at a file that is actually vendored here', () => {
-    const missing = entries.filter(e => !existsSync(path.join(import.meta.dirname, '..', 'lua-filters', e.path)));
+    const missing = entries.filter(e => !existsSync(path.join(import.meta.dirname, '..', '..', 'lua-filters', e.path)));
     expect(missing.map(e => e.path)).toEqual([]);
   });
 
@@ -211,7 +216,7 @@ describe('the catalogue in this repository', () => {
   test('nothing offered answers to the name of a filter the plugin ships', () => {
     // `bundled/` is written over the plugin's `lua/` on every load, so an entry taking one of those names could never
     // stay installed.
-    const bundled = readdirSync(path.join(import.meta.dirname, '..', 'lua-filters', 'bundled')).filter(f => f.endsWith('.lua'));
+    const bundled = readdirSync(path.join(import.meta.dirname, '..', '..', 'lua-filters', 'bundled')).filter(f => f.endsWith('.lua'));
     expect(bundled.length).toBeGreaterThan(0);
     const clashing = entries.filter(e => bundled.includes(e.fileName));
     expect(clashing.map(e => e.id)).toEqual([]);

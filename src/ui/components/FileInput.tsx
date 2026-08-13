@@ -1,5 +1,5 @@
 import { Show } from 'solid-js';
-import { chooseFile, isDesktop, type FileFilter } from '../../platform';
+import { chooseFile, isDesktop, type FileFilter } from '../../system/platform';
 import { Text, ExtraButton } from './Setting';
 
 /** Ask for a path, and answer with it — or with nothing, where the dialog was closed. */

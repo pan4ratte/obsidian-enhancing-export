@@ -21,8 +21,8 @@ import {
   tableHeadStyle,
   tableStyle,
   todayFormat,
-} from '../src/filter_args';
-import { luaFilterArg } from '../src/lua_filters';
+} from '../../src/filters/filter_args';
+import { luaFilterArg } from '../../src/filters/lua_filters';
 
 /*
  * Each row reads a filter flag and the fields configuring it back as one

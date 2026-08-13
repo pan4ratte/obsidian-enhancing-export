@@ -1,4 +1,4 @@
-import { getPlatformValue, setPlatformValue } from '../src/utils';
+import { getPlatformValue, setPlatformValue } from '../../src/system/utils';
 
 test('test get set platformValue 1', async () => {
   const val = setPlatformValue({}, 'abc');

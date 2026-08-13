@@ -14,7 +14,7 @@
     // they are assigned to — the only reason `saveSettings` needed annotating.
     "strictBindCallApply": true,
     "moduleResolution": "bundler",
-    // The build and the test configs share text-loader.ts, and vite's native config
+    // The build and the test configs share tools/text-loader.ts, and vite's native config
     // loader wants that import spelled with its extension.
     "allowImportingTsExtensions": true,
     "esModuleInterop": true,

@@ -1,8 +1,8 @@
 import { createMemo } from 'solid-js';
-import { t } from '../lang/helpers';
-import { hasLuaFilterArg, type InstalledLuaFilter } from '../lua_filters';
-import { runsInFormat } from '../pandoc_format';
-import CheckGrid from './components/CheckGrid';
+import { t } from '../../lang/helpers';
+import { hasLuaFilterArg, type InstalledLuaFilter } from '../../filters/lua_filters';
+import { runsInFormat } from '../../pandoc/pandoc_format';
+import CheckGrid from '../components/CheckGrid';
 
 /** Which installed lua filters this template runs. */
 export default (props: {

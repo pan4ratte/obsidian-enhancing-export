@@ -1,7 +1,7 @@
 /* Whether this device can run pandoc's wasm build — and, on a desktop, making sure it can. */
 
 import { Platform } from 'obsidian';
-import { isEmulatingMobile } from '../platform';
+import { isEmulatingMobile } from '../system/platform';
 
 /**
  * A module whose only unusual instruction is `try_table` (opcode 0x1f) — wasm exception handling, which pandoc's

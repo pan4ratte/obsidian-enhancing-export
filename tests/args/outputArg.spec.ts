@@ -1,5 +1,5 @@
-import { outputArg } from '../src/output_arg';
-import { trimQuotes } from '../src/utils';
+import { outputArg } from '../../src/args/output_arg';
+import { trimQuotes } from '../../src/system/utils';
 
 /** What `export.ts` ends up with: the argument as written, with its quotes taken off. */
 const output = (cmd: string) => {

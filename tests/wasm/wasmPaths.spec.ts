@@ -1,5 +1,5 @@
-import { VirtualPaths } from '../src/wasm/paths';
-import { basename, dirname, extname, isAbsolute, normalize, resolve, stem } from '../src/paths';
+import { VirtualPaths } from '../../src/wasm/paths';
+import { basename, dirname, extname, isAbsolute, normalize, resolve, stem } from '../../src/system/paths';
 
 describe('path pieces', () => {
   test('normalize squares up separators and drops a trailing one', () => {

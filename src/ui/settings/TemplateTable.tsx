@@ -1,9 +1,9 @@
 import { For, Show, createMemo } from 'solid-js';
-import { t } from '../lang/helpers';
-import { extractDefaultExtension, type ExportSetting } from '../settings';
-import { droppedBy, unsupportedBy, type Engine } from '../engine';
-import { isMobileUi, isPhoneUi } from '../platform';
-import Icon from './components/Icon';
+import { t } from '../../lang/helpers';
+import { extractDefaultExtension, type ExportSetting } from '../../settings';
+import { droppedBy, unsupportedBy, type Engine } from '../../pandoc/engine';
+import { isMobileUi, isPhoneUi } from '../../system/platform';
+import Icon from '../components/Icon';
 
 type Column = 'name' | 'output';
 

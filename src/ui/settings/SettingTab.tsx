@@ -1,25 +1,25 @@
 import { Notice, Platform, PluginSettingTab, moment } from 'obsidian';
 import type { SettingDefinitionItem } from 'obsidian';
 import type { SemVer } from 'semver';
-import type PandocGuiPlugin from '../main';
-import { CustomExportSetting, ExportSetting, PandocExportSetting, createEnv, today, DEFAULT_ENV } from '../settings';
-import { setPlatformValue, getPlatformValue, clone } from '../utils';
+import type PandocGuiPlugin from '../../main';
+import { CustomExportSetting, ExportSetting, PandocExportSetting, createEnv, today, DEFAULT_ENV } from '../../settings';
+import { setPlatformValue, getPlatformValue, clone } from '../../system/utils';
 
 import { createSignal, createRoot, onCleanup, createMemo, createEffect, For, Index, Show, batch, Match, Switch, JSX } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { insert, Dynamic } from 'solid-js/web';
-import { t } from '../lang/helpers';
+import { t } from '../../lang/helpers';
 
-import pandoc from '../pandoc';
-import { resolveEngine } from '../engine';
-import { chooseFile, documentsFolder, isMobileUi, vaultRoot } from '../platform';
+import pandoc from '../../pandoc/pandoc';
+import { resolveEngine } from '../../pandoc/engine';
+import { chooseFile, documentsFolder, isMobileUi, vaultRoot } from '../../system/platform';
 import PandocDashboard from './PandocDashboard';
 import PandocLinks from './PandocLinks';
 import PandocNotices, { type PanelNotice } from './PandocNotices';
 import WasmPanel from './WasmPanel';
 import TemplateActions from './TemplateActions';
 import TemplateTable from './TemplateTable';
-import LuaFilterStore from './LuaFilterStore';
+import LuaFilterStore from '../dialogs/LuaFilterStore';
 import EnvVars, { addEnvFolder } from './EnvVars';
 import {
   LuaFilterManager,
@@ -28,11 +28,11 @@ import {
   orderLuaFilters,
   removeLuaFilterArg,
   type InstalledLuaFilter,
-} from '../lua_filters';
+} from '../../filters/lua_filters';
 import TemplateLuaFilters from './TemplateLuaFilters';
-import CheckGrid from './components/CheckGrid';
-import StepSlider from './components/StepSlider';
-import { TOC_MAX_DEPTH, TOC_NONE, setTocDepth, tocDepth } from '../toc_args';
+import CheckGrid from '../components/CheckGrid';
+import StepSlider from '../components/StepSlider';
+import { TOC_MAX_DEPTH, TOC_NONE, setTocDepth, tocDepth } from '../../args/toc_args';
 import {
   FIGURE_DEFAULT_STYLE,
   TABLE_DEFAULT_STYLE,
@@ -56,8 +56,8 @@ import {
   tableHeadStyle,
   tableStyle,
   todayFormat,
-} from '../filter_args';
-import { PANDOC_EXTENSIONS, enabledExtensions, setExtensions } from '../pandoc_extensions';
+} from '../../filters/filter_args';
+import { PANDOC_EXTENSIONS, enabledExtensions, setExtensions } from '../../pandoc/pandoc_extensions';
 import {
   CURATED_VARIABLES,
   EMAIL_OBFUSCATIONS,
@@ -167,7 +167,7 @@ import {
   variables,
   wrap,
   type CuratedVariable,
-} from '../writer_args';
+} from '../../args/writer_args';
 import {
   isEpubOutput,
   isPdfOutput,
@@ -197,18 +197,18 @@ import {
   supportsTopLevelDivision,
   supportsVariable,
   supportsWrap,
-} from '../pandoc_format';
-import { MessageBox } from './message_box';
-import Modal from './components/Modal';
-import Button from './components/Button';
-import Icon from './components/Icon';
-import Collapsible from './components/Collapsible';
-import Section from './components/Section';
-import Setting, { Text, Toggle, ExtraButton, DropDown, TextArea } from './components/Setting';
-import FileInput from './components/FileInput';
-import FolderInput from './components/FolderInput';
-import export_templates from '../export_templates';
-import { BUNDLED_LUA_FILES } from '../resources';
+} from '../../pandoc/pandoc_format';
+import { MessageBox } from '../message_box';
+import Modal from '../components/Modal';
+import Button from '../components/Button';
+import Icon from '../components/Icon';
+import Collapsible from '../components/Collapsible';
+import Section from '../components/Section';
+import Setting, { Text, Toggle, ExtraButton, DropDown, TextArea } from '../components/Setting';
+import FileInput from '../components/FileInput';
+import FolderInput from '../components/FolderInput';
+import export_templates from '../../templates/export_templates';
+import { BUNDLED_LUA_FILES } from '../../resources';
 
 // Whether the template editor's panels stand open. Module scope, so a modal rebuilt on
 // every open reopens where it was; not written to `data.json` — a scroll position is not a setting.

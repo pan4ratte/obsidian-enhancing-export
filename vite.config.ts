@@ -4,7 +4,7 @@ import solidPlugin from 'vite-plugin-solid';
 import { builtinModules as builtins } from 'node:module';
 import path from 'path';
 import * as fsp from 'fs/promises';
-import { TEXT_FILES, textLoader } from './text-loader.ts';
+import { TEXT_FILES, textLoader } from './tools/text-loader.ts';
 
 
 

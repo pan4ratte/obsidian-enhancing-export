@@ -1,9 +1,9 @@
-import export_templates from './export_templates';
-import { setPlatformValue, PlatformValue, renderTemplate, getPlatformValue, clone } from './utils';
+import export_templates from './templates/export_templates';
+import { setPlatformValue, PlatformValue, renderTemplate, getPlatformValue, clone } from './system/utils';
 import type { PropertyGridMeta } from './ui/components/PropertyGrid';
-import type { InstalledLuaFilter } from './lua_filters';
-import type { TodayFormat } from './filter_args';
-import type { EngineMode } from './engine';
+import type { InstalledLuaFilter } from './filters/lua_filters';
+import type { TodayFormat } from './filters/filter_args';
+import type { EngineMode } from './pandoc/engine';
 
 // What a template's `${...}` are filled in with. For `/User/aaa/Documents/test.pdf`:
 // `outputDir` is the folder, `outputPath` the whole path, `outputFileName` is `test`,
@@ -54,7 +54,7 @@ export function today(locale: string, now = new Date()): Record<TodayFormat, str
 export interface PandocGuiSettings {
   pandocPath?: PlatformValue<string>;
 
-  /** Which pandoc runs an export — see `src/engine.ts`. Unset is `auto`. */
+  /** Which pandoc runs an export — see `src/pandoc/engine.ts`. Unset is `auto`. */
   engineMode?: EngineMode;
   /** The version of the wasm build that is installed, or nothing where none is. */
   wasmVersion?: string;

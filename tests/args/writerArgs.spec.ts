@@ -92,7 +92,7 @@ import {
   variable,
   variables,
   wrap,
-} from '../src/writer_args';
+} from '../../src/args/writer_args';
 
 /*
  * Every row in the template editor reads its answer out of a line of arguments

@@ -1,4 +1,4 @@
-import type { CuratedVariable } from './writer_args';
+import type { CuratedVariable } from '../args/writer_args';
 
 /* What a template writes, and what that writer can be asked to do. */
 

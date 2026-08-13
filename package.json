@@ -6,13 +6,13 @@
   "scripts": {
     "dev": "vite build -w -m development",
     "build": "vite build",
-    "version-bump": "node version.mjs bump",
-    "version": "node version.mjs",
+    "version-bump": "node scripts/version.mjs bump",
+    "version": "node scripts/version.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint-fix": "eslint --fix .",
-    "format-check": "prettier --check \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\"",
-    "format-fix": "prettier --write \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\"",
+    "format-check": "prettier --check \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\" \"tools/**/*.ts\"",
+    "format-fix": "prettier --write \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\" \"tools/**/*.ts\"",
     "docs:catalogue": "node scripts/gen-catalogue.js",
     "docs:catalogue:check": "node scripts/gen-catalogue.js --check",
     "test": "vitest run"

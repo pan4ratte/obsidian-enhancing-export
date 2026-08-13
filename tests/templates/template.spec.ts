@@ -1,4 +1,4 @@
-import { renderTemplate, TemplateError } from '../src/utils';
+import { renderTemplate, TemplateError } from '../../src/system/utils';
 
 describe('substitution', () => {
   test('names, dotted paths and bracket access', () => {

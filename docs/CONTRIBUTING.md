@@ -98,22 +98,27 @@ their own. Anything else `package.json`'s `scripts` offers is fair game too.
 
 | Path | What is in it |
 | --- | --- |
-| `src/` | The plugin. `main.ts` is the entry point; `exporto0o.ts` runs an export; `pandoc.ts` finds and questions the installed Pandoc. |
-| `src/export_templates.ts` | The templates the plugin ships with. |
-| `src/writer_args.ts`, `filter_args.ts`, `toc_args.ts` | The template editor's rows, read out of and written back into a template's arguments. |
-| `src/pandoc_format.ts` | What each output format is and which rows it can answer — the format families a row and a filter are narrowed by. |
-| `src/lua_filters.ts` | The store: reading the catalogue, installing, uninstalling, and the `--lua-filter` argument a template runs one through. |
-| `src/ui/` | The settings tab, the export dialog and the filter store, in Solid. |
+| `src/` | The plugin. `main.ts` is the entry point; `settings.ts` is the data model the rest of it reads. |
+| `src/convert/` | An export and an import from end to end, and the error text a failed one comes to. |
+| `src/pandoc/` | Which Pandoc runs and what it can be asked to do: `engine.ts` chooses between the installed one and the wasm build, `pandoc.ts` finds and questions the installed one, and the format files say which rows a writer or a reader can answer. |
+| `src/args/` | The template editor's rows, read out of and written back into a template's arguments. |
+| `src/filters/` | The store: reading the catalogue, installing, uninstalling, and the `--lua-filter` argument a template runs one through — plus the rows for the filters the plugin ships. |
+| `src/templates/` | The templates the plugin ships with, and the expression language behind `${...}` in them. |
+| `src/system/` | Paths, platform and file access. Everything that must also work where there is no node — a phone — is reached through here. |
+| `src/wasm/` | Pandoc's wasm build: installing it, running it, and the defaults file it is driven by. |
+| `src/ui/` | Solid components: `settings/` is the settings tab, `dialogs/` the export, import and store modals, `components/` the widgets they share. |
 | `src/lang/` | Every string the user sees. `en.ts` is the type every other locale satisfies; `ru.ts` is the Russian one. |
-| `lua-filters/` | The filters: `bundled/` is what the plugin ships, the rest is the store's catalogue. See its [readme](lua-filters/README.md). |
+| `lua-filters/` | The filters: `bundled/` is what the plugin ships, the rest is the store's catalogue. See its [readme](../lua-filters/README.md). |
 | `textemplate/` | LaTeX templates embedded into the build alongside the bundled filters. |
-| `scripts/` | `gen-catalogue.js`, which writes the catalogue table in the readme. |
-| `tests/` | Vitest specs. Some shell out to the real Pandoc. |
+| `docs/` | This file, the changelog, the user guide and the Russian readme. |
+| `scripts/` | `gen-catalogue.js`, which writes the catalogue table in the readme, and `version.mjs`, which bumps the version across `package.json`, `manifest.json` and `versions.json`. |
+| `tools/` | Build helpers the vite and vitest configs load. |
+| `tests/` | Vitest specs, laid out to mirror `src/`. Some shell out to the real Pandoc. |
 | `styles.css` | The stylesheet, edited by hand. |
 
 ## Adding an export template
 
-Add an entry to `src/export_templates.ts`. A template is a name, a `type`, the
+Add an entry to `src/templates/export_templates.ts`. A template is a name, a `type`, the
 arguments Pandoc is given and the extension the file is written with; the
 comments at the top of that file explain the variables the arguments may use and
 why the shared fragments exist. Templates the plugin ships are merged into a
@@ -125,9 +130,9 @@ Please export something real with a new template before proposing it.
 
 ## Adding a row to the template editor
 
-A row is three things: the argument it reads and writes (in `writer_args.ts`,
-or `filter_args.ts` for the rows that run a bundled filter), the formats it is
-shown for (`pandoc_format.ts`), and its strings (`src/lang/en.ts`). Rows are
+A row is three things: the argument it reads and writes (in `src/args/writer_args.ts`,
+or `src/filters/filter_args.ts` for the rows that run a bundled filter), the formats it
+is shown for (`src/pandoc/pandoc_format.ts`), and its strings (`src/lang/en.ts`). Rows are
 offered only to the writers that would do something with them, so a row with no
 format restriction should genuinely apply everywhere.
 
@@ -137,7 +142,7 @@ written into a template, read back out, and shown as the same value.
 
 ## Adding a lua filter to the catalogue
 
-The catalogue lives in `lua-filters/`, and its [readme](lua-filters/README.md)
+The catalogue lives in `lua-filters/`, and its [readme](../lua-filters/README.md)
 is the reference: what an entry carries, which folder the file goes in, and why
 every filter offered is vendored in this repository rather than fetched from
 wherever it was published.

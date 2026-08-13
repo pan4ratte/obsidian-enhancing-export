@@ -1,6 +1,6 @@
-import { commandToDefaults, readablePaths, rewritePaths } from '../src/wasm/defaults';
-import export_templates from '../src/export_templates';
-import { renderTemplate } from '../src/template';
+import { commandToDefaults, readablePaths, rewritePaths } from '../../src/wasm/defaults';
+import export_templates from '../../src/templates/export_templates';
+import { renderTemplate } from '../../src/templates/template';
 
 /** The options a command comes down to, which is all most of these care about. */
 const options = (cmd: string) => commandToDefaults(cmd).defaults;

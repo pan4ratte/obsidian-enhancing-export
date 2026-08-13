@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS, restoreTemplates, type PandocGuiSettings } from '../src/settings';
+import { DEFAULT_SETTINGS, restoreTemplates, type PandocGuiSettings } from '../../src/settings';
 
 /*
  * What a vault gets back when it starts: its own templates, and the defaults it has not been given yet — never one it

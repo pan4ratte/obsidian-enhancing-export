@@ -8,7 +8,7 @@
 
 import { vi } from 'vitest';
 import v8 from 'v8';
-import { pandocWasmSupport } from '../src/wasm/support';
+import { pandocWasmSupport } from '../../src/wasm/support';
 
 describe('pandocWasmSupport', () => {
   test('says yes, switching the feature on where the engine keeps it behind a flag', async () => {

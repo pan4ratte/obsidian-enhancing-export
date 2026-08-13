@@ -1,5 +1,5 @@
 import { deflateRawSync } from 'zlib';
-import { extractFromZip } from '../src/wasm/zip';
+import { extractFromZip } from '../../src/wasm/zip';
 
 /** An archive built by hand, so the reader is measured against the format rather than against another reader. */
 const zip = (entries: { name: string; data: Buffer; stored?: boolean }[]): ArrayBuffer => {

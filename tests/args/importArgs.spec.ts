@@ -1,4 +1,4 @@
-import { importArguments, importCommand, type ImportOptions } from '../src/import_args';
+import { importArguments, importCommand, type ImportOptions } from '../../src/args/import_args';
 
 /*
  * The rows of the import dialog come and go as another file is chosen, so an option can outlive the reader it was

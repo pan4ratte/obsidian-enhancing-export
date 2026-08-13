@@ -1,8 +1,8 @@
 import { App, Menu, Plugin, PluginManifest, TFile, Notice, debounce } from 'obsidian';
 import { PandocGuiSettings, ExportSetting, DEFAULT_SETTINGS, DEFAULT_ENV, restoreTemplates } from './settings';
 import { ExportSettingTab, ExportDialog, ImportDialog, UserGuideModal } from './ui';
-import { exportNote } from './export';
-import { getPlatformValue, PlatformKey, clone } from './utils';
+import { exportNote } from './convert/export';
+import { getPlatformValue, PlatformKey, clone } from './system/utils';
 import { t } from './lang/helpers';
 import resources, { BUNDLED_LUA_FILES } from './resources';
 import { PandocWasmManager } from './wasm/install';

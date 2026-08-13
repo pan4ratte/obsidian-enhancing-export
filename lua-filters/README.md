@@ -185,7 +185,7 @@ survives a pull request.
    is derived from `path`.
 3. Run `npm run docs:catalogue`, which normalises the entry and rewrites the
    catalogue tables in the project's [readme](../README.md) and its
-   [Russian one](../README_RU.md).
+   [Russian one](../docs/README_RU.md).
 4. Run `npm test`.
 
 The tables in those readmes are generated, never hand-written: each sits between

@@ -1,9 +1,9 @@
 import type { App } from 'obsidian';
-import { t } from '../lang/helpers';
-import pandoc from '../pandoc';
-import { openExternal } from '../platform';
-import Icon from './components/Icon';
-import { UserGuideModal } from './user_guide';
+import { t } from '../../lang/helpers';
+import pandoc from '../../pandoc/pandoc';
+import { openExternal } from '../../system/platform';
+import Icon from '../components/Icon';
+import { UserGuideModal } from '../user_guide';
 
 /** What is read rather than set: Pandoc's own pages, which belong to neither engine, and the plugin's guide. */
 export default (props: { app: App }) => (

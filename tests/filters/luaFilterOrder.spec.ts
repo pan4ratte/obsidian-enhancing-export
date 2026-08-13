@@ -1,4 +1,4 @@
-import { EMBEDS_FILTER, luaFilterArg, orderLuaFilters } from '../src/lua_filters';
+import { EMBEDS_FILTER, luaFilterArg, orderLuaFilters } from '../../src/filters/lua_filters';
 
 /*
  * Pandoc runs filters in the order they are written. The embeds filter parses the transcluded notes into the

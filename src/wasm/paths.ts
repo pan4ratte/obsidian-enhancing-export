@@ -5,7 +5,7 @@
  * such place, and is given one under a folder of its own.
  */
 
-import { basename, dirname, normalize } from '../paths';
+import { basename, dirname, normalize } from '../system/paths';
 
 /** The folder anything from outside the vault is put under. */
 const EXTERNAL = '_external';

@@ -2,7 +2,7 @@
  *
  * The binary is a wasi reactor: it is initialized once and then answers `convert` and `query` calls. Everything it
  * reads and writes lives in a file system built here, in memory — it can open no real file, reach no network and start
- * no program, which is what `src/engine.ts` gates the plugin's features on.
+ * no program, which is what `src/pandoc/engine.ts` gates the plugin's features on.
  */
 
 import { ConsoleStdout, Directory, File, OpenFile, PreopenDirectory, WASI, type Inode } from '@bjorn3/browser_wasi_shim';

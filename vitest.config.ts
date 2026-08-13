@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import path from 'node:path';
-import { TEXT_FILES, textLoader } from './text-loader.ts';
+import { TEXT_FILES, textLoader } from './tools/text-loader.ts';
 
 export default defineConfig({
   // The same inlining the build does: a test reaching a localised string reaches the user guide with it.

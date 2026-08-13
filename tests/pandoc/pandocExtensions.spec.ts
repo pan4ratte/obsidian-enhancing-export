@@ -1,4 +1,4 @@
-import { PANDOC_EXTENSIONS, enabledExtensions, setExtensions } from '../src/pandoc_extensions';
+import { PANDOC_EXTENSIONS, enabledExtensions, setExtensions } from '../../src/pandoc/pandoc_extensions';
 
 /*
  * The extensions ride on a second `-f`, whose format is the literal text

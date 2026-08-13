@@ -1,19 +1,19 @@
 import { App, Notice, Platform, TFile, normalizePath } from 'obsidian';
-import { createEnv } from './settings';
-import { exec, getPlatformValue } from './utils';
-import { t } from './lang/helpers';
-import { MessageBox, confirm } from './ui/message_box';
-import { IMPORT_MESSAGES, PandocProgress } from './ui/progress';
+import { createEnv } from '../settings';
+import { exec, getPlatformValue } from '../system/utils';
+import { t } from '../lang/helpers';
+import { MessageBox, confirm } from '../ui/message_box';
+import { IMPORT_MESSAGES, PandocProgress } from '../ui/progress';
 import { describeExportFailure } from './export_error';
-import type PandocGuiPlugin from './main';
-import pandoc from './pandoc';
-import { readerFor } from './import_format';
-import { importCommand, type ImportOptions } from './import_args';
-import { resolveEngine } from './engine';
-import { convertWithWasm } from './wasm/convert';
-import { FileStore } from './file_store';
-import { basename, dirname, relativeTo, stem } from './paths';
-import { isMobile, vaultRoot } from './platform';
+import type PandocGuiPlugin from '../main';
+import pandoc from '../pandoc/pandoc';
+import { readerFor } from '../pandoc/import_format';
+import { importCommand, type ImportOptions } from '../args/import_args';
+import { resolveEngine } from '../pandoc/engine';
+import { convertWithWasm } from '../wasm/convert';
+import { FileStore } from '../system/file_store';
+import { basename, dirname, relativeTo, stem } from '../system/paths';
+import { isMobile, vaultRoot } from '../system/platform';
 
 export interface ImportRequest {
   /** The file on disk, as the dialog was given it. */

@@ -9,12 +9,12 @@ import { vi } from 'vitest';
 
 const execMock = vi.fn<(cmd: string, options?: unknown) => Promise<{ stdout: string; stderr: string }>>();
 
-vi.mock('../src/utils', async () => ({
-  ...(await vi.importActual<Record<string, unknown>>('../src/utils')),
+vi.mock('../../src/system/utils', async () => ({
+  ...(await vi.importActual<Record<string, unknown>>('../../src/system/utils')),
   exec: (cmd: string, options?: unknown) => execMock(cmd, options),
 }));
 
-import { getCachedPandocVersion } from '../src/pandoc';
+import { getCachedPandocVersion } from '../../src/pandoc/pandoc';
 
 const VERSION_OUTPUT = { stdout: 'pandoc 3.1.11\nFeatures: +server +lua\n', stderr: '' };
 

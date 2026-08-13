@@ -1,4 +1,4 @@
-import { TOC_DEFAULT_DEPTH, TOC_MAX_DEPTH, TOC_NONE, setTocDepth, tocDepth } from '../src/toc_args';
+import { TOC_DEFAULT_DEPTH, TOC_MAX_DEPTH, TOC_NONE, setTocDepth, tocDepth } from '../../src/args/toc_args';
 
 /*
  * The dropdown reads a depth out of a line of arguments and writes one back

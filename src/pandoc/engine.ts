@@ -5,9 +5,9 @@
  * no shell, no network. Every feature the plugin gates on the difference is named here, so nothing has to guess.
  */
 
-import { extractDefaultExtension, type ExportSetting } from './settings';
+import { extractDefaultExtension, type ExportSetting } from '../settings';
 import { isPdfOutput, outputFormat } from './pandoc_format';
-import { commandToDefaults } from './wasm/defaults';
+import { commandToDefaults } from '../wasm/defaults';
 
 export type Engine = 'native' | 'wasm';
 

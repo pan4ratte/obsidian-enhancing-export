@@ -25,8 +25,8 @@ import {
   supportsTopLevelDivision,
   supportsVariable,
   supportsWrap,
-} from '../src/pandoc_format';
-import { CURATED_VARIABLES } from '../src/writer_args';
+} from '../../src/pandoc/pandoc_format';
+import { CURATED_VARIABLES } from '../../src/args/writer_args';
 
 /*
  * What a template writes decides which rows the editor shows, so reading the

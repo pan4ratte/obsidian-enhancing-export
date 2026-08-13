@@ -1,4 +1,4 @@
-import { renderTemplate } from '../src/utils';
+import { renderTemplate } from '../../src/system/utils';
 
 test('test Template rendering', async () => {
   const out = renderTemplate('s${luaDir}e', { luaDir: 'w123' });

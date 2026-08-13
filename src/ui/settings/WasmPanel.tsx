@@ -1,12 +1,12 @@
 import { Notice, type App } from 'obsidian';
 import { Show, createEffect, createMemo, createResource, createSignal } from 'solid-js';
-import { t } from '../lang/helpers';
-import { isMobileUi } from '../platform';
-import { isNewerRelease, type PandocWasmManager, type WasmRelease } from '../wasm/install';
-import { pandocWasmSupport } from '../wasm/support';
-import { MessageBox } from './message_box';
-import Button from './components/Button';
-import Icon from './components/Icon';
+import { t } from '../../lang/helpers';
+import { isMobileUi } from '../../system/platform';
+import { isNewerRelease, type PandocWasmManager, type WasmRelease } from '../../wasm/install';
+import { pandocWasmSupport } from '../../wasm/support';
+import { MessageBox } from '../message_box';
+import Button from '../components/Button';
+import Icon from '../components/Icon';
 import type { PanelNotice } from './PandocNotices';
 
 const megabytes = (bytes: number) => Math.round(bytes / 1024 / 1024);

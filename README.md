@@ -3,7 +3,7 @@
 <img alt="Pandoc GUI for Obsidian" src="https://shieldcn.dev/header/graph.svg?title=Pandoc+GUI+for+Obsidian&subtitle=Obsidian+%2B+Pandoc+%2B+GUI+%3D+%E2%9D%A4%EF%B8%8F&logo=pandoc&size=wide&mode=dark">
 
 <p align="center">
-  English | <a href="https://github.com/pan4ratte/obsidian-pandoc-gui/blob/main/README_RU.md">Русский</a>
+  English | <a href="https://github.com/pan4ratte/obsidian-pandoc-gui/blob/main/docs/README_RU.md">Русский</a>
 </p>
 
 Export and import notes with Pandoc without touching the command line: every option Pandoc offers is available right in the Obsidian interface. Build export templates for Word, PDF, LaTeX, HTML, EPUB and many other formats, and install extra lua filters straight from the store inside the plugin.

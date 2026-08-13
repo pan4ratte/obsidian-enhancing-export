@@ -1,5 +1,5 @@
 import { MARKDOWN_HEADINGS, SHIFT_HEADING_LEVELS, WRAP_MODES } from './writer_args';
-import { supportsMarkdownHeadings, supportsReferenceLinks, supportsWrap } from './pandoc_format';
+import { supportsMarkdownHeadings, supportsReferenceLinks, supportsWrap } from '../pandoc/pandoc_format';
 import {
   supportsExtractMedia,
   supportsMetadata,
@@ -8,7 +8,7 @@ import {
   supportsTrackChanges,
   writerFor,
   type MarkdownFlavour,
-} from './import_format';
+} from '../pandoc/import_format';
 
 /* The options the import dialog asks for, and the command line they come to. */
 

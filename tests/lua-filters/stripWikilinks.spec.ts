@@ -1,4 +1,4 @@
-import { convert, testConversion } from './common';
+import { convert, testConversion } from '../common';
 
 const stripWikilinks = { dir: 'pan4ratte', from: 'markdown+wikilinks_title_after_pipe' };
 

@@ -6,7 +6,7 @@
  * the "Defaults files" section of its manual.
  */
 
-import { trimQuotes } from '../utils';
+import { trimQuotes } from '../system/utils';
 
 /** Splits a command line on whitespace, keeping anything inside double quotes together — as `output_arg` does. */
 const TOKENS = /(?:[^\s"]+|"[^"]*")+/g;

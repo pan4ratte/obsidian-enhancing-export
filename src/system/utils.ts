@@ -75,4 +75,4 @@ export function trimQuotes(s: string) {
   return (s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'")) ? s.substring(1, s.length - 1) : s;
 }
 
-export { renderTemplate, TemplateError } from './template';
+export { renderTemplate, TemplateError } from '../templates/template';

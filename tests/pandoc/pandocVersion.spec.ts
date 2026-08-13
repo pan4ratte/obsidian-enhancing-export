@@ -1,4 +1,4 @@
-import pandoc, { parsePandocVersion } from '../src/pandoc';
+import pandoc, { parsePandocVersion } from '../../src/pandoc/pandoc';
 
 test('test get pandoc version', async () => {
   const out = await pandoc.getVersion();

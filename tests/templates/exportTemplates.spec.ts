@@ -1,9 +1,16 @@
 import { readdirSync } from 'fs';
 import path from 'path';
-import export_templates from '../src/export_templates';
-import { FIGURE_DEFAULT_STYLE, TABLE_DEFAULT_STYLE, figureStyle, flattenOrdered, listStyles, tableStyle } from '../src/filter_args';
-import { DEFAULT_TEMPLATE_PRESETS } from '../src/settings';
-import { renderTemplate } from '../src/utils';
+import export_templates from '../../src/templates/export_templates';
+import {
+  FIGURE_DEFAULT_STYLE,
+  TABLE_DEFAULT_STYLE,
+  figureStyle,
+  flattenOrdered,
+  listStyles,
+  tableStyle,
+} from '../../src/filters/filter_args';
+import { DEFAULT_TEMPLATE_PRESETS } from '../../src/settings';
+import { renderTemplate } from '../../src/system/utils';
 
 /*
  * A preset is a command line with holes in it, and nothing type-checks the holes: a variable that is never filled in,
@@ -137,7 +144,7 @@ describe('the corrections these presets carry', () => {
   test('the lua filters named are ones the plugin still ships', () => {
     // Read off the folder rather than listed here: a preset naming a filter that is not written to `lua/` fails every
     // export it is used for, and a list in a test is one more thing to forget to update.
-    const shipped = readdirSync(path.join(import.meta.dirname, '..', 'lua-filters', 'bundled'));
+    const shipped = readdirSync(path.join(import.meta.dirname, '..', '..', 'lua-filters', 'bundled'));
     for (const preset of pandocPresets) {
       for (const [, file] of render(preset).matchAll(/--lua-filter="[^"]*\/([^"/]+)"/g)) {
         expect(shipped).toContain(file);

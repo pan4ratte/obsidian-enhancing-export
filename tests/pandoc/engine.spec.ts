@@ -1,6 +1,6 @@
-import { capabilities, droppedBy, resolveEngine, unsupportedBy, writesPdf, type EngineMode } from '../src/engine';
-import type { ExportSetting } from '../src/settings';
-import export_templates from '../src/export_templates';
+import { capabilities, droppedBy, resolveEngine, unsupportedBy, writesPdf, type EngineMode } from '../../src/pandoc/engine';
+import type { ExportSetting } from '../../src/settings';
+import export_templates from '../../src/templates/export_templates';
 
 const template = (name: string) => export_templates[name];
 

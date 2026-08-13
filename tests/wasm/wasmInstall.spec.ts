@@ -6,7 +6,7 @@
  * which is how "Not installed" survived an install.
  */
 
-import { PandocWasmManager, WASM_FILE } from '../src/wasm/install';
+import { PandocWasmManager, WASM_FILE } from '../../src/wasm/install';
 
 /** What this vault happens to call its config folder — a fixture, not a lookup. */
 const CONFIG = '.config';

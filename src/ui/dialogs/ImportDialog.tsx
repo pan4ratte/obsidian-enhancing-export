@@ -1,12 +1,12 @@
-import { stem } from '../paths';
+import { stem } from '../../system/paths';
 import { Notice } from 'obsidian';
 import { JSX, Show, createMemo, createRoot, createSignal, onCleanup, untrack } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { insert } from 'solid-js/web';
-import type PandocGuiPlugin from '../main';
-import { t } from '../lang/helpers';
-import { importFile } from '../import';
-import { isMobileUi, vaultRoot } from '../platform';
+import type PandocGuiPlugin from '../../main';
+import { t } from '../../lang/helpers';
+import { importFile } from '../../convert/import';
+import { isMobileUi, vaultRoot } from '../../system/platform';
 import {
   DEFAULT_MARKDOWN_FLAVOUR,
   IMPORT_EXTENSIONS,
@@ -18,16 +18,16 @@ import {
   supportsTabStop,
   supportsTrackChanges,
   type MarkdownFlavour,
-} from '../import_format';
-import { TRACK_CHANGES, type ImportOptions } from '../import_args';
-import { SHIFT_HEADING_LEVELS, WRAP_MODES } from '../writer_args';
-import { supportsMarkdownHeadings, supportsReferenceLinks, supportsWrap } from '../pandoc_format';
-import Modal from './components/Modal';
-import Button from './components/Button';
-import FileInput from './components/FileInput';
-import VaultFileInput from './components/VaultFileInput';
-import FolderInput from './components/FolderInput';
-import Setting, { DropDown, Text, Toggle } from './components/Setting';
+} from '../../pandoc/import_format';
+import { TRACK_CHANGES, type ImportOptions } from '../../args/import_args';
+import { SHIFT_HEADING_LEVELS, WRAP_MODES } from '../../args/writer_args';
+import { supportsMarkdownHeadings, supportsReferenceLinks, supportsWrap } from '../../pandoc/pandoc_format';
+import Modal from '../components/Modal';
+import Button from '../components/Button';
+import FileInput from '../components/FileInput';
+import VaultFileInput from '../components/VaultFileInput';
+import FolderInput from '../components/FolderInput';
+import Setting, { DropDown, Text, Toggle } from '../components/Setting';
 
 const SOURCE_FILES = [
   { name: t.IMPORT_DIALOG_FILE_FILTER, extensions: IMPORT_EXTENSIONS },

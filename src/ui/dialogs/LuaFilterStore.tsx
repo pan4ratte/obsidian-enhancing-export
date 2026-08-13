@@ -1,7 +1,7 @@
 import { Notice, Platform, type App } from 'obsidian';
 import { For, Match, Show, Switch, createEffect, createMemo, createResource, createSignal, onCleanup } from 'solid-js';
-import { t } from '../lang/helpers';
-import { openExternal } from '../platform';
+import { t } from '../../lang/helpers';
+import { openExternal } from '../../system/platform';
 import {
   DEFAULT_LUA_FILTER_CATEGORY,
   LUA_FILTER_CATEGORIES,
@@ -9,10 +9,10 @@ import {
   type InstalledLuaFilter,
   type LuaFilterCategory,
   type LuaFilterEntry,
-} from '../lua_filters';
-import Modal from './components/Modal';
-import Icon from './components/Icon';
-import { tooltip } from './components/tooltip';
+} from '../../filters/lua_filters';
+import Modal from '../components/Modal';
+import Icon from '../components/Icon';
+import { tooltip } from '../components/tooltip';
 
 /** The chips above the list: how a filter stands, then the shelf it sits on. */
 type Chip = LuaFilterCategory | 'all' | 'installed' | 'updatable' | 'nosetup';

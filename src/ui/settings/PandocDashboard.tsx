@@ -1,11 +1,11 @@
 import { Show, createEffect, createMemo, createResource, onCleanup } from 'solid-js';
 import type { SemVer } from 'semver';
-import { t } from '../lang/helpers';
-import pandoc, { type PandocRelease } from '../pandoc';
-import Button from './components/Button';
-import Icon from './components/Icon';
+import { t } from '../../lang/helpers';
+import pandoc, { type PandocRelease } from '../../pandoc/pandoc';
+import Button from '../components/Button';
+import Icon from '../components/Icon';
 import type { PanelNotice } from './PandocNotices';
-import { openExternal } from '../platform';
+import { openExternal } from '../../system/platform';
 
 /** Green / yellow / grey dot next to the version. */
 type Status = 'ok' | 'outdated' | 'checking' | 'absent';

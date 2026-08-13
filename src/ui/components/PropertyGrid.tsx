@@ -1,5 +1,5 @@
 import { For, JSX, createEffect, createSignal, untrack } from 'solid-js';
-import { chooseFile as chooseFromSystem, type FileFilter } from '../../platform';
+import { chooseFile as chooseFromSystem, type FileFilter } from '../../system/platform';
 import Setting, { Toggle, DropDown, Text, ExtraButton } from './Setting';
 
 const editors = {

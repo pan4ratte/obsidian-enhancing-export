@@ -4,10 +4,10 @@
  * into the wasm build's file system, converts, and writes what came out back where the command said it goes.
  */
 
-import type { FileStore } from '../file_store';
+import type { FileStore } from '../system/file_store';
 import { commandToDefaults, readablePaths, rewritePaths } from './defaults';
 import { VirtualPaths } from './paths';
-import { dirname, resolve } from '../paths';
+import { dirname, resolve } from '../system/paths';
 import type { PandocWasm, WasmFiles } from './runtime';
 
 export interface WasmConversion {
