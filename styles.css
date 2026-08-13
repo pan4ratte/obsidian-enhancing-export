@@ -147,11 +147,46 @@
   background-color: var(--setting-items-background, var(--background-primary));
 }
 
+/* The name of the pandoc this half is about, and — while there is one to ask —
+   the mark that says what it is. They share a line and wrap together, a half
+   this narrow having nowhere else to put the second of them. */
 .ex-pandoc-dashboard-version {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-4-1);
   font-size: var(--font-ui-medium);
   font-weight: var(--font-semibold);
   color: var(--text-normal);
   line-height: 1.2;
+}
+
+/* Faint: it is there to be found by whoever is wondering, not to be read by
+   everyone who is not. */
+.ex-pandoc-dashboard-hint {
+  display: flex;
+  align-items: center;
+  color: var(--text-faint);
+  transition: color 100ms ease-in-out;
+}
+
+.ex-pandoc-dashboard-hint:hover {
+  color: var(--text-muted);
+}
+
+.ex-pandoc-dashboard-hint .svg-icon {
+  width: var(--icon-s);
+  height: var(--icon-s);
+}
+
+/* A press needs something to land on, which a hover does not — so on a phone,
+   where the mark is pressed rather than pointed at, it is given the room.
+   `clickable-icon` is Obsidian's own, and is only on it where there is a press
+   to make. */
+.ex-pandoc-dashboard-hint.clickable-icon {
+  padding: var(--size-2-2);
+  margin: calc(-1 * var(--size-2-2));
+  margin-inline-start: 0;
 }
 
 /* Status line: the dot and its label share the state colour. What can be done
@@ -2130,10 +2165,15 @@
 }
 
 /* Prose at the size the rest of the settings are read at, rather than the
-   note's own — this is a panel of the plugin, not a note. Headings keep the
-   sizes the renderer gives them, which is what makes them headings. */
-.ex-user-guide-modal p,
-.ex-user-guide-modal li {
+   note's own — this is a panel of the plugin, not a note. Set on the page as
+   well as on its paragraphs, so everything the renderer leaves at the base size
+   is read at it too. Headings keep the sizes the renderer gives them, which is
+   what makes them headings.
+   The class is written twice: a theme's stylesheet loads after a plugin's, and
+   a rule of the same weight in one would otherwise be the one that lands. */
+.ex-user-guide-modal.ex-user-guide-modal,
+.ex-user-guide-modal.ex-user-guide-modal p,
+.ex-user-guide-modal.ex-user-guide-modal li {
   font-size: var(--font-ui-small);
 }
 

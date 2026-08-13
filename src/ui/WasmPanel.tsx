@@ -1,6 +1,7 @@
 import { Notice, type App } from 'obsidian';
 import { Show, createEffect, createMemo, createResource, createSignal } from 'solid-js';
 import { t } from '../lang/helpers';
+import { isMobileUi } from '../platform';
 import { isNewerRelease, type PandocWasmManager, type WasmRelease } from '../wasm/install';
 import { pandocWasmSupport } from '../wasm/support';
 import { MessageBox } from './message_box';
@@ -46,6 +47,9 @@ export default (props: {
    */
   const [onDisk, { refetch: lookAgain }] = createResource(() => props.manager.isInstalled());
   const installed = () => !!props.version && onDisk() !== false;
+
+  /** What the build is for, and what it costs. */
+  const hint = `${t.WASM_HINT} ${t.WASM_SIZE}`;
 
   const updatable = createMemo(() => {
     const release = latest();
@@ -143,7 +147,20 @@ export default (props: {
 
   return (
     <div class="ex-pandoc-dashboard-half">
-      <div class="ex-pandoc-dashboard-version">{installed() ? t.WASM_VERSION(props.version) : t.WASM_TITLE}</div>
+      <div class="ex-pandoc-dashboard-version">
+        {installed() ? t.WASM_VERSION(props.version) : t.WASM_TITLE}
+
+        {/* Only while there is nothing installed: what the build is for is a question the answer to it settles.
+            Read by hovering, and on a phone — where there is no hovering — by pressing. */}
+        <Show when={!installed()}>
+          <Icon
+            class="ex-pandoc-dashboard-hint"
+            name="circle-question-mark"
+            tooltip={hint}
+            onClick={isMobileUi() ? () => new Notice(hint) : undefined}
+          />
+        </Show>
+      </div>
 
       <div class="ex-pandoc-dashboard-status" classList={{ [`is-${status()}`]: true }}>
         <span class="ex-pandoc-dashboard-indicator" />
@@ -160,7 +177,7 @@ export default (props: {
         <Show when={latest() && (!installed() || failed())}>
           <Button
             class="ex-pandoc-dashboard-inline is-cta"
-            tooltip={`${installed() ? t.WASM_UPDATE : t.WASM_INSTALL}. ${t.WASM_SIZE(megabytes(latest().size))}`}
+            tooltip={`${installed() ? t.WASM_UPDATE : t.WASM_INSTALL}. ${t.WASM_SIZE}`}
             disabled={!!busy()}
             onClick={() => void install(latest())}
           >

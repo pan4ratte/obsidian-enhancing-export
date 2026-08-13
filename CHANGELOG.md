@@ -38,6 +38,8 @@
 * Extensions are ticked off one to a line on a phone, where two columns cut their names in half.
 * The lua-filter store's search field keeps its height on a phone, rather than being squeezed by the list under it.
 * Every node package is reached behind `Platform.isDesktop`, which is also false while a phone is emulated — where Obsidian withholds node whatever the device is.
+* “Pandoc WASM” carries a question mark saying what the build is for and what the download costs, until it is installed. Pressed rather than hovered on a phone.
+* The user guide is read at the size the settings are.
 
 
 ## 1.3.0

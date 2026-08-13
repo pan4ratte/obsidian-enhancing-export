@@ -78,9 +78,9 @@ The full Pandoc runs on a computer only, so to use it on a phone or a tablet you
 
 1. In the plugin settings find the “Pandoc WASM” card and press the install icon. The plugin downloads Pandoc's own official build, unpacks it and puts it in the plugin folder — there is nothing else to do.
 
-2. Turn on “Use Pandoc WASM on this computer” to have the built-in build convert instead of the installed Pandoc. It is off by default, and the installed Pandoc does the work. A phone and a tablet are not asked: WASM is the only thing that converts there, so everything about an installed Pandoc is left out of the settings.
+2. Turn on “Use Pandoc WASM on this computer” to have Pandoc WASM convert instead of the installed Pandoc. It is off by default, and the installed Pandoc does the work. A phone and a tablet are not asked: WASM is the only thing that converts there, so everything about an installed Pandoc is left out of the settings.
 
-So you need never install Pandoc on your computer at all, and can use the build inside the plugin instead. Pandoc WASM does have limits the ordinary version does not — they are built into the program itself. The user guide has the details.
+So you need never install Pandoc on your computer at all, and can use Pandoc WASM instead. Pandoc WASM does have limits the ordinary version does not — they are built into the program itself. The user guide has the details.
 
 
 ## The lua-filter catalogue
