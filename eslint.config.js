@@ -81,11 +81,13 @@ export default tseslint.config(
   },
   {
     // Node is what these are for. The rule against importing it is about what a
-    // phone loads: none of these are ever in it. The build config and the two
-    // loaders run under node at build time, the specs under vitest, and the
-    // hot-reload shim is injected into development builds only — `vite.config.ts`
-    // adds it when the mode is not production, so a release never carries it.
-    files: ['vite.config.ts', 'vitest.config.ts', 'text-loader.ts', 'version.mjs', 'scripts/**', 'tests/**', 'src/hmr.ts'],
+    // phone loads: the build config runs under node while the bundle is made,
+    // and the specs under vitest, so neither is ever in one.
+    //
+    // Written here rather than in the files because a reviewer's own eslint run
+    // does not read this config — anything that has to be said to that run is
+    // said in the file itself, as `text-loader.ts` does.
+    files: ['vite.config.ts', 'vitest.config.ts', 'version.mjs', 'scripts/**', 'tests/**'],
     rules: { 'obsidianmd/no-nodejs-modules': 'off' },
   },
   {
