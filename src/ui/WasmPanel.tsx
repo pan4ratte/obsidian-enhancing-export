@@ -1,18 +1,16 @@
 import { Notice, type App } from 'obsidian';
 import { Show, createMemo, createResource, createSignal } from 'solid-js';
 import { t } from '../lang/helpers';
-import type { EngineMode } from '../engine';
 import { isNewerRelease, type PandocWasmManager, type WasmRelease } from '../wasm/install';
 import { pandocWasmSupport } from '../wasm/support';
 import { MessageBox } from './message_box';
 import Button from './components/Button';
 import Icon from './components/Icon';
-import Setting, { DropDown } from './components/Setting';
 
 const megabytes = (bytes: number) => Math.round(bytes / 1024 / 1024);
 
 /**
- * The wasm build: whether it is here, how to get it, and which pandoc an export goes to.
+ * The wasm build: whether it is here, and how to get it.
  *
  * It is a 56 MB download, so nothing happens until it is asked for — and once it is, the one button does the whole
  * thing: fetch the release, unpack it, put it in place.
@@ -22,8 +20,6 @@ export default (props: {
   manager: PandocWasmManager;
   /** The version on disk, as the settings recorded it. */
   version?: string;
-  mode?: EngineMode;
-  onModeChange: (mode: EngineMode) => void;
   /** The version now on disk, or nothing where it has just been removed. */
   onInstalled: (version?: string) => void;
 }) => {
@@ -57,7 +53,10 @@ export default (props: {
     if (supported()?.ok === false || failed()) {
       return 'missing';
     }
-    return installed() ? (updatable() ? 'outdated' : 'ok') : 'missing';
+    if (!installed()) {
+      return 'absent';
+    }
+    return updatable() ? 'outdated' : 'ok';
   });
 
   const statusText = createMemo(() => {
@@ -72,7 +71,7 @@ export default (props: {
       return t.WASM_UNAVAILABLE;
     }
     if (!installed()) {
-      return latest() ? t.WASM_SIZE(megabytes(latest().size)) : t.WASM_DESC;
+      return t.WASM_ABSENT;
     }
     return updatable() ? t.PANDOC_UPDATE_AVAILABLE(latest().version) : t.WASM_SYNC_WARNING;
   });
@@ -122,54 +121,40 @@ export default (props: {
     }).open();
   };
 
-  const modes = [
-    { name: t.WASM_ENGINE_AUTO, value: 'auto' },
-    { name: t.WASM_ENGINE_NATIVE, value: 'native' },
-    { name: t.WASM_ENGINE_WASM, value: 'wasm' },
-  ];
-
   return (
-    <>
-      <Setting name={t.WASM_TITLE} heading={true} />
+    <div class="ex-pandoc-dashboard-half">
+      <div class="ex-pandoc-dashboard-version">{installed() ? t.WASM_VERSION(props.version) : t.WASM_TITLE}</div>
 
-      <div class="ex-pandoc-dashboard ex-wasm-panel">
-        <div class="ex-pandoc-dashboard-info">
-          <div class="ex-pandoc-dashboard-version">{installed() ? t.WASM_VERSION(props.version) : t.WASM_ABSENT}</div>
+      <div class="ex-pandoc-dashboard-status" classList={{ [`is-${status()}`]: true }}>
+        <span class="ex-pandoc-dashboard-indicator" />
+        <span>{statusText()}</span>
 
-          <div class="ex-pandoc-dashboard-status" classList={{ [`is-${status()}`]: true }}>
-            <span class="ex-pandoc-dashboard-indicator" />
-            <span>{statusText()}</span>
-          </div>
-        </div>
+        {/* What to do about what the line says, beside it. Nothing here yet is the one worth a word of its own;
+            a newer build and the copy already installed are what the line has just named.
 
-        {/* Offered whatever the probe thought: it is a guess, and being wrong about it must not be what stops
-            someone installing. The binary itself answers on the next line. */}
-        <div class="ex-pandoc-dashboard-actions">
-          <Show when={latest() && (!installed() || updatable() || failed())}>
-            <Button
-              class={`ex-pandoc-dashboard-button${updatable() ? ' is-outdated' : ''}`}
-              disabled={!!busy()}
-              onClick={() => void install(latest())}
-            >
-              <Icon name="download" />
-              {installed() ? t.WASM_UPDATE : t.WASM_INSTALL}
-            </Button>
-          </Show>
-          <Show when={installed()}>
-            <Button class="ex-pandoc-dashboard-button" disabled={!!busy()} onClick={remove}>
-              <Icon name="trash-2" />
-              {t.WASM_REMOVE}
-            </Button>
-          </Show>
-        </div>
+            Offered whatever the probe thought: it is a guess, and being wrong about it must not be what stops
+            someone installing. The binary itself answers on this same line, once it has been asked. */}
+        <Show when={latest() && (!installed() || failed())}>
+          <Button
+            class="ex-pandoc-dashboard-inline is-cta"
+            tooltip={`${installed() ? t.WASM_UPDATE : t.WASM_INSTALL}. ${t.WASM_SIZE(megabytes(latest().size))}`}
+            disabled={!!busy()}
+            onClick={() => void install(latest())}
+          >
+            <Icon name="download" />
+          </Button>
+        </Show>
+        <Show when={updatable() && !failed()}>
+          <Button class="ex-pandoc-dashboard-inline" tooltip={t.WASM_UPDATE} disabled={!!busy()} onClick={() => void install(latest())}>
+            <Icon name="download" />
+          </Button>
+        </Show>
+        <Show when={installed()}>
+          <Button class="ex-pandoc-dashboard-inline is-quiet" tooltip={t.WASM_REMOVE} disabled={!!busy()} onClick={remove}>
+            <Icon name="trash-2" />
+          </Button>
+        </Show>
       </div>
-
-      {/* Asked whether or not it is installed: it is the answer that says what to install for. */}
-      <div class="ex-settings-card">
-        <Setting name={t.WASM_ENGINE} description={t.WASM_DESC}>
-          <DropDown options={modes} selected={props.mode ?? 'auto'} autofocus={false} onChange={(v: EngineMode) => props.onModeChange(v)} />
-        </Setting>
-      </div>
-    </>
+    </div>
   );
 };

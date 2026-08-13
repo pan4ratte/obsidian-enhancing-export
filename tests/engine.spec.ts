@@ -1,19 +1,25 @@
-import { capabilities, droppedBy, resolveEngine, unsupportedBy, writesPdf } from '../src/engine';
+import { capabilities, droppedBy, resolveEngine, unsupportedBy, writesPdf, type EngineMode } from '../src/engine';
 import type { ExportSetting } from '../src/settings';
 import export_templates from '../src/export_templates';
 
 const template = (name: string) => export_templates[name];
 
 describe('resolveEngine', () => {
-  test('a named engine is the one used, wherever it is', () => {
-    expect(resolveEngine('native', true)).toBe('native');
+  test('the wasm build everywhere, where that is what was asked for', () => {
     expect(resolveEngine('wasm', false)).toBe('wasm');
+    expect(resolveEngine('wasm', true)).toBe('wasm');
   });
 
   test('left to itself, it is the installed pandoc on a desktop and the wasm build on a phone', () => {
     expect(resolveEngine('auto', false)).toBe('native');
     expect(resolveEngine('auto', true)).toBe('wasm');
     expect(resolveEngine(undefined, true)).toBe('wasm');
+  });
+
+  test('the `native` older settings hold reads as auto, which on a phone is the wasm build', () => {
+    const legacy = 'native' as unknown as EngineMode;
+    expect(resolveEngine(legacy, false)).toBe('native');
+    expect(resolveEngine(legacy, true)).toBe('wasm');
   });
 });
 

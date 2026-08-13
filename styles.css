@@ -77,14 +77,12 @@
  */
 
 /*
- * One card divided into blocks by the lines between them, the way the templates
- * table's actions card is: what pandoc is, and then what can be done about it.
- * `overflow` keeps a block's hover fill inside the rounded corners.
+ * Everything about pandoc in one card: a row to each thing it is read for, and a
+ * pandoc to each half of a row — the installed one on the left, the wasm build
+ * on the right, all the way down. `overflow` keeps a half's hover fill inside
+ * the rounded corners.
  */
-.ex-pandoc-dashboard {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
+.ex-pandoc-panel {
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--setting-items-radius);
   background: var(--setting-items-background);
@@ -92,12 +90,47 @@
   margin-bottom: 24px;
 }
 
-/* The section the card opens with, and the only one that is read rather than
-   pressed: it takes the width the actions leave, and the card's padding with it.
-   `min-width` is what lets it be the one that gives way when the pane narrows. */
-.ex-pandoc-dashboard-info {
-  flex: 1 1 auto;
+.ex-pandoc-panel-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+/* Halves that are halves whatever they hold: half the row to start from, and
+   `min-width` so nothing inside — a long status, a dropdown as wide as its
+   longest option — can argue for more than that. The second selector is the
+   same rule at the specificity a button needs, its own being two classes deep
+   to outrank the theme. */
+.ex-pandoc-panel-row > *,
+.ex-pandoc-panel-row > .ex-action {
+  flex: 1 1 50%;
   min-width: 0;
+}
+
+/* The lines the card is divided by: across, between one row and the next, and
+   down, between the two halves of a row. */
+.ex-pandoc-panel-row + .ex-pandoc-panel-row {
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.ex-pandoc-panel-row > * + *,
+.ex-pandoc-panel-row > .ex-action + .ex-action {
+  border-inline-start: 1px solid var(--background-modifier-border);
+}
+
+/* A button standing as a half is as tall as the row, whatever the half beside
+   it holds. */
+.ex-pandoc-panel-row .ex-action {
+  align-self: stretch;
+  height: auto;
+}
+
+/* What the row holds that is not a half of it: the icon that forgets the folder. */
+.ex-pandoc-panel-row .ex-action.is-icon {
+  flex: none;
+}
+
+.ex-pandoc-dashboard-half {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -111,9 +144,12 @@
   line-height: 1.2;
 }
 
-/* Status line: the dot and its label share the state colour. */
+/* Status line: the dot and its label share the state colour. What can be done
+   about the state follows the label, and drops below it where a long enough
+   status leaves no room. */
 .ex-pandoc-dashboard-status {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--size-4-2);
   font-size: var(--font-ui-smaller);
@@ -146,6 +182,11 @@
   color: var(--text-error);
 }
 
+/* Nothing installed yet is not a fault, and does not read as one. */
+.ex-pandoc-dashboard-status.is-absent {
+  color: var(--text-muted);
+}
+
 .ex-pandoc-dashboard-status.is-checking .ex-pandoc-dashboard-indicator {
   box-shadow: none;
 }
@@ -156,83 +197,48 @@
   margin-top: var(--size-2-2);
 }
 
-/* The sections after it, one per action, each as wide as what it says. */
-.ex-pandoc-dashboard-actions {
-  flex: none;
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  border-inline-start: 1px solid var(--background-modifier-border);
-}
-
-/* Two-class specificity throughout: these are `button` elements, and every
-   property below is one the theme's button rules would otherwise set. */
-.ex-pandoc-dashboard-button.ex-pandoc-dashboard-button {
+/* The buttons that stand in the status line rather than in a card of their own:
+   no fill, no border, and the colour of the line they belong to. */
+.ex-pandoc-dashboard-inline.ex-pandoc-dashboard-inline {
   flex: none;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--size-4-2);
-  min-width: 0;
-  /* The section is the full height of the card, not a button standing in one. */
-  align-self: stretch;
-  height: auto;
-  min-height: 42px;
+  height: 1lh;
   margin: 0;
-  padding: var(--size-4-2) var(--size-4-4);
-  background-color: transparent;
+  padding: 0;
+  background: none;
   border: none;
   border-radius: 0;
   box-shadow: none;
-  color: var(--text-normal);
-  font-size: var(--font-ui-small);
+  color: inherit;
   cursor: var(--cursor);
-  transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
 }
 
-/* The lines the card is divided by. */
-.ex-pandoc-dashboard-actions .ex-pandoc-dashboard-button + .ex-pandoc-dashboard-button {
-  border-inline-start: 1px solid var(--background-modifier-border);
+/* Removing what is installed is not what the line is about, so it says less. */
+.ex-pandoc-dashboard-inline.is-quiet.is-quiet {
+  color: var(--text-muted);
 }
 
-/* Accent under the pointer only: these are what the card is for, but not what
-   it is about. */
-.ex-pandoc-dashboard-button.ex-pandoc-dashboard-button:hover,
-.ex-pandoc-dashboard-button.ex-pandoc-dashboard-button:focus-visible {
-  background-color: var(--background-modifier-hover);
+/* The one the card is waiting on: nothing is installed until it is pressed, so
+   it takes the colour of something to press. */
+.ex-pandoc-dashboard-inline.is-cta.is-cta {
   color: var(--text-accent);
 }
 
-/* Reached by tab, so it has to show where it is — but inside the card, where an
-   outline would otherwise be clipped by the corners. */
-.ex-pandoc-dashboard-button.ex-pandoc-dashboard-button:focus-visible {
-  outline: none;
-  box-shadow: inset 0 0 0 2px var(--background-modifier-border-focus);
+.ex-pandoc-dashboard-inline.ex-pandoc-dashboard-inline:hover {
+  color: var(--text-accent);
 }
 
-/* An update to offer wears the colour the status line is already wearing, in
-   place of the accent the other sections take. */
-.ex-pandoc-dashboard-button.is-outdated.is-outdated,
-.ex-pandoc-dashboard-button.is-outdated.is-outdated:hover {
-  color: var(--text-warning);
+.ex-pandoc-dashboard-inline.ex-pandoc-dashboard-inline:disabled {
+  color: var(--text-faint);
+  cursor: default;
 }
 
-/* A section with an icon and no label needs less width around it. */
-.ex-pandoc-dashboard-button.is-icon.is-icon {
-  padding-inline: var(--size-4-3);
+.ex-pandoc-dashboard-inline .svg-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
 }
 
-/* `setIcon` sizes to the font, which is too big for a button label. */
-.ex-pandoc-dashboard-button .svg-icon {
-  width: var(--icon-s);
-  height: var(--icon-s);
-}
-
-/* The wasm build's card is the same card, and sits under a heading of its own
-   rather than at the top of the tab. */
-.ex-wasm-panel {
-  margin-block: var(--size-4-2) 24px;
-}
 
 /* On a phone the export folder is one of the vault's, typed into a field that
    suggests them — which wants the width the folder button would have taken. */
@@ -264,12 +270,106 @@
   color: var(--text-warning);
 }
 
-/* An install takes a while and cannot be hurried along, so the buttons say so
-   by standing down rather than by disappearing. */
-.ex-pandoc-dashboard-button.ex-pandoc-dashboard-button:disabled {
-  color: var(--text-faint);
+/*
+ * A card that is nothing but the things it can be asked to do: equal halves of
+ * one card, told apart by the rule between them rather than by any chrome of
+ * their own. `overflow` keeps a half's hover fill inside the rounded corners.
+ */
+.ex-actions-card {
+  display: flex;
+  align-items: stretch;
+  margin-bottom: var(--size-4-4);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--setting-items-radius);
+  background: var(--setting-items-background);
+  overflow: hidden;
+}
+
+/*
+ * Written at two-class specificity throughout: these are `button` elements, and
+ * every one of these properties is something the theme's button rules would
+ * otherwise set.
+ */
+.ex-action.ex-action {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--size-4-2);
+  min-width: 0;
+  margin: 0;
+  /* Tall enough to read as a panel of the card rather than a button sitting in
+     it — the height is the point, so it is set rather than left to the label. */
+  min-height: 42px;
+  padding: var(--size-4-5) var(--size-4-4);
   background-color: transparent;
-  cursor: default;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  cursor: var(--cursor);
+  transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
+}
+
+/* The line the card is divided by, whether a half is a button or not — and
+   again at the specificity the button's own `border: none` is written at. */
+.ex-actions-card > * + *,
+.ex-pandoc-folder > * + *,
+.ex-actions-card > .ex-action + .ex-action,
+.ex-pandoc-folder > .ex-action + .ex-action {
+  border-inline-start: 1px solid var(--background-modifier-border);
+}
+
+/* The folder and the icon that forgets it are one half between them, so the row
+   stays two. */
+.ex-pandoc-folder {
+  display: flex;
+  align-items: stretch;
+}
+
+/* An icon with no label needs less width around it. */
+.ex-action.is-icon.is-icon {
+  flex: none;
+  padding-inline: var(--size-4-3);
+}
+
+/* The half that is chosen from rather than pressed. */
+.ex-pandoc-mode {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--size-2-2);
+  padding: var(--size-4-3) var(--size-4-4);
+}
+
+.ex-pandoc-mode-label {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+.ex-pandoc-mode .dropdown {
+  max-width: 100%;
+}
+
+/* Accent under the pointer only: these are what the card is for, but not what
+   it is about. */
+.ex-action.ex-action:hover,
+.ex-action.ex-action:focus-visible {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-accent);
+}
+
+/* Reached by tab, so it has to show where it is — but inside the card, where an
+   outline would otherwise be clipped by the corners. */
+.ex-action.ex-action:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+.ex-action .svg-icon {
+  width: var(--icon-s);
+  height: var(--icon-s);
 }
 
 /*
@@ -444,73 +544,6 @@
 /*
  * Export templates.
  */
-
-/*
- * The actions card above the table: two equal halves of one card, told apart by
- * the rule between them rather than by any chrome of their own. `overflow`
- * keeps a half's hover fill inside the card's rounded corners.
- */
-.ex-template-actions {
-  display: flex;
-  align-items: stretch;
-  margin-bottom: var(--size-4-4);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--setting-items-radius);
-  background: var(--setting-items-background);
-  overflow: hidden;
-}
-
-/*
- * Written at two-class specificity throughout: these are `button` elements, and
- * every one of these properties is something the theme's button rules would
- * otherwise set.
- */
-.ex-template-actions .ex-template-action {
-  flex: 1 1 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--size-4-2);
-  min-width: 0;
-  margin: 0;
-  /* Tall enough to read as a panel of the card rather than a button sitting in
-     it — the height is the point, so it is set rather than left to the label. */
-  min-height: 42px;
-  padding: var(--size-4-5) var(--size-4-4);
-  background-color: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  color: var(--text-normal);
-  font-size: var(--font-ui-small);
-  cursor: var(--cursor);
-  transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
-}
-
-/* The one line the card is divided by. */
-.ex-template-actions .ex-template-action + .ex-template-action {
-  border-inline-start: 1px solid var(--background-modifier-border);
-}
-
-/* Accent under the pointer only: these are what the section is for, but not
-   what it is about. */
-.ex-template-actions .ex-template-action:hover,
-.ex-template-actions .ex-template-action:focus-visible {
-  background-color: var(--background-modifier-hover);
-  color: var(--text-accent);
-}
-
-/* Reached by tab, so it has to show where it is — but inside the card, where an
-   outline would otherwise be clipped by the corners. */
-.ex-template-actions .ex-template-action:focus-visible {
-  outline: none;
-  box-shadow: inset 0 0 0 2px var(--background-modifier-border-focus);
-}
-
-.ex-template-action .svg-icon {
-  width: var(--icon-s);
-  height: var(--icon-s);
-}
 
 .ex-template-table {
     width: 100%;

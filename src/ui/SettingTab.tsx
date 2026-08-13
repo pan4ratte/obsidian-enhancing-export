@@ -13,7 +13,9 @@ import { t } from '../lang/helpers';
 import pandoc from '../pandoc';
 import { resolveEngine } from '../engine';
 import { chooseFile, documentsFolder, isMobile, vaultRoot } from '../platform';
+import PandocControls from './PandocControls';
 import PandocDashboard from './PandocDashboard';
+import PandocLinks from './PandocLinks';
 import WasmPanel from './WasmPanel';
 import TemplateActions from './TemplateActions';
 import TemplateTable from './TemplateTable';
@@ -1405,25 +1407,33 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
 
   return (
     <>
-      {/* The installed program has nothing to say where it is not the one running. */}
-      <Show when={engine() === 'native'}>
-        <PandocDashboard
-          version={pandocVersion()}
-          markdownLinks={app.vault.config.useMarkdownLinks}
+      {/* One card: a pandoc to each half of it, and a row to each thing it is read for. */}
+      <div class="ex-pandoc-panel">
+        <div class="ex-pandoc-panel-row">
+          {/* The installed program has nothing to say where it is not the one running. */}
+          <Show when={engine() === 'native'}>
+            <PandocDashboard version={pandocVersion()} markdownLinks={app.vault.config.useMarkdownLinks} />
+          </Show>
+
+          <WasmPanel
+            app={app}
+            manager={plugin.wasm}
+            version={settings.wasmVersion}
+            onInstalled={version => setSettings('wasmVersion', version)}
+          />
+        </div>
+
+        <PandocControls
+          showFolder={engine() === 'native'}
           path={getPlatformValue(settings.pandocPath) ?? ''}
           onPathChange={value => setSettings('pandocPath', v => setPlatformValue(v, value))}
           onChoosePath={() => void choosePandocPath()}
+          mode={settings.engineMode}
+          onModeChange={mode => setSettings('engineMode', mode)}
         />
-      </Show>
 
-      <WasmPanel
-        app={app}
-        manager={plugin.wasm}
-        version={settings.wasmVersion}
-        mode={settings.engineMode}
-        onModeChange={mode => setSettings('engineMode', mode)}
-        onInstalled={version => setSettings('wasmVersion', version)}
-      />
+        <PandocLinks />
+      </div>
 
       <Setting name={t.SECTION_DEFAULTS} heading={true} />
 

@@ -18,14 +18,11 @@ const fetchLatestRelease = async (): Promise<PandocRelease | undefined> => {
   }
 };
 
-/** Installed Pandoc at a glance: version, whether it is the newest release, and the links worth having close by. */
+/** Installed Pandoc at a glance: which version is there, and whether it is the newest release. */
 export default (props: {
   version?: SemVer;
-  path?: string;
   /** Whether the vault writes Markdown links rather than wikilinks. */
   markdownLinks?: boolean;
-  onPathChange?: (path: string) => void;
-  onChoosePath?: () => void;
 }) => {
   const [latest] = createResource(fetchLatestRelease);
 
@@ -68,43 +65,25 @@ export default (props: {
   );
 
   return (
-    <div class="ex-pandoc-dashboard">
-      <div class="ex-pandoc-dashboard-info">
-        <div class="ex-pandoc-dashboard-version">{versionText()}</div>
+    <div class="ex-pandoc-dashboard-half">
+      <div class="ex-pandoc-dashboard-version">{versionText()}</div>
 
-        <div class="ex-pandoc-dashboard-status" classList={{ [`is-${status()}`]: true }}>
-          <span class="ex-pandoc-dashboard-indicator" />
-          <span>{statusText()}</span>
-        </div>
+      <div class="ex-pandoc-dashboard-status" classList={{ [`is-${status()}`]: true }}>
+        <span class="ex-pandoc-dashboard-indicator" />
+        <span>{statusText()}</span>
 
-        <Show when={warning()}>
-          <div class="ex-pandoc-dashboard-warning">{warning()}</div>
-        </Show>
-      </div>
-
-      <div class="ex-pandoc-dashboard-actions">
-        <Button
-          class={`ex-pandoc-dashboard-button${updateAvailable() ? ' is-outdated' : ''}`}
-          onClick={() => openExternal(latest()?.url ?? pandoc.latestReleaseUrl)}
-        >
-          <Icon name={updateAvailable() ? 'download' : 'scroll-text'} />
-          {updateAvailable() ? t.PANDOC_UPDATE : t.PANDOC_CHANGELOG}
-        </Button>
-        <Button class="ex-pandoc-dashboard-button" onClick={() => openExternal(pandoc.manualUrl)}>
-          <Icon name="book-open" />
-          {t.PANDOC_OPEN_MANUAL}
-        </Button>
-        <Button class="ex-pandoc-dashboard-button" tooltip={props.path || t.PANDOC_PATH_PLACEHOLDER} onClick={props.onChoosePath}>
-          <Icon name="folder" />
-          {t.PANDOC_FOLDER}
-        </Button>
-        {/* The dialog cannot pick "nothing", so clearing needs its own control. */}
-        <Show when={props.path}>
-          <Button class="ex-pandoc-dashboard-button is-icon" tooltip={t.PANDOC_PATH_RESET} onClick={() => props.onPathChange?.('')}>
-            <Icon name="rotate-ccw" />
+        {/* Beside the line that says there is one: it is only ever there when that line is, and it is what to do
+            about what the line just said. */}
+        <Show when={updateAvailable()}>
+          <Button class="ex-pandoc-dashboard-inline" tooltip={t.PANDOC_UPDATE} onClick={() => openExternal(latest().url)}>
+            <Icon name="download" />
           </Button>
         </Show>
       </div>
+
+      <Show when={warning()}>
+        <div class="ex-pandoc-dashboard-warning">{warning()}</div>
+      </Show>
     </div>
   );
 };

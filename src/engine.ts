@@ -11,21 +11,19 @@ import { commandToDefaults } from './wasm/defaults';
 
 export type Engine = 'native' | 'wasm';
 
-/** What the settings hold: the two engines, and letting the platform decide. */
-export type EngineMode = Engine | 'auto';
+/** What the settings hold: when the wasm build is used — everywhere, or only where nothing else can run. */
+export type EngineMode = 'auto' | 'wasm';
 
-export const ENGINE_MODES: readonly EngineMode[] = ['native', 'wasm', 'auto'];
+export const ENGINE_MODES: readonly EngineMode[] = ['auto', 'wasm'];
 
 /**
  * The engine a mode comes down to. `auto` is the answer for someone who wants it to work everywhere: the installed
  * pandoc on a desktop, where it is faster and complete, and the wasm build on a phone, where nothing else can run.
+ *
+ * Anything else read from the settings is `auto` — which is what the `native` these once held now means, since a
+ * phone has no installed pandoc to name.
  */
-export const resolveEngine = (mode: EngineMode | undefined, mobile: boolean): Engine => {
-  if (mode === 'native' || mode === 'wasm') {
-    return mode;
-  }
-  return mobile ? 'wasm' : 'native';
-};
+export const resolveEngine = (mode: EngineMode | undefined, mobile: boolean): Engine => (mode === 'wasm' || mobile ? 'wasm' : 'native');
 
 export interface Capabilities {
   /** Producing PDF, which needs a typesetter the wasm build cannot start. */

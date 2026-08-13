@@ -6,8 +6,8 @@
 ### New feature: Pandoc on a phone and a tablet
 
 * The plugin runs on mobile. Exporting, importing, the template editor and the lua-filter store all work there.
-* New section in the settings: “Pandoc for mobile” installs Pandoc's official WebAssembly build with one press — downloaded, unpacked and put in place by the plugin.
-* New setting, “What converts”: the installed Pandoc, the built-in one, or the installed one on a computer and the built-in one on a phone.
+* New card in the settings: “Pandoc WASM” installs Pandoc's official WebAssembly build with one press — downloaded, unpacked and put in place by the plugin.
+* New setting, “Use Pandoc WASM”: always, or on mobile only.
 * The built-in Pandoc makes no PDF, runs no commands of your own and fetches nothing from the network; templates it cannot run are left out of the export dialog, and settings that mean nothing to it are hidden.
 * Export and import on a phone write into the vault, and its folders are suggested as you type.
 * The device is checked before anything is downloaded, and on a desktop the wasm feature the build needs is switched on where Obsidian's Chromium still keeps it behind a flag. A device that cannot run it is told so by the binary itself rather than by a guess.
@@ -16,6 +16,7 @@
 * The templates table marks the ones the built-in Pandoc will not run, and the ones it will run without some of their options.
 * `--natbib` and `--biblatex` are read by the built-in Pandoc, as `--citeproc` already was.
 * A newer built-in Pandoc is noticed at startup and said once, rather than only in the settings.
+* The settings open with one card holding everything about Pandoc: the installed one on the left of every row, the WebAssembly one on the right. Version and status first, with the update beside the line that reports it, then the Pandoc folder and “Use Pandoc WASM”, then Pandoc's manual and changelog.
 
 
 ## 1.3.0

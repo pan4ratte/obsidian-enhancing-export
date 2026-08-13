@@ -55,9 +55,9 @@ The plugin runs on mobile: its settings will install a build of Pandoc that runs
 
 A program cannot be installed on a phone, so there the plugin uses a build of Pandoc compiled to WebAssembly.
 
-1. Open the plugin settings, find the "Pandoc for mobile" section and choose "Install". The plugin downloads Pandoc's own official build, unpacks it and puts it in its folder. There is nothing else to do.
+1. Open the plugin settings, find the "Pandoc WASM" card and choose "Install". The plugin downloads Pandoc's own official build, unpacks it and puts it in its folder. There is nothing else to do.
 
-2. "What converts" decides which one runs: the installed program, the built-in build, or — the default — the installed one on a computer and the built-in one on a phone.
+2. "Use Pandoc WASM" decides when it runs: always, or — the default — on mobile only, leaving a computer to the installed program.
 
 Mind what the built-in build cannot do:
 
