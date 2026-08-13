@@ -22,6 +22,9 @@ export default {
   EXPORT_DIALOG_SELECT_FOLDER: 'Select an export folder.',
   EXPORT_DIALOG_OVERWRITE: 'Overwrite confirmation',
   EXPORT_DIALOG_SUBMIT: 'Export',
+  EXPORT_DIALOG_SUBMIT_ANYWAY: 'Export anyway',
+  EXPORT_DIALOG_NO_TEMPLATES: 'None of your templates work with the built-in Pandoc. Edit one, or switch to the installed Pandoc in the settings.',
+  EXPORT_DIALOG_DROPPED: (options: string) => `The built-in Pandoc has no answer for some of this template's options: ${options}. It can still export, but without them.`,
   OVERWRITE_TITLE: (file: string) => `“${file}” already exists. Replace it?`,
 
   // ─── Import dialog ───────────────────────────────────────────────────────────
@@ -147,6 +150,8 @@ export default {
   WASM_NO_PDF: 'The built-in Pandoc cannot make a PDF: that needs a typesetting program it has no way to run. Export to Word, HTML or LaTeX instead, or switch to the installed Pandoc.',
   WASM_NO_COMMAND: 'The built-in Pandoc cannot run commands of your own, so this template needs the installed Pandoc.',
   WASM_TEMPLATE_UNAVAILABLE: 'Not available with the built-in Pandoc',
+  WASM_TEMPLATE_DROPPED: (options: string) => `The built-in Pandoc has no answer for: ${options}. They are left out of the export.`,
+  WASM_DROPPED: (options: string) => `The built-in Pandoc has no answer for: ${options}. The file was written without them.`,
 
   // ─── Defaults ────────────────────────────────────────────────────────────────
   SECTION_DEFAULTS: 'General',

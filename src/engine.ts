@@ -7,6 +7,7 @@
 
 import { extractDefaultExtension, type ExportSetting } from './settings';
 import { isPdfOutput, outputFormat } from './pandoc_format';
+import { commandToDefaults } from './wasm/defaults';
 
 export type Engine = 'native' | 'wasm';
 
@@ -73,4 +74,21 @@ export const unsupportedBy = (setting: ExportSetting, engine: Engine): Unsupport
     return 'pdf';
   }
   return undefined;
+};
+
+/**
+ * The options an engine would quietly leave out of a template. None of them stops an export: the document is simply
+ * written without whatever they would have done, which is the worst way to be wrong about it — so they are named
+ * where the template is edited, and again when the file is written.
+ *
+ * The arguments are read as they are stored, `${...}` and all. A variable stands where a value goes and never where
+ * an option does, so every flag is still there to be found.
+ */
+export const droppedBy = (setting: ExportSetting, engine: Engine): string[] => {
+  if (engine !== 'wasm' || setting.type !== 'pandoc') {
+    return [];
+  }
+  const args = [setting.arguments, setting.customArguments, setting.userArguments].map(part => part?.trim()).filter(Boolean);
+  // The first token is read as the name the program was called by, so there has to be one.
+  return commandToDefaults(['pandoc', ...args].join(' ')).unsupported;
 };

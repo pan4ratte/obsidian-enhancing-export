@@ -1,4 +1,5 @@
-import { capabilities, resolveEngine, unsupportedBy, writesPdf } from '../src/engine';
+import { capabilities, droppedBy, resolveEngine, unsupportedBy, writesPdf } from '../src/engine';
+import type { ExportSetting } from '../src/settings';
 import export_templates from '../src/export_templates';
 
 const template = (name: string) => export_templates[name];
@@ -65,5 +66,37 @@ describe('unsupportedBy', () => {
     expect(unsupportedBy(template('Word (.docx)'), 'wasm')).toBeUndefined();
     expect(unsupportedBy(template('Epub'), 'wasm')).toBeUndefined();
     expect(unsupportedBy(template('Latex'), 'wasm')).toBeUndefined();
+  });
+});
+
+describe('droppedBy', () => {
+  /** A template as the settings hold one, with whatever was typed into its three argument fields. */
+  const edited = (args: Partial<ExportSetting>): ExportSetting => ({ ...template('Word (.docx)'), ...args }) as ExportSetting;
+
+  test('the templates that ship drop nothing', () => {
+    for (const setting of Object.values(export_templates)) {
+      expect({ name: setting.name, dropped: droppedBy(setting, 'wasm') }).toEqual({ name: setting.name, dropped: [] });
+    }
+  });
+
+  test('the installed pandoc drops nothing whatever the template asks for', () => {
+    expect(droppedBy(edited({ userArguments: '--filter=pandoc-crossref' }), 'native')).toEqual([]);
+  });
+
+  test('a json filter is a program, and there is nothing to run one with', () => {
+    expect(droppedBy(edited({ userArguments: '--filter=pandoc-crossref' }), 'wasm')).toEqual(['--filter=pandoc-crossref']);
+  });
+
+  test('all three argument fields are read, and the order they were written in is kept', () => {
+    const setting = edited({ customArguments: '--frobnicate', userArguments: '--filter pandoc-crossref' });
+    expect(droppedBy(setting, 'wasm')).toEqual(['--frobnicate', '--filter=pandoc-crossref']);
+  });
+
+  test('the first option is not eaten as the name of the program', () => {
+    expect(droppedBy(edited({ arguments: '--frobnicate', customArguments: '', userArguments: '' }), 'wasm')).toEqual(['--frobnicate']);
+  });
+
+  test("a template's own variables are values, not options, and go by unread", () => {
+    expect(droppedBy(edited({ userArguments: '--resource-path="${embedDirs}"' }), 'wasm')).toEqual([]);
   });
 });

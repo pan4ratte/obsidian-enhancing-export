@@ -113,7 +113,12 @@ export async function importFile(plugin: PandocGuiPlugin, request: ImportRequest
         vaultDir: vaultRoot(adapter),
         cwd: outputDir,
       });
-      warnings = result.stderr.trim();
+      // Named in a notice of their own: the progress one says only that there were warnings — see `exportNote`.
+      const dropped = result.unsupported.length > 0 ? t.WASM_DROPPED(result.unsupported.join(' ')) : '';
+      if (dropped) {
+        new Notice(dropped, 10000);
+      }
+      warnings = [dropped, result.stderr.trim()].filter(Boolean).join('\n\n');
     } else {
       const { stderr } = await exec(cmd, { cwd: outputDir, env });
       warnings = stderr.trim();

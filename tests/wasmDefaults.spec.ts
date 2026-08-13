@@ -75,6 +75,13 @@ describe('commandToDefaults', () => {
     expect(options('pandoc --mathml')).toMatchObject({ 'html-math-method': { method: 'mathml' } });
   });
 
+  test('the citation method is one key too, and citeproc is still a filter rather than a value of it', () => {
+    expect(options('pandoc --natbib')).toMatchObject({ 'cite-method': 'natbib' });
+    expect(options('pandoc --biblatex')).toMatchObject({ 'cite-method': 'biblatex' });
+    expect(options('pandoc --citeproc')).toMatchObject({ filters: ['citeproc'] });
+    expect(commandToDefaults('pandoc --natbib').unsupported).toEqual([]);
+  });
+
   test('a path with spaces in it survives, quotes and all', () => {
     expect(options('pandoc --reference-doc="C:/My Files/ref.docx"')).toMatchObject({ 'reference-doc': 'C:/My Files/ref.docx' });
   });

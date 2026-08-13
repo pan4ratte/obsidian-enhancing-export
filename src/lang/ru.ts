@@ -22,6 +22,9 @@ export default {
   EXPORT_DIALOG_SELECT_FOLDER: 'Выберите папку для экспорта.',
   EXPORT_DIALOG_OVERWRITE: 'Подтверждение перезаписи',
   EXPORT_DIALOG_SUBMIT: 'Экспортировать',
+  EXPORT_DIALOG_SUBMIT_ANYWAY: 'Всё равно экспортировать',
+  EXPORT_DIALOG_NO_TEMPLATES: 'Ни один из ваших шаблонов не работает со встроенным Pandoc. Измените шаблон или переключитесь на установленный Pandoc в настройках.',
+  EXPORT_DIALOG_DROPPED: (options: string) => `Встроенный Pandoc не поддерживает часть настроек шаблона: ${options}. Экспортировать можно, но без них.`,
   OVERWRITE_TITLE: (file: string) => `«${file}» уже существует. Заменить?`,
 
   // ─── Import dialog ───────────────────────────────────────────────────────────
@@ -147,6 +150,8 @@ export default {
   WASM_NO_PDF: 'Встроенный Pandoc не умеет создавать PDF: для этого нужна программа вёрстки, которую он не может запустить. Экспортируйте в Word, HTML или LaTeX — либо переключитесь на установленный Pandoc.',
   WASM_NO_COMMAND: 'Встроенный Pandoc не может выполнять произвольные команды, поэтому этот шаблон работает только с установленным Pandoc.',
   WASM_TEMPLATE_UNAVAILABLE: 'Недоступно со встроенным Pandoc',
+  WASM_TEMPLATE_DROPPED: (options: string) => `Встроенный Pandoc не поддерживает: ${options}. При экспорте эти параметры будут пропущены.`,
+  WASM_DROPPED: (options: string) => `Встроенный Pandoc не поддерживает: ${options}. Файл создан без них.`,
 
   // ─── Defaults ────────────────────────────────────────────────────────────────
   SECTION_DEFAULTS: 'Основные',

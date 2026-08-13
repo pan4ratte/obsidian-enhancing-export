@@ -1525,6 +1525,7 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
 
       <TemplateTable
         templates={settings.items}
+        engine={engine()}
         sort={settings.lastTemplateSort}
         onSort={sort => setSettings('lastTemplateSort', sort)}
         onEdit={editCommandTemplate}

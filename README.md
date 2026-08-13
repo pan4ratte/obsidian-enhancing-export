@@ -68,6 +68,21 @@ Mind what the built-in build cannot do:
 * The build takes about 56 MB in the plugin folder. With plugin syncing on, it will be copied to every device.
 * It needs a recent engine: iOS 18.4 or newer, or an up-to-date Android WebView. On a desktop the plugin switches on the wasm feature the build needs, which Obsidian's Chromium still keeps behind a flag.
 
+Templates the built-in Pandoc cannot run at all are left out of the export dialog. A template it can run, but only without some of its options, has them named in the dialog before the export, and the button asks to export anyway.
+
+Options you will be warned about:
+
+* `--filter` — filters that are programs, which there is nothing to run. Lua filters (`--lua-filter`) work, and every filter in the plugin's store is one.
+* `--defaults` — a Pandoc defaults file.
+* `--sandbox`, `--fail-if-warnings`.
+* Any option the plugin does not know, including deprecated ones such as `--atx-headers` and `--epub-chapter-level`.
+
+Options that simply do nothing, and are not warned about because they change no result:
+
+* `--pdf-engine`, `--pdf-engine-opt` — there is nothing to start.
+* `--request-header`, `--no-check-certificate` — there is no network.
+* `--data-dir`, `--log`, `--verbose`, `--quiet`, `--trace`, `--dump-args` — there are no system folders and no console to send them to.
+
 ### Option 1: Obsidian plugin store
 
 1. In Obsidian settings open the tab "Community plugins" and click "Browse" button.

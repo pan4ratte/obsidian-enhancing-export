@@ -151,6 +151,9 @@ const IGNORED_WITH_VALUE = new Set(['data-dir', 'log', 'request-header', 'pdf-en
 /** `--mathjax` and friends, which share one key. */
 const MATH_METHODS = ['mathjax', 'katex', 'mathml', 'webtex', 'gladtex'];
 
+/** The same for citations: two flags that are each a value of one key. `--citeproc` is a filter and stands apart. */
+const CITE_METHODS = ['natbib', 'biblatex'];
+
 /** A filter as a defaults file names one: the built-in `citeproc`, or a script with the kind it is. */
 export type Filter = string | { type: string; path?: string };
 
@@ -301,6 +304,10 @@ export function commandToDefaults(cmd: string): TranslatedCommand {
     if (MATH_METHODS.includes(name)) {
       const url = value === undefined ? undefined : trimQuotes(value);
       defaults['html-math-method'] = url ? { method: name, url } : { method: name };
+      continue;
+    }
+    if (CITE_METHODS.includes(name)) {
+      defaults['cite-method'] = name;
       continue;
     }
     if (name === 'no-highlight') {

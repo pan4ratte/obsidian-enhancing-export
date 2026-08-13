@@ -1,6 +1,7 @@
-import { For, createMemo } from 'solid-js';
+import { For, Show, createMemo } from 'solid-js';
 import { t } from '../lang/helpers';
 import { extractDefaultExtension, type ExportSetting } from '../settings';
+import { droppedBy, unsupportedBy, type Engine } from '../engine';
 import Icon from './components/Icon';
 
 type Column = 'name' | 'output';
@@ -33,9 +34,23 @@ const describeOutput = (extension?: string) => {
   return `${format} (${extension})`;
 };
 
+/**
+ * What the engine will not do with this template, or nothing where it will do all of it. Said here rather than at the
+ * export, which is too late to change the template it is about.
+ */
+const shortfall = (setting: ExportSetting, engine: Engine): string | undefined => {
+  if (unsupportedBy(setting, engine)) {
+    return t.WASM_TEMPLATE_UNAVAILABLE;
+  }
+  const dropped = droppedBy(setting, engine);
+  return dropped.length > 0 ? t.WASM_TEMPLATE_DROPPED(dropped.join(' ')) : undefined;
+};
+
 /** Every export template in one table. The order is the caller's to keep, defaulting to name ascending. */
 export default (props: {
   templates: ExportSetting[];
+  /** The one that will run these templates, so the table can say which of them it will not run as written. */
+  engine?: Engine;
   sort?: { column: Column; ascending: boolean };
   onSort?: (sort: { column: Column; ascending: boolean }) => void;
   onEdit?: (name: string) => void;
@@ -52,9 +67,14 @@ export default (props: {
   const rows = createMemo(() => {
     const key = column();
     const direction = ascending() ? 1 : -1;
+    const engine = props.engine ?? 'native';
     return (
       props.templates
-        .map(item => ({ name: item.name ?? '', output: describeOutput(extractDefaultExtension(item)) }))
+        .map(item => ({
+          name: item.name ?? '',
+          output: describeOutput(extractDefaultExtension(item)),
+          warning: shortfall(item, engine),
+        }))
         // Name breaks a tie on output, so the order never depends on settings-file position.
         .sort((a, b) => direction * (a[key].localeCompare(b[key]) || a.name.localeCompare(b.name)))
     );
@@ -95,7 +115,14 @@ export default (props: {
         >
           {row => (
             <tr>
-              <td class="ex-template-table-name">{row.name}</td>
+              <td class="ex-template-table-name">
+                <span class="ex-template-table-label">
+                  <span>{row.name}</span>
+                  <Show when={row.warning}>
+                    <Icon class="ex-template-table-warning" name="alert-triangle" tooltip={row.warning} />
+                  </Show>
+                </span>
+              </td>
               <td class="ex-template-table-output">{row.output}</td>
               <td class="ex-template-table-actions">
                 <div class="ex-template-table-row-actions">

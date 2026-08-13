@@ -6,11 +6,12 @@ import { t } from '../lang/helpers';
 import { extractDefaultExtension as extractExtension } from '../settings';
 import { setPlatformValue, getPlatformValue } from '../utils';
 import { exportNote } from '../export';
-import { resolveEngine, unsupportedBy } from '../engine';
+import { droppedBy, resolveEngine, unsupportedBy } from '../engine';
 import { chooseFile, documentsFolder, isMobile, vaultRoot } from '../platform';
 import FolderInput from './components/FolderInput';
 import Modal from './components/Modal';
 import Button from './components/Button';
+import Icon from './components/Icon';
 import Setting, { Text, DropDown, ExtraButton, Toggle } from './components/Setting';
 
 const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: () => void }) => {
@@ -25,6 +26,8 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
   // Only the templates this engine can actually run: a PDF has no answer where there is no typesetter to make one.
   const engine = resolveEngine(globalSetting.engineMode, isMobile());
   const available = globalSetting.items.filter(o => !unsupportedBy(o, engine));
+  /** Templates were written, and this engine runs none of them — which is not the same as having written none. */
+  const allHidden = globalSetting.items.length > 0 && available.length === 0;
 
   // The template last exported with, where it is still a template this engine runs: it is remembered by name, and a
   // deleted or renamed one would leave this pointing at nothing.
@@ -33,6 +36,10 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
   );
   const setting = createMemo(() => available.find(o => o.name === exportType()) ?? available.first());
   const extension = createMemo(() => (setting() ? extractExtension(setting()) : ''));
+
+  // What this template asks for that the engine will not do. It is not a reason to stop — the file is written, just
+  // without them — so it is said here, where the template can still be changed, and the button says what it is agreeing to.
+  const dropped = createMemo(() => (setting() ? droppedBy(setting(), engine) : []));
 
   // Where the file goes, as a path on the device. A phone has nowhere outside the vault to write to, so there it is
   // always one of the vault's own folders — held as a vault path, and turned into a real one at export.
@@ -79,7 +86,7 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
     };
     // Every template can be deleted, and then there is nothing to export with.
     if (!untrack(setting)) {
-      new Notice(t.TEMPLATES_EMPTY, 2000);
+      new Notice(allHidden ? t.EXPORT_DIALOG_NO_TEMPLATES : t.TEMPLATES_EMPTY, 5000);
       return;
     }
     setHidden(true);
@@ -106,6 +113,20 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
           <DropDown options={exportTypes} onChange={typ => setExportType(typ)} selected={exportType()} />
         </Setting>
 
+        <Show when={allHidden}>
+          <div class="ex-export-modal-warning">
+            <Icon name="alert-triangle" />
+            <span>{t.EXPORT_DIALOG_NO_TEMPLATES}</span>
+          </div>
+        </Show>
+
+        <Show when={dropped().length > 0}>
+          <div class="ex-export-modal-warning">
+            <Icon name="alert-triangle" />
+            <span>{t.EXPORT_DIALOG_DROPPED(dropped().join(' '))}</span>
+          </div>
+        </Show>
+
         <Setting name={t.EXPORT_DIALOG_FILE_NAME} description={t.EXPORT_DIALOG_FILE_NAME_DESC(extension())}>
           <Text tooltip={outputFileFullName()} value={candidateOutputFileName()} onChange={value => setCandidateOutputFileName(value)} />
         </Setting>
@@ -131,7 +152,7 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
 
         <div class="modal-button-container">
           <Button cta={true} onClick={() => void doExport()}>
-            {t.EXPORT_DIALOG_SUBMIT}
+            {dropped().length > 0 ? t.EXPORT_DIALOG_SUBMIT_ANYWAY : t.EXPORT_DIALOG_SUBMIT}
           </Button>
         </div>
       </Modal>

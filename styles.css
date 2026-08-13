@@ -240,6 +240,30 @@
   width: 100%;
 }
 
+/* Stands between the template that caused it and the button that agrees to it,
+   so it is read on the way from one to the other rather than found afterwards. */
+.ex-export-modal-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--size-4-2);
+  margin-bottom: var(--size-4-3);
+  padding: var(--setting-items-padding-x);
+  border: 1px solid var(--text-warning);
+  border-radius: var(--setting-items-radius);
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  line-height: var(--line-height-tight);
+}
+
+/* Kept off the first line's baseline: the triangle marks the whole block, not
+   the word it happens to sit beside. */
+.ex-export-modal-warning .svg-icon {
+  width: var(--icon-s);
+  height: var(--icon-s);
+  color: var(--text-warning);
+}
+
 /* An install takes a while and cannot be hurried along, so the buttons say so
    by standing down rather than by disappearing. */
 .ex-pandoc-dashboard-button.ex-pandoc-dashboard-button:disabled {
@@ -590,6 +614,20 @@
 .ex-template-table-name {
   color: var(--text-normal);
   font-size: var(--font-ui-small);
+}
+
+/* Always visible, unlike the row actions: it is about the template rather than
+   about what can be done to it, and a warning that appears on hover is one
+   nobody was looking for. */
+.ex-template-table-warning {
+  display: flex;
+  align-items: center;
+  color: var(--text-warning);
+}
+
+.ex-template-table-warning .svg-icon {
+  width: var(--icon-s);
+  height: var(--icon-s);
 }
 
 /* Takes what the half above it leaves, less the icons at the end of the row.

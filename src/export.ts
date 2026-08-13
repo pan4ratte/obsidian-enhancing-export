@@ -293,10 +293,10 @@ export async function exportNote(
         resources: [...embeddedFiles],
         embeds: noteEmbeds,
       });
-      if (result.unsupported.length > 0) {
-        console.warn(`Pandoc for mobile has no answer for ${result.unsupported.join(' ')} — the export went ahead without it.`);
-      }
-      warnings = result.stderr.trim();
+      // Counted as a warning so the notice finishes orange and the console keeps the detail, but not said again: the
+      // export dialog names these before it runs, and the quick export repeats a template that was agreed to there.
+      const dropped = result.unsupported.length > 0 ? t.WASM_DROPPED(result.unsupported.join(' ')) : '';
+      warnings = [dropped, result.stderr.trim()].filter(Boolean).join('\n\n');
     } else {
       progress.running(variables.outputFileFullName);
       const { stderr } = await exec(cmd, { cwd: variables.currentDir, env });
