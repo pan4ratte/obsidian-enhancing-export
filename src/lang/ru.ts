@@ -149,13 +149,31 @@ export default {
   WASM_UNAVAILABLE: 'Похоже, устройство не поддерживает Pandoc WASM: нужен iOS 18.4, Android с обновлённым WebView или свежая версия Obsidian. Установить всё равно можно — если не запустится, плагин скажет почему.',
   WASM_LOAD_FAILED: (reason: string) => `Pandoc WASM установлен, но не запускается на этом устройстве: ${reason}`,
   WASM_PREPARING: 'Подготовка Pandoc…',
-  WASM_NO_PDF: 'Pandoc WASM не умеет создавать PDF: для этого нужна программа вёрстки, которую он не может запустить. Экспортируйте в Word, HTML или LaTeX.',
+  WASM_NO_PDF: 'Этот шаблон делает PDF через LaTeX, а его Pandoc WASM запустить не может. Экспортируйте шаблоном «PDF (Typst)» — он работает и без установленных программ — или в Word, HTML либо LaTeX.',
   WASM_NO_COMMAND: 'Pandoc WASM не может выполнять произвольные команды, поэтому этот шаблон не запустится.',
   // Совет добавляется к двум предыдущим только там, где установленный Pandoc вообще бывает.
   WASM_USE_NATIVE: 'Либо переключитесь на установленный Pandoc.',
   WASM_TEMPLATE_UNAVAILABLE: 'Недоступно с Pandoc WASM',
   WASM_TEMPLATE_DROPPED: (options: string) => `Pandoc WASM не поддерживает: ${options}. При экспорте эти параметры будут пропущены.`,
   WASM_DROPPED: (options: string) => `Pandoc WASM не поддерживает: ${options}. Файл создан без них.`,
+
+  // ─── Typst (вёрстка PDF без установленных программ) ──────────────────────────
+  TYPST_TITLE: 'Typst',
+  TYPST_HINT: 'Typst — программа вёрстки, у которой тоже есть сборка WASM. С ней Pandoc WASM делает PDF на любом устройстве, включая телефон. Шаблоны LaTeX (.tex) она не понимает: PDF собирается шаблоном «PDF (Typst)».',
+  TYPST_SIZE: 'После установки файлы займут примерно 36 МБ в папке плагина: сама программа и шрифты, которыми набирается документ.',
+  TYPST_VERSION: (version: string) => `Typst: ${version}`,
+  TYPST_NOT_INSTALLED: 'Typst не установлен, а без него PDF не собрать. Откройте настройки плагина и нажмите «Установить».',
+  TYPST_INSTALL: 'Установить',
+  TYPST_REMOVE: 'Удалить',
+  TYPST_REMOVE_CONFIRM: 'Удалить Typst? Освободится около 36 МБ, а экспорт в PDF станет недоступен.',
+  TYPST_DOWNLOADING: 'Загрузка Typst…',
+  TYPST_FONTS: (done: number, total: number) => `Загрузка шрифтов… (${done} из ${total})`,
+  TYPST_WRITING: 'Сохранение…',
+  TYPST_INSTALLED: (version: string) => `Typst ${version} установлен.`,
+  TYPST_INSTALL_FAILED: 'Не удалось установить Typst — подробности в консоли.',
+  TYPST_FONTS_DIR: 'Папка со шрифтами',
+  TYPST_FONTS_DIR_DESC: 'Путь в хранилище. Шрифты (.ttf, .otf) из этой папки добавляются к встроенным — нужны для CJK, эмодзи и вообще для любого шрифта, который вы указали в `-V mainfont`.',
+  TYPST_FONTS_FOUND: (count: number) => `Шрифтов для вёрстки: ${count}`,
 
   // ─── Defaults ────────────────────────────────────────────────────────────────
   SECTION_DEFAULTS: 'Основные',

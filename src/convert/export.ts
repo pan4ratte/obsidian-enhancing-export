@@ -11,9 +11,10 @@ import pandoc from '../pandoc/pandoc';
 import { orderLuaFilters } from '../filters/lua_filters';
 import { renameHighlightFlags } from '../args/writer_args';
 import { outputArg } from '../args/output_arg';
-import { resolveEngine, unsupportedBy } from '../pandoc/engine';
+import { resolveEngine, unsupportedBy, writesTypstPdf } from '../pandoc/engine';
 import { convertWithWasm } from '../wasm/convert';
 import { FileStore } from '../system/file_store';
+import { download } from '../system/download';
 import { basename, dirname, normalize, resolve, stem } from '../system/paths';
 import { PATH_SEPARATOR, chooseSavePath, isDesktop, isMobile, openFile, showInFolder, vaultRoot } from '../system/platform';
 
@@ -61,6 +62,12 @@ export async function exportNote(
   }
   if (engine === 'wasm' && !(await plugin.wasm.isInstalled())) {
     refuse(t.WASM_NOT_INSTALLED);
+    return;
+  }
+  // The PDF is typst's half of the work, and it is installed on its own — a vault that exports no PDF never fetches it.
+  const needsTypst = engine === 'wasm' && writesTypstPdf(setting);
+  if (needsTypst && !(await plugin.typst.isInstalled())) {
+    refuse(t.TYPST_NOT_INSTALLED);
     return;
   }
 
@@ -285,6 +292,7 @@ export async function exportNote(
       // Bringing the binary up is seconds on the first export of a session, and nothing on every one after it.
       progress.starting();
       const wasm = await plugin.wasm.load();
+      const typst = needsTypst ? await plugin.typst.load() : undefined;
       progress.running(variables.outputFileFullName);
 
       // Everything the run needs has to be put in front of it: the note, what the note reaches, and the embed list
@@ -294,6 +302,8 @@ export async function exportNote(
         vaultDir,
         resources: [...embeddedFiles],
         embeds: noteEmbeds,
+        typst,
+        download,
       });
       // Counted as a warning so the notice finishes orange and the console keeps the detail, but not said again: the
       // export dialog names these before it runs, and the quick export repeats a template that was agreed to there.

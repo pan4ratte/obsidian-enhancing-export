@@ -60,6 +60,10 @@ export interface PandocGuiSettings {
   wasmVersion?: string;
   /** The newer version already announced, so the same release is not brought up at every start. */
   wasmUpdateSeen?: string;
+  /** The version of typst's build that is installed — what makes a PDF possible without a program to start. */
+  typstVersion?: string;
+  /** A folder in the vault whose fonts a typst export is also set in, for a script the bundled ones do not cover. */
+  typstFontsDir?: string;
 
   showOverwriteConfirmation?: boolean;
   defaultExportDirectoryMode: 'Same' | 'Custom';
@@ -186,6 +190,7 @@ export const DEFAULT_TEMPLATE_PRESETS: readonly string[] = [
   'Html',
   'Typst',
   'PDF',
+  'PDF (Typst)',
   'Word (.docx)',
   'OpenOffice',
   'Epub',

@@ -9,10 +9,16 @@ import { commandToDefaults, readablePaths, rewritePaths } from './defaults';
 import { VirtualPaths } from './paths';
 import { dirname, resolve } from '../system/paths';
 import type { PandocWasm, WasmFiles } from './runtime';
+import type { TypstWasm } from './typst';
+import { fetchRemote, withRemoteFilter, type Download } from './remote';
 
 export interface WasmConversion {
   /** The command as `exportNote` rendered it. */
   command: string;
+  /** Typst, where the export is one that ends in it — a PDF. */
+  typst?: TypstWasm;
+  /** How to reach the network, which the wasm build cannot: what an image named by URL is fetched with. */
+  download?: Download;
   /** The vault's own folder on the machine, which the virtual file system is laid out around. */
   vaultDir: string;
   /** The folder the command would have run in, which any path it writes relatively is read against. */
@@ -38,6 +44,13 @@ export interface WasmConversionResult {
   /** Options this build has no answer for, which the caller reports rather than fails on. */
   unsupported: string[];
 }
+
+const decoder = new TextDecoder('utf-8');
+const encoder = new TextEncoder();
+
+/** The files a run was handed, as bytes — the embed list is written as text, and typst is handed the same map. */
+const asBytes = (files: WasmFiles): Record<string, Uint8Array> =>
+  Object.fromEntries(Object.entries(files).map(([path, data]) => [path, typeof data === 'string' ? encoder.encode(data) : data]));
 
 /** Warnings pandoc reports as data, put back into the one line of text the rest of the plugin reads. */
 const asText = (warnings: unknown[]): string =>
@@ -98,11 +111,48 @@ export async function convertWithWasm(pandoc: PandocWasm, store: FileStore, requ
     files[EMBED_LIST] = embeds.map(([link, note]) => `${link}\t${file(note)}\n`).join('');
   }
 
+  // What the note names by URL, fetched here because nothing inside the run can fetch anything.
+  const remote = request.download ? await fetchRemote(files, request.download) : { files: {}, warnings: [] };
+  if (Object.keys(remote.files).length > 0) {
+    Object.assign(files, remote.files);
+    withRemoteFilter(defaults);
+  }
+
+  /**
+   * A PDF is made in two steps: pandoc writes typst source, typst sets it. Only the PDF reaches the disk — the source
+   * is written where the PDF will stand, so that an `image("a.png")` in it still finds the note's own image.
+   */
+  const target = typeof defaults['output-file'] === 'string' ? defaults['output-file'] : undefined;
+  const source = target && defaults.to === 'typst' && target.toLowerCase().endsWith('.pdf') ? `${target.slice(0, -4)}.typ` : undefined;
+  if (source) {
+    defaults['output-file'] = source;
+  }
+
   const result = pandoc.run(defaults, inputs.length === 0 ? '' : undefined, files);
+
+  const produced: Record<string, Uint8Array> = { ...result.files };
+  let typeset = '';
+  if (source && target) {
+    const written = produced[source];
+    delete produced[source];
+    if (!request.typst) {
+      throw new Error('A PDF was asked for, and typst was not handed over to make it with');
+    }
+    // Typst sees what pandoc saw: the note's images, and anything the run itself produced beside them.
+    const { pdf, diagnostics } = await request.typst.compile(source, decoder.decode(written ?? new Uint8Array()), {
+      ...asBytes(files),
+      ...produced,
+    });
+    typeset = diagnostics;
+    if (!pdf) {
+      throw new Error([result.stderr.trim(), diagnostics].filter(Boolean).join('\n') || 'Typst wrote no PDF, and said nothing about why');
+    }
+    produced[target] = pdf;
+  }
 
   const written: string[] = [];
   await Promise.all(
-    Object.entries(result.files).map(async ([virtual, bytes]) => {
+    Object.entries(produced).map(async ([virtual, bytes]) => {
       const real = paths.toReal(virtual);
       if (real) {
         await store.write(real, bytes);
@@ -119,7 +169,7 @@ export async function convertWithWasm(pandoc: PandocWasm, store: FileStore, requ
 
   return {
     written,
-    stderr: [complaint, asText(worthReporting(result.warnings))].filter(Boolean).join('\n'),
+    stderr: [complaint, typeset, ...remote.warnings, asText(worthReporting(result.warnings))].filter(Boolean).join('\n'),
     unsupported,
   };
 }

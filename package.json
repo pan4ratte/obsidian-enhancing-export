@@ -41,6 +41,8 @@
   },
   "dependencies": {
     "@bjorn3/browser_wasi_shim": "^0.4.2",
+    "@myriaddreamin/typst-ts-web-compiler": "^0.7.0",
+    "@myriaddreamin/typst.ts": "^0.7.0",
     "semver": "^7.8.5",
     "solid-js": "^1.9.14"
   }

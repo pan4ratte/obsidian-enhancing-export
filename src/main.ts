@@ -6,12 +6,15 @@ import { getPlatformValue, PlatformKey, clone } from './system/utils';
 import { t } from './lang/helpers';
 import resources, { BUNDLED_LUA_FILES } from './resources';
 import { PandocWasmManager } from './wasm/install';
+import { TypstWasmManager } from './wasm/typst';
 // `styles.css` is not imported: Obsidian loads the plugin folder's stylesheet itself.
 
 export default class PandocGuiPlugin extends Plugin {
   settings: PandocGuiSettings;
   /** Pandoc's wasm build: the copy on disk, and the one running. */
   readonly wasm = new PandocWasmManager(this);
+  /** Typst's, which turns what pandoc writes into a PDF. */
+  readonly typst = new TypstWasmManager(this);
 
   constructor(app: App, manifest: PluginManifest) {
     super(app, manifest);

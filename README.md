@@ -168,14 +168,16 @@ This guide is available inside the plugin too: the “Pandoc GUI: Open user guid
 
 Pandoc WASM works somewhat differently from the ordinary version because of how it is built. Before exporting with it, mind these limits:
 
-* **No PDF.** A PDF needs a typesetting program (LaTeX, Typst), and Pandoc WASM has no way to start one. Templates that write a PDF are left out of the export dialog. Export to Word, HTML, EPUB or LaTeX instead.
-* **No templates that run a command of your own**, for the same reason.
-* **Nothing is fetched from the network** while converting. An image embedded by URL will not make it into the exported file.
+* **PDF through Typst only.** The “PDF (Typst)” template works everywhere, a phone included: Pandoc writes Typst source, and Typst sets the PDF from it. That needs Typst installed from the plugin settings, separately from Pandoc WASM. The ordinary “PDF” template is set with LaTeX, which Pandoc WASM cannot start: templates like it are left out of the export dialog, as are Beamer slides.
+* **LaTeX (.tex) templates do not work with Typst.** Typst is a different typesetting program with a language of its own: `--template=neurips.tex`, `-V geometry` and raw LaTeX (`\newpage`, `tikzpicture`) do not reach a Typst PDF. Maths, tables, images, the table of contents and citations work as they always did.
+* **Typst has to be handed its fonts.** It cannot see the system's: Libertinus, New Computer Modern and DejaVu are installed with it, which covers Latin and Cyrillic. For CJK, emoji, or a font of your own named in `-V mainfont`, point the settings at a folder of fonts in the vault.
+* **No templates that run a command of your own.**
 * **Lua filters only.** Ordinary Pandoc takes filters of other kinds, Python among them; WASM does not. The good news: every filter in the plugin's store is a lua filter.
 
 What else to keep in mind:
 
-* The file takes about 56 MB in the plugin folder. If you sync your vault between devices, the WASM file is synced along with it.
+* The file takes about 56 MB in the plugin folder. If you sync your vault between devices, the WASM file is synced along with it. Typst and its fonts are about 36 MB more, and only if you install it.
+* Images named by URL are fetched by the plugin before the conversion starts and put into the document: Pandoc WASM itself never reaches the network. Up to 64 of them per export, and only what is written as an image — an ordinary link stays a link.
 * WASM needs a recent phone: iOS 18.4 or newer, or an up-to-date Android WebView.
 * Templates Pandoc WASM cannot run are left out of the export dialog.
 
@@ -192,8 +194,8 @@ Options you will be warned about:
 
 Options that simply do nothing, and are not warned about because they change no result:
 
-* `--pdf-engine`, `--pdf-engine-opt` — there is nothing to start.
-* `--request-header`, `--no-check-certificate` — there is no network.
+* `--pdf-engine`, `--pdf-engine-opt` — a PDF is always set with the Typst build that comes with the plugin.
+* `--request-header`, `--no-check-certificate` — the plugin reaches the network, not Pandoc.
 * `--data-dir`, `--log`, `--verbose`, `--quiet`, `--trace`, `--dump-args` — there are no system folders and no console to send them to.
 
 ## 2. Custom export commands
@@ -254,4 +256,4 @@ Thanks are also owed to:
 
 ---
 
-In compliance with the Obsidian community guidelines, all external network calls should be disclosed in the plugin README and only made with user knowledge. This plugin makes network calls to [api.github.com](https://api.github.com) — to look up the latest Pandoc release for the version check in the settings — and to [raw.githubusercontent.com](https://raw.githubusercontent.com), to read the lua-filter catalogue when you open the store and to download a filter when you install one.
+In compliance with the Obsidian community guidelines, all external network calls should be disclosed in the plugin README and only made with user knowledge. This plugin makes network calls to [api.github.com](https://api.github.com) — to look up the latest Pandoc release for the version check in the settings — and to [raw.githubusercontent.com](https://raw.githubusercontent.com), to read the lua-filter catalogue when you open the store and to download a filter when you install one. Installing Typst — from the button in the settings — fetches the Typst build and its fonts from [cdn.jsdelivr.net](https://cdn.jsdelivr.net). Exporting with Pandoc WASM downloads the images a note names by URL: those addresses are the ones you wrote in the note, and nothing else is requested.

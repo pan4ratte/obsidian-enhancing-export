@@ -149,13 +149,31 @@ export default {
   WASM_UNAVAILABLE: 'This device looks unable to run Pandoc WASM: it needs iOS 18.4, an up-to-date Android WebView, or a newer Obsidian. Installing anyway is allowed — if it will not start, the plugin will say why.',
   WASM_LOAD_FAILED: (reason: string) => `Pandoc WASM is installed, but will not start on this device: ${reason}`,
   WASM_PREPARING: 'Starting Pandoc…',
-  WASM_NO_PDF: 'Pandoc WASM cannot make a PDF: that needs a typesetting program it has no way to run. Export to Word, HTML or LaTeX instead.',
+  WASM_NO_PDF: 'This template makes its PDF with LaTeX, which Pandoc WASM has no way to run. Use the “PDF (Typst)” template — it needs nothing installed — or export to Word, HTML or LaTeX.',
   WASM_NO_COMMAND: 'Pandoc WASM cannot run commands of your own, so this template will not run.',
   // Added to the two above only where an installed Pandoc is a thing that can exist.
   WASM_USE_NATIVE: 'Or switch to the installed Pandoc.',
   WASM_TEMPLATE_UNAVAILABLE: 'Not available with Pandoc WASM',
   WASM_TEMPLATE_DROPPED: (options: string) => `Pandoc WASM has no answer for: ${options}. They are left out of the export.`,
   WASM_DROPPED: (options: string) => `Pandoc WASM has no answer for: ${options}. The file was written without them.`,
+
+  // ─── Typst (typesetting a PDF with nothing installed) ────────────────────────
+  TYPST_TITLE: 'Typst',
+  TYPST_HINT: 'Typst is a typesetting program that also has a WASM build. With it, Pandoc WASM can make a PDF on any device, a phone included. It does not read LaTeX (.tex) templates: the PDF is built by the “PDF (Typst)” template.',
+  TYPST_SIZE: 'Once installed, the files take about 36 MB in the plugin folder: the program itself, and the fonts a document is set in.',
+  TYPST_VERSION: (version: string) => `Typst: ${version}`,
+  TYPST_NOT_INSTALLED: 'Typst is not installed, and there is no making a PDF without it. Open the plugin settings and choose Install.',
+  TYPST_INSTALL: 'Install',
+  TYPST_REMOVE: 'Remove',
+  TYPST_REMOVE_CONFIRM: 'Remove Typst? That frees about 36 MB, and leaves no way to export a PDF.',
+  TYPST_DOWNLOADING: 'Downloading Typst…',
+  TYPST_FONTS: (done: number, total: number) => `Downloading fonts… (${done} of ${total})`,
+  TYPST_WRITING: 'Saving…',
+  TYPST_INSTALLED: (version: string) => `Typst ${version} is installed.`,
+  TYPST_INSTALL_FAILED: 'Typst could not be installed — see the console for details.',
+  TYPST_FONTS_DIR: 'Font folder',
+  TYPST_FONTS_DIR_DESC: 'A path inside the vault. Fonts (.ttf, .otf) in this folder are added to the bundled ones — what CJK, emoji, and any font named in `-V mainfont` need.',
+  TYPST_FONTS_FOUND: (count: number) => `Fonts available for typesetting: ${count}`,
 
   // ─── Defaults ────────────────────────────────────────────────────────────────
   SECTION_DEFAULTS: 'General',

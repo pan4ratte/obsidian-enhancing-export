@@ -81,6 +81,16 @@ export default {
     },
     extension: '.pdf',
   },
+  'PDF (Typst)': {
+    name: 'PDF (Typst)',
+    type: 'pandoc',
+    // `-t typst` with a `.pdf` to write: pandoc reads the extension and runs the typesetter over what the typst
+    // writer produced. The same command works both ways — on an installed pandoc with typst beside it, and on the
+    // wasm build, which carries its own typst and needs nothing installed. See `src/wasm/typst.ts`.
+    arguments: `-f \${fromFormat} ${IMAGE_PATHS} ${MATH_BLOCK} -s -o "\${outputPath}" -t typst`,
+    customArguments: `--pdf-engine=typst ${OBSIDIAN_SYNTAX}`,
+    extension: '.pdf',
+  },
   'Beamer slides (.pdf)': {
     name: 'Beamer slides',
     type: 'pandoc',

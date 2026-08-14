@@ -1,8 +1,9 @@
 /* Which pandoc runs an export, and what that one can be asked to do.
  *
  * There are two: the program installed on the machine, and the wasm build running inside Obsidian. The first can do
- * everything and only exists on a desktop; the second runs anywhere but is sealed off from the system — no PDF engine,
- * no shell, no network. Every feature the plugin gates on the difference is named here, so nothing has to guess.
+ * everything and only exists on a desktop; the second runs anywhere but is sealed off from the system — no shell, no
+ * network, and no typesetter but the one it carries its own build of, typst. Every feature the plugin gates on the
+ * difference is named here, so nothing has to guess.
  */
 
 import { extractDefaultExtension, type ExportSetting } from '../settings';
@@ -26,8 +27,10 @@ export const ENGINE_MODES: readonly EngineMode[] = ['auto', 'wasm'];
 export const resolveEngine = (mode: EngineMode | undefined, mobile: boolean): Engine => (mode === 'wasm' || mobile ? 'wasm' : 'native');
 
 export interface Capabilities {
-  /** Producing PDF, which needs a typesetter the wasm build cannot start. */
+  /** Producing PDF with any typesetter, which is a program to start. */
   pdf: boolean;
+  /** Producing PDF through typst, the one typesetter that also has a wasm build — see `src/wasm/typst.ts`. */
+  typstPdf: boolean;
   /** Running a command of the user's own — what a `custom` template is. */
   commands: boolean;
   /** Fetching an image or a stylesheet named by URL while converting. */
@@ -38,8 +41,8 @@ export interface Capabilities {
   wholeFileSystem: boolean;
 }
 
-const NATIVE: Capabilities = { pdf: true, commands: true, network: true, jsonFilters: true, wholeFileSystem: true };
-const WASM: Capabilities = { pdf: false, commands: false, network: false, jsonFilters: false, wholeFileSystem: false };
+const NATIVE: Capabilities = { pdf: true, typstPdf: true, commands: true, network: true, jsonFilters: true, wholeFileSystem: true };
+const WASM: Capabilities = { pdf: false, typstPdf: true, commands: false, network: false, jsonFilters: false, wholeFileSystem: false };
 
 /**
  * What an engine can do on this platform. The wasm build reads only what it is handed, and on a desktop that can be
@@ -60,6 +63,15 @@ export const writesPdf = (setting: ExportSetting): boolean => {
   );
 };
 
+/**
+ * Whether the PDF a template writes is one typst makes. Pandoc reads the extension as readily as the writer — see
+ * `writesPdf` — so a template that writes `.pdf` from the typst writer is the whole of it.
+ */
+export const writesTypstPdf = (setting: ExportSetting): boolean =>
+  setting.type === 'pandoc' &&
+  writesPdf(setting) &&
+  outputFormat(setting.arguments, setting.customArguments, setting.userArguments) === 'typst';
+
 /** Why an engine cannot run a template, or nothing when it can. */
 export type Unsupported = 'pdf' | 'command';
 
@@ -68,7 +80,9 @@ export const unsupportedBy = (setting: ExportSetting, engine: Engine): Unsupport
   if (!can.commands && setting.type === 'custom') {
     return 'command';
   }
-  if (!can.pdf && writesPdf(setting)) {
+  // A typst PDF is not gated on typst being installed, any more than an export is on pandoc being: what is missing is
+  // said when the export is asked for, where there is somewhere to send the reader.
+  if (!can.pdf && writesPdf(setting) && !(can.typstPdf && writesTypstPdf(setting))) {
     return 'pdf';
   }
   return undefined;

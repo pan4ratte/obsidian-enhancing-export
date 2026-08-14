@@ -17,6 +17,7 @@ import PandocDashboard from './PandocDashboard';
 import PandocLinks from './PandocLinks';
 import PandocNotices, { type PanelNotice } from './PandocNotices';
 import WasmPanel from './WasmPanel';
+import TypstPanel from './TypstPanel';
 import TemplateActions from './TemplateActions';
 import TemplateTable from './TemplateTable';
 import LuaFilterStore from '../dialogs/LuaFilterStore';
@@ -1436,6 +1437,18 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
             onInstalled={version => setSettings('wasmVersion', version)}
             onNotices={setWasmNotices}
           />
+
+          {/* Beside the build it belongs to: typst is the wasm build's half of a PDF, and is worth offering wherever
+              that build is installed. Not only where it is the one running — the vault it is written into is the one
+              that syncs to the phone, and the phone is where the exports that need it happen. */}
+          <Show when={!!settings.wasmVersion}>
+            <TypstPanel
+              app={app}
+              manager={plugin.typst}
+              version={settings.typstVersion}
+              onInstalled={version => setSettings('typstVersion', version)}
+            />
+          </Show>
         </div>
 
         {/* Between the two pandocs and the pages to read: what neither half has the width to say. */}
@@ -1474,6 +1487,19 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         <Show when={!isMobileUi()}>
           <Setting name={t.WASM_ENGINE} description={t.WASM_ENGINE_DESC}>
             <Toggle checked={settings.engineMode === 'wasm'} onChange={on => setSettings('engineMode', on ? 'wasm' : 'auto')} />
+          </Setting>
+        </Show>
+
+        {/* Only once typst is there to be set with: what it is asked for is a font it was handed, and the ones
+            installed with it cover Latin and Cyrillic alone. */}
+        <Show when={!!settings.typstVersion}>
+          <Setting name={t.TYPST_FONTS_DIR} description={t.TYPST_FONTS_DIR_DESC}>
+            <FolderInput
+              app={app}
+              value={settings.typstFontsDir ?? ''}
+              placeholder={t.IMPORT_DIALOG_FOLDER_PLACEHOLDER}
+              onChange={folder => setSettings('typstFontsDir', folder)}
+            />
           </Setting>
         </Show>
 
@@ -1625,6 +1651,8 @@ export default class extends PluginSettingTab {
               // about the installed pandoc, because there is none to say anything about.
               ...(isMobileUi() ? [] : [t.PANDOC_PATH, t.PANDOC_FOLDER, t.WASM_ENGINE, t.SETTING_ENV_VARS]),
               t.WASM_TITLE,
+              t.TYPST_TITLE,
+              t.TYPST_FONTS_DIR,
               t.SECTION_DEFAULTS,
               t.SETTING_EXPORT_DESTINATION,
               t.SETTING_OPEN_LOCATION,

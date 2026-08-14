@@ -1,4 +1,4 @@
-import { capabilities, droppedBy, resolveEngine, unsupportedBy, writesPdf, type EngineMode } from '../../src/pandoc/engine';
+import { capabilities, droppedBy, resolveEngine, unsupportedBy, writesPdf, writesTypstPdf, type EngineMode } from '../../src/pandoc/engine';
 import type { ExportSetting } from '../../src/settings';
 import export_templates from '../../src/templates/export_templates';
 
@@ -62,7 +62,7 @@ describe('unsupportedBy', () => {
     }
   });
 
-  test('the wasm build refuses a pdf and a command of your own', () => {
+  test('the wasm build refuses a pdf it would need LaTeX for, and a command of your own', () => {
     expect(unsupportedBy(template('PDF'), 'wasm')).toBe('pdf');
     expect(unsupportedBy(template('Beamer slides (.pdf)'), 'wasm')).toBe('pdf');
     expect(unsupportedBy(template('Custom'), 'wasm')).toBe('command');
@@ -72,6 +72,22 @@ describe('unsupportedBy', () => {
     expect(unsupportedBy(template('Word (.docx)'), 'wasm')).toBeUndefined();
     expect(unsupportedBy(template('Epub'), 'wasm')).toBeUndefined();
     expect(unsupportedBy(template('Latex'), 'wasm')).toBeUndefined();
+  });
+
+  test('a PDF typst makes is one it can run — that build it carries', () => {
+    expect(unsupportedBy(template('PDF (Typst)'), 'wasm')).toBeUndefined();
+  });
+});
+
+describe('writesTypstPdf', () => {
+  test('the template that writes a pdf from the typst writer', () => {
+    expect(writesTypstPdf(template('PDF (Typst)'))).toBe(true);
+  });
+
+  test('and nothing else — not the LaTeX pdf, and not the typst source it stops at', () => {
+    expect(writesTypstPdf(template('PDF'))).toBe(false);
+    expect(writesTypstPdf(template('Beamer slides (.pdf)'))).toBe(false);
+    expect(writesTypstPdf(template('Typst'))).toBe(false);
   });
 });
 

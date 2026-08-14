@@ -1,6 +1,21 @@
 # Changelog
 
 
+## 2.1.0
+
+### New feature: PDF with Pandoc WASM, through Typst
+
+* New template, “PDF (Typst)”: exports a PDF on any device, a phone included.
+* Typst installs from the dashboard, separately from Pandoc WASM: about 36 MB with its fonts.
+* Fonts: Libertinus, New Computer Modern and DejaVu ship with it; a vault folder can add more.
+* LaTeX PDF templates and Beamer slides are still left out under WASM — they need a typesetter that cannot be run.
+
+### Images by URL
+
+* Images named by URL are fetched by the plugin and put into the document before the conversion starts, up to 64 per export.
+* What could not be fetched is reported as a warning; the export goes on.
+
+
 ## 2.0.0
 
 ### Major update: Mobile devices support
