@@ -28,6 +28,7 @@
 ### UI/UX enhancements and bug fixes
 
 * Confirmation dialogs are built as Obsidian's own: Cancel first, the action named on the button that goes through with it, and red where something is removed.
+* The edit pencil is back in the templates table on mobile; the table scrolls sideways there instead of folding the names over several lines.
 
 
 ## 2.0.0

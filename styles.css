@@ -630,6 +630,32 @@
  * Export templates.
  */
 
+/*
+ * A phone screen is not as wide as a row of this table: the name, the format
+ * and three icons across it leave the name folding over three lines. The strip
+ * scrolls sideways there instead, the table keeping the width its content asks
+ * for. On a pointer the wrapper is nothing but a div.
+ */
+.ex-template-table-scroll.is-touch {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-bottom: var(--size-4-4);
+}
+
+.ex-template-table-scroll.is-touch .ex-template-table {
+  width: max-content;
+  min-width: 100%;
+  margin-bottom: 0;
+}
+
+/* The half-width name column is what forces the folding, and a table sized to
+   its content has no half to give it. */
+.ex-template-table-scroll.is-touch .ex-template-table th:first-child,
+.ex-template-table-scroll.is-touch .ex-template-table td:first-child {
+  width: auto;
+  white-space: nowrap;
+}
+
 .ex-template-table {
     width: 100%;
     margin-bottom: var(--size-4-4);
@@ -790,8 +816,7 @@
   opacity: 1;
 }
 
-/* On a phone the row is the edit control, the pencil having gone with the width
-   it would have cost. */
+/* On a phone the row opens the editor as well as the pencil does. */
 .ex-template-table tbody tr.is-tappable {
   cursor: var(--cursor);
 }

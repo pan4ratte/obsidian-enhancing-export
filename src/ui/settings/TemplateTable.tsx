@@ -61,9 +61,10 @@ export default (props: {
   const column = () => props.sort?.column ?? 'name';
   const ascending = () => props.sort?.ascending ?? true;
 
-  /* A touch screen has no pointer to reveal the row actions with, so they are shown from the start there. */
+  /* A touch screen has no pointer to reveal the row actions with, so they are shown from the start there — and has no
+     room for the whole row either, which is what the table scrolls sideways in. */
   const touch = isMobileUi();
-  /* And a phone has no room for three of them: the row itself opens the editor, and the pencil goes. */
+  /* On a phone the row opens the editor as well, the pencil being a small thing to hit. */
   const tapToEdit = isPhoneUi();
 
   // A second click on the column already sorted turns it around.
@@ -101,59 +102,59 @@ export default (props: {
   );
 
   return (
-    <table class="ex-template-table" classList={{ 'is-touch': touch }}>
-      <thead>
-        <tr>
-          <Heading column="name" label={t.TEMPLATE_NAME} />
-          <Heading column="output" label={t.TEMPLATE_OUTPUT} />
-          {/* The row actions' column, unlabelled — the icons say what they do. */}
-          <th class="ex-template-table-actions" />
-        </tr>
-      </thead>
-      <tbody>
-        <For
-          each={rows()}
-          fallback={
-            <tr class="ex-template-table-empty">
-              <td colSpan={3}>{t.TEMPLATES_EMPTY}</td>
-            </tr>
-          }
-        >
-          {row => (
-            <tr classList={{ 'is-tappable': tapToEdit }} onClick={tapToEdit ? () => props.onEdit?.(row.name) : undefined}>
-              <td class="ex-template-table-name">
-                <span class="ex-template-table-label">
-                  <span>{row.name}</span>
-                  <Show when={row.warning}>
-                    <Icon class="ex-template-table-warning" name="alert-triangle" tooltip={row.warning} />
-                  </Show>
-                </span>
-              </td>
-              <td class="ex-template-table-output">{row.output}</td>
-              <td class="ex-template-table-actions">
-                {/* Kept from the row's own handler, so a tap on the trash is not also a tap on the template. */}
-                <div class="ex-template-table-row-actions" onClick={e => e.stopPropagation()}>
-                  <Show when={!tapToEdit}>
+    <div class="ex-template-table-scroll" classList={{ 'is-touch': touch }}>
+      <table class="ex-template-table" classList={{ 'is-touch': touch }}>
+        <thead>
+          <tr>
+            <Heading column="name" label={t.TEMPLATE_NAME} />
+            <Heading column="output" label={t.TEMPLATE_OUTPUT} />
+            {/* The row actions' column, unlabelled — the icons say what they do. */}
+            <th class="ex-template-table-actions" />
+          </tr>
+        </thead>
+        <tbody>
+          <For
+            each={rows()}
+            fallback={
+              <tr class="ex-template-table-empty">
+                <td colSpan={3}>{t.TEMPLATES_EMPTY}</td>
+              </tr>
+            }
+          >
+            {row => (
+              <tr classList={{ 'is-tappable': tapToEdit }} onClick={tapToEdit ? () => props.onEdit?.(row.name) : undefined}>
+                <td class="ex-template-table-name">
+                  <span class="ex-template-table-label">
+                    <span>{row.name}</span>
+                    <Show when={row.warning}>
+                      <Icon class="ex-template-table-warning" name="alert-triangle" tooltip={row.warning} />
+                    </Show>
+                  </span>
+                </td>
+                <td class="ex-template-table-output">{row.output}</td>
+                <td class="ex-template-table-actions">
+                  {/* Kept from the row's own handler, so a tap on the trash is not also a tap on the template. */}
+                  <div class="ex-template-table-row-actions" onClick={e => e.stopPropagation()}>
                     <Icon class="ex-template-table-edit" name="pencil" tooltip={t.ACTION_EDIT} onClick={() => props.onEdit?.(row.name)} />
-                  </Show>
-                  <Icon
-                    class="ex-template-table-duplicate"
-                    name="copy"
-                    tooltip={t.ACTION_DUPLICATE}
-                    onClick={() => props.onDuplicate?.(row.name)}
-                  />
-                  <Icon
-                    class="ex-template-table-remove"
-                    name="trash"
-                    tooltip={t.ACTION_REMOVE}
-                    onClick={() => props.onRemove?.(row.name)}
-                  />
-                </div>
-              </td>
-            </tr>
-          )}
-        </For>
-      </tbody>
-    </table>
+                    <Icon
+                      class="ex-template-table-duplicate"
+                      name="copy"
+                      tooltip={t.ACTION_DUPLICATE}
+                      onClick={() => props.onDuplicate?.(row.name)}
+                    />
+                    <Icon
+                      class="ex-template-table-remove"
+                      name="trash"
+                      tooltip={t.ACTION_REMOVE}
+                      onClick={() => props.onRemove?.(row.name)}
+                    />
+                  </div>
+                </td>
+              </tr>
+            )}
+          </For>
+        </tbody>
+      </table>
+    </div>
   );
 };
