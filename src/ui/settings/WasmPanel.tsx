@@ -26,6 +26,8 @@ export default (props: {
   onInstalled: (version?: string) => void;
   /** What this half has to say at length, which the card says under both of them. */
   onNotices: (notices: PanelNotice[]) => void;
+  /** Open what the build can be given past itself — typst, and the fonts a document is set in. */
+  onExtensions: () => void;
 }) => {
   const [supported] = createResource(pandocWasmSupport);
   const [latest] = createResource(async () => {
@@ -146,55 +148,66 @@ export default (props: {
   };
 
   return (
-    <div class="ex-pandoc-dashboard-half">
-      <div class="ex-pandoc-dashboard-version">
-        {installed() ? t.WASM_VERSION(props.version) : t.WASM_TITLE}
+    <div class="ex-pandoc-dashboard-half ex-wasm-half">
+      <div class="ex-wasm-half-main">
+        <div class="ex-pandoc-dashboard-version">
+          {installed() ? t.WASM_VERSION(props.version) : t.WASM_TITLE}
 
-        {/* Only while there is nothing installed: what the build is for is a question the answer to it settles.
+          {/* Only while there is nothing installed: what the build is for is a question the answer to it settles.
             Read by hovering, and on a phone — where there is no hovering — by pressing. */}
-        <Show when={!installed()}>
-          <Icon
-            class="ex-pandoc-dashboard-hint"
-            name="circle-question-mark"
-            tooltip={hint}
-            onClick={isMobileUi() ? () => new Notice(hint) : undefined}
-          />
-        </Show>
-      </div>
+          <Show when={!installed()}>
+            <Icon
+              class="ex-pandoc-dashboard-hint"
+              name="circle-question-mark"
+              tooltip={hint}
+              onClick={isMobileUi() ? () => new Notice(hint) : undefined}
+            />
+          </Show>
+        </div>
 
-      <div class="ex-pandoc-dashboard-status" classList={{ [`is-${status()}`]: true }}>
-        <span class="ex-pandoc-dashboard-indicator" />
-        {/* The dot keeps the state even where the words for it are too long to stand here. */}
-        <Show when={statusText()}>
-          <span>{statusText()}</span>
-        </Show>
+        <div class="ex-pandoc-dashboard-status" classList={{ [`is-${status()}`]: true }}>
+          <span class="ex-pandoc-dashboard-indicator" />
+          {/* The dot keeps the state even where the words for it are too long to stand here. */}
+          <Show when={statusText()}>
+            <span>{statusText()}</span>
+          </Show>
 
-        {/* What to do about what the line says, beside it. Nothing here yet is the one worth a word of its own;
+          {/* What to do about what the line says, beside it. Nothing here yet is the one worth a word of its own;
             a newer build and the copy already installed are what the line has just named.
 
             Offered whatever the probe thought: it is a guess, and being wrong about it must not be what stops
             someone installing. The binary itself answers on this same line, once it has been asked. */}
-        <Show when={latest() && (!installed() || failed())}>
-          <Button
-            class="ex-pandoc-dashboard-inline is-cta"
-            tooltip={`${installed() ? t.WASM_UPDATE : t.WASM_INSTALL}. ${t.WASM_SIZE}`}
-            disabled={!!busy()}
-            onClick={() => void install(latest())}
-          >
-            <Icon name="download" />
-          </Button>
-        </Show>
-        <Show when={updatable() && !failed()}>
-          <Button class="ex-pandoc-dashboard-inline" tooltip={t.WASM_UPDATE} disabled={!!busy()} onClick={() => void install(latest())}>
-            <Icon name="download" />
-          </Button>
-        </Show>
-        <Show when={installed()}>
-          <Button class="ex-pandoc-dashboard-inline is-quiet" tooltip={t.WASM_REMOVE} disabled={!!busy()} onClick={remove}>
-            <Icon name="trash-2" />
-          </Button>
-        </Show>
+          <Show when={latest() && (!installed() || failed())}>
+            <Button
+              class="ex-pandoc-dashboard-inline is-cta"
+              tooltip={`${installed() ? t.WASM_UPDATE : t.WASM_INSTALL}. ${t.WASM_SIZE}`}
+              disabled={!!busy()}
+              onClick={() => void install(latest())}
+            >
+              <Icon name="download" />
+            </Button>
+          </Show>
+          <Show when={updatable() && !failed()}>
+            <Button class="ex-pandoc-dashboard-inline" tooltip={t.WASM_UPDATE} disabled={!!busy()} onClick={() => void install(latest())}>
+              <Icon name="download" />
+            </Button>
+          </Show>
+          <Show when={installed()}>
+            <Button class="ex-pandoc-dashboard-inline is-quiet" tooltip={t.WASM_REMOVE} disabled={!!busy()} onClick={remove}>
+              <Icon name="trash-2" />
+            </Button>
+          </Show>
+        </div>
       </div>
+
+      {/* At the end of the half rather than in the line of statuses: what the build can be given past itself is about
+          the build, not about how it is doing. Only once there is one — typst and its fonts are of no use beside a
+          pandoc that is not here. */}
+      <Show when={installed()}>
+        <Button class="ex-wasm-extensions" tooltip={t.EXT_TITLE} disabled={!!busy()} onClick={props.onExtensions}>
+          <Icon name="cog" />
+        </Button>
+      </Show>
     </div>
   );
 };

@@ -6,9 +6,19 @@
 ### New feature: PDF with Pandoc WASM, through Typst
 
 * New template, “PDF (Typst)”: exports a PDF on any device, a phone included.
-* Typst installs from the dashboard, separately from Pandoc WASM: about 36 MB with its fonts.
-* Fonts: Libertinus, New Computer Modern and DejaVu ship with it; a vault folder can add more.
+* New Pandoc WASM extensions dialog, opened from the extensions icon on the Pandoc WASM card.
+* Typst installs there, separately from Pandoc WASM: about 36 MB with its fonts.
+* Fonts: Libertinus, New Computer Modern and DejaVu come with Typst; a vault folder adds your own, and Noto Color Emoji installs on its own.
+* The Typst card offers an update when the installed build is older than the one this release was tested with.
 * LaTeX PDF templates and Beamer slides are still left out under WASM — they need a typesetter that cannot be run.
+
+### Extensions for Pandoc WASM
+
+* Citation styles: APA, Chicago (both), MLA, IEEE, AMA, Nature, Harvard and GOST, from the official CSL repository.
+* Pandoc's own layout templates for HTML, LaTeX, Typst and EPUB, taken from the version of the build you have.
+* Reference documents for Word, OpenOffice and PowerPoint — written by Pandoc itself, so nothing is downloaded.
+* MathJax as a local file, for HTML exports that show their maths offline.
+* Everything installs into the plugin folder and is named in a template with `${pluginDir}/…`.
 
 ### Images by URL
 

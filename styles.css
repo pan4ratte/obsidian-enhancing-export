@@ -147,6 +147,46 @@
   background-color: var(--setting-items-background, var(--background-primary));
 }
 
+/* The wasm half carries one thing no other does: what the build can be given
+   past itself. It stands at the end of the half, so the half is a row of two —
+   everything the other halves hold, and then that. */
+.ex-pandoc-dashboard-half.ex-wasm-half {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.ex-wasm-half-main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* `min-width` so a long status asks for the width of the half rather than of
+     the button beside it. */
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Read as a way in rather than as an action on the line: the size of the icons
+   in the row, in the colour of the text it stands beside. */
+.ex-wasm-extensions.ex-wasm-extensions {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: var(--size-4-2);
+  background: none;
+  border: none;
+  box-shadow: none;
+  color: var(--text-muted);
+  cursor: var(--cursor);
+}
+
+.ex-wasm-extensions.ex-wasm-extensions:hover {
+  color: var(--text-accent);
+  background: var(--background-modifier-hover);
+}
+
 /* The name of the pandoc this half is about, and — while there is one to ask —
    the mark that says what it is. They share a line and wrap together, a half
    this narrow having nowhere else to put the second of them. */
@@ -1977,6 +2017,56 @@
 .ex-lua-actions button:disabled {
   cursor: default;
   opacity: 0.6;
+}
+
+/*
+ * What the wasm build can be given past itself — typst, and the fonts it sets a
+ * document in.
+ *
+ * The cards are the filter store's, class names and all: the bargain is the
+ * same one, so it is shown the same way rather than described twice. What is
+ * new is the line under a card's description, the word it says while it is
+ * working, and the folder the fonts card is pointed at.
+ */
+.ex-ext-intro {
+  margin: 0 0 var(--size-4-3);
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+/* What it costs, where it was installed, or what it is doing — one line, in the
+   place the store gives a filter's credit: the start of the row the buttons
+   end, taking the width they leave. */
+.ex-ext-note {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--size-4-2) var(--size-4-4);
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+/* Not a fault, but the one thing on the card standing between it and a button. */
+.ex-ext-note.is-blocked {
+  color: var(--text-faint);
+}
+
+.ex-ext-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-1);
+  margin-top: var(--size-4-2);
+}
+
+.ex-ext-field input {
+  width: 100%;
+}
+
+.ex-ext-field-note {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
 }
 
 /*

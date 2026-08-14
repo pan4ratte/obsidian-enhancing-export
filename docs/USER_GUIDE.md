@@ -4,11 +4,21 @@ This guide can be opened from the command palette by typing “Pandoc GUI: Open 
 
 Pandoc WASM works somewhat differently from the ordinary version because of how it is built. Before exporting with it, mind these limits:
 
-* **PDF through Typst only.** The “PDF (Typst)” template works everywhere, a phone included: Pandoc writes Typst source, and Typst sets the PDF from it. That needs Typst installed from the plugin settings, separately from Pandoc WASM. The ordinary “PDF” template is set with LaTeX, which Pandoc WASM cannot start: templates like it are left out of the export dialog, as are Beamer slides.
+* **PDF through Typst only.** The “PDF (Typst)” template works everywhere, a phone included: Pandoc writes Typst source, and Typst sets the PDF from it. Typst installs separately — in the plugin settings, on the Pandoc WASM card, press the extensions icon, where the fonts and emoji live too. The ordinary “PDF” template is set with LaTeX, which Pandoc WASM cannot start: templates like it are left out of the export dialog, as are Beamer slides.
 * **LaTeX (.tex) templates do not work with Typst.** Typst is a different typesetting program with a language of its own: `--template=neurips.tex`, `-V geometry` and raw LaTeX (`\newpage`, `tikzpicture`) do not reach a Typst PDF. Maths, tables, images, the table of contents and citations work as they always did.
-* **Typst has to be handed its fonts.** It cannot see the system's: Libertinus, New Computer Modern and DejaVu are installed with it, which covers Latin and Cyrillic. For CJK, emoji, or a font of your own named in `-V mainfont`, point the settings at a folder of fonts in the vault.
+* **Typst has to be handed its fonts.** It cannot see the system's: Libertinus, New Computer Modern and DejaVu are installed with it, which covers Latin and Cyrillic. Emoji are one button away in the extensions; for CJK, or a font of your own named in `-V mainfont`, point the same place at a folder of fonts in the vault.
 * **No templates that run a command of your own.**
 * **Lua filters only.** Ordinary Pandoc takes filters of other kinds, Python among them; WASM does not. The good news: every filter in the plugin's store is a lua filter.
+
+### Pandoc WASM extensions
+
+An installed Pandoc takes some of its files from the system; the WASM build has only what it is handed. All of it installs from the extensions button on the Pandoc WASM card and lives in the plugin folder, so a template can name it with `${pluginDir}`:
+
+* **Typst** and **fonts** — typesetting a PDF, as above.
+* **Citation styles** — nine styles asked for often, GOST R 7.0.5-2008 among them.
+* **Pandoc layout templates** — its own HTML, LaTeX, Typst and EPUB templates, from the version you have: copy one, change it, name it under “Template”.
+* **Reference documents** — reference.docx, .odt and .pptx. Pandoc writes them itself, so there is nothing to download.
+* **MathJax, offline** — the library as a file, so an HTML export shows its maths without a connection.
 
 What else to keep in mind:
 

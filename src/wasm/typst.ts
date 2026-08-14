@@ -16,36 +16,65 @@ export const TYPST_VERSION = '0.7.0';
 const FONT_RELEASE = 'v0.13.1';
 
 const WASM_URL = `https://cdn.jsdelivr.net/npm/@myriaddreamin/typst-ts-web-compiler@${TYPST_VERSION}/pkg/typst_ts_web_compiler_bg.wasm`;
-const FONT_URL = `https://cdn.jsdelivr.net/gh/typst/typst-assets@${FONT_RELEASE}/files/fonts`;
+/** Where a pack's own repository is read from — the rest of the path is the pack's, see `FONT_PACKS`. */
+const FONT_URL = 'https://cdn.jsdelivr.net/gh/typst';
 
 export const TYPST_FILE = 'typst.wasm';
 /** Where the fonts sit beside the binary. */
 export const TYPST_FONT_DIR = 'fonts';
 
+export type FontPackId = 'base' | 'emoji';
+
+/** A set of fonts that installs on its own: the base one comes with typst, the rest are asked for. */
+export interface FontPack {
+  id: FontPackId;
+  /** The repository the files are taken from — typst's own assets, or the ones its tests are run against. */
+  repo: string;
+  files: readonly string[];
+  /** What it comes to, near enough for the card that offers it. */
+  size: number;
+}
+
 /**
  * The fonts typst sets a document in when nothing says otherwise: Libertinus for text, New Computer Modern for maths,
  * DejaVu for code. Between them they cover Latin and Cyrillic; a note in another script needs a font of its own, which
- * is what the font folder setting is for.
+ * is what the vault's font folder is for.
+ *
+ * There is no pack for CJK: the one in typst's own assets is a 5,000-glyph subset, and a font that silently drops
+ * characters is worse than none. Emoji are a different matter — that one is the whole font.
  */
-const FONTS = [
-  'DejaVuSansMono-Bold.ttf',
-  'DejaVuSansMono-BoldOblique.ttf',
-  'DejaVuSansMono-Oblique.ttf',
-  'DejaVuSansMono.ttf',
-  'LibertinusSerif-Bold.otf',
-  'LibertinusSerif-BoldItalic.otf',
-  'LibertinusSerif-Italic.otf',
-  'LibertinusSerif-Regular.otf',
-  'LibertinusSerif-Semibold.otf',
-  'LibertinusSerif-SemiboldItalic.otf',
-  'NewCM10-Bold.otf',
-  'NewCM10-BoldItalic.otf',
-  'NewCM10-Italic.otf',
-  'NewCM10-Regular.otf',
-  'NewCMMath-Bold.otf',
-  'NewCMMath-Book.otf',
-  'NewCMMath-Regular.otf',
-];
+export const FONT_PACKS: Record<FontPackId, FontPack> = {
+  base: {
+    id: 'base',
+    repo: `typst-assets@${FONT_RELEASE}`,
+    size: 8.3 * 1024 * 1024,
+    files: [
+      'DejaVuSansMono-Bold.ttf',
+      'DejaVuSansMono-BoldOblique.ttf',
+      'DejaVuSansMono-Oblique.ttf',
+      'DejaVuSansMono.ttf',
+      'LibertinusSerif-Bold.otf',
+      'LibertinusSerif-BoldItalic.otf',
+      'LibertinusSerif-Italic.otf',
+      'LibertinusSerif-Regular.otf',
+      'LibertinusSerif-Semibold.otf',
+      'LibertinusSerif-SemiboldItalic.otf',
+      'NewCM10-Bold.otf',
+      'NewCM10-BoldItalic.otf',
+      'NewCM10-Italic.otf',
+      'NewCM10-Regular.otf',
+      'NewCMMath-Bold.otf',
+      'NewCMMath-Book.otf',
+      'NewCMMath-Regular.otf',
+    ],
+  },
+  emoji: {
+    id: 'emoji',
+    repo: `typst-dev-assets@${FONT_RELEASE}`,
+    size: 4.5 * 1024 * 1024,
+    files: ['NotoColorEmoji-Regular-COLR.subset.ttf'],
+  },
+};
 
 /** What the whole install comes to, near enough to say before asking for it: 27 MB of binary and 8 MB of fonts. */
 export const TYPST_SIZE = 36 * 1024 * 1024;
@@ -151,13 +180,8 @@ export class TypstWasmManager {
       throw new Error('The downloaded typst binary is empty');
     }
 
-    let done = 0;
-    onProgress?.('fonts', 0, FONTS.length);
-    for (const font of FONTS) {
-      const response = await requestUrl({ url: `${FONT_URL}/${font}` });
-      await adapter.writeBinary(`${this.fontDirectory}/${font}`, response.arrayBuffer);
-      onProgress?.('fonts', (done += 1), FONTS.length);
-    }
+    // The base fonts come with it: a typst that cannot set a paragraph is not one worth having installed.
+    await this.installFonts('base', onProgress);
 
     onProgress?.('writing');
     await adapter.writeBinary(this.filePath, arrayBuffer);
@@ -166,17 +190,48 @@ export class TypstWasmManager {
     return TYPST_VERSION;
   }
 
-  /** Delete the binary and the fonts that came with it. */
+  /** Fetch a set of fonts and write it beside the binary. */
+  async installFonts(id: FontPackId, onProgress?: TypstInstallProgress): Promise<void> {
+    const { adapter } = this.plugin.app.vault;
+    const pack = FONT_PACKS[id];
+    await adapter.mkdir(this.directory);
+    await adapter.mkdir(this.fontDirectory);
+
+    let done = 0;
+    onProgress?.('fonts', 0, pack.files.length);
+    for (const font of pack.files) {
+      const { arrayBuffer } = await requestUrl({ url: `${FONT_URL}/${pack.repo}/files/fonts/${font}` });
+      await adapter.writeBinary(`${this.fontDirectory}/${font}`, arrayBuffer);
+      onProgress?.('fonts', (done += 1), pack.files.length);
+    }
+    // A font added to a compiler that is already running is a font it will not know about.
+    this.forget();
+  }
+
+  async removeFonts(id: FontPackId): Promise<void> {
+    const { adapter } = this.plugin.app.vault;
+    for (const font of FONT_PACKS[id].files) {
+      const path = `${this.fontDirectory}/${font}`;
+      if (await adapter.exists(path)) {
+        await adapter.remove(path);
+      }
+    }
+    this.forget();
+  }
+
+  /** Whether a set of fonts is on disk — the first of its files answers for the rest. */
+  async hasFonts(id: FontPackId): Promise<boolean> {
+    return await this.plugin.app.vault.adapter.exists(`${this.fontDirectory}/${FONT_PACKS[id].files[0]}`);
+  }
+
+  /** Delete the binary and every font that came with it. What the vault's own folder holds is the vault's. */
   async remove(): Promise<void> {
     const { adapter } = this.plugin.app.vault;
     if (await adapter.exists(this.filePath)) {
       await adapter.remove(this.filePath);
     }
-    for (const font of FONTS) {
-      const path = `${this.fontDirectory}/${font}`;
-      if (await adapter.exists(path)) {
-        await adapter.remove(path);
-      }
+    for (const id of Object.keys(FONT_PACKS) as FontPackId[]) {
+      await this.removeFonts(id);
     }
     this.forget();
   }
@@ -224,20 +279,38 @@ export class TypstWasmManager {
     return fonts;
   }
 
+  /**
+   * The fonts to hand the compiler, as paths. Whatever is in the folder beside the binary rather than the packs by
+   * name: a pack the user has since removed is gone from the folder, and a font dropped in by hand is not.
+   */
   async #fontFiles(): Promise<string[]> {
     const { adapter } = this.plugin.app.vault;
-    const paths = FONTS.map(font => `${this.fontDirectory}/${font}`);
+    const folders = [this.fontDirectory, this.plugin.settings.typstFontsDir?.trim()];
 
-    const folder = this.plugin.settings.typstFontsDir?.trim();
-    if (!folder || !(await adapter.exists(folder))) {
-      return paths;
+    const paths: string[] = [];
+    for (const folder of folders) {
+      if (!folder || !(await adapter.exists(folder))) {
+        continue;
+      }
+      const { files } = await adapter.list(folder);
+      paths.push(...files.filter(file => FONT_TYPES.includes(file.slice(file.lastIndexOf('.')).toLowerCase())));
     }
-    const { files } = await adapter.list(folder);
-    return [...paths, ...files.filter(file => FONT_TYPES.includes(file.slice(file.lastIndexOf('.')).toLowerCase()))];
+    return paths;
   }
 
-  /** How many fonts an export would be typeset with, for the panel to say so. */
+  /** How many fonts an export would be typeset with, for the card that offers them to say so. */
   async fontCount(): Promise<number> {
     return (await this.#fontFiles()).length;
+  }
+
+  /** How many of those the vault's own folder brought, which is the number that answers whether it is the right one. */
+  async vaultFontCount(): Promise<number> {
+    const { adapter } = this.plugin.app.vault;
+    const folder = this.plugin.settings.typstFontsDir?.trim();
+    if (!folder || !(await adapter.exists(folder))) {
+      return 0;
+    }
+    const { files } = await adapter.list(folder);
+    return files.filter(file => FONT_TYPES.includes(file.slice(file.lastIndexOf('.')).toLowerCase())).length;
   }
 }
