@@ -1276,8 +1276,12 @@
 }
 
 /* Said in the grid's place when there is nothing to tick — the card stays, so
-   the row does not collapse to nothing. */
+   the row does not collapse to nothing. It is about the card rather than about
+   a column of it, so it takes the whole width and sits in the middle instead of
+   starting where the first checkbox would. */
 .ex-check-empty {
+  grid-column: 1 / -1;
+  text-align: center;
   font-size: var(--font-ui-smaller);
   color: var(--text-faint);
 }

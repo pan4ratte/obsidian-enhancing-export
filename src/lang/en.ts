@@ -134,7 +134,7 @@ export default {
   WASM_ABSENT: 'Not installed',
   WASM_UNSUPPORTED: 'Unsupported',
   WASM_HINT: 'Ordinary Pandoc does not run on a mobile device. WASM is what makes Pandoc usable there, with some limits — and it can be used on any platform, with nothing to install.',
-  WASM_SIZE: 'Once installed, the file takes about 56 MB, kept in the plugin folder inside your vault.',
+  WASM_SIZE: 'Once downloaded, the file takes about 56 MB, kept in the plugin folder inside your vault.',
   WASM_INSTALL: 'Install',
   WASM_UPDATE: 'Update',
   WASM_REMOVE: 'Remove',
@@ -249,7 +249,7 @@ export default {
 
   // ─── Lua filters ─────────────────────────────────────────────────────────────
   LUA_FILTERS: 'Lua filters',
-  LUA_FILTERS_NONE_INSTALLED: 'No filters installed yet: add some from the lua-filter store.',
+  LUA_FILTERS_NONE_INSTALLED: 'No filters installed yet: add some from the lua-filter store',
   LUA_FILTERS_NONE_FOR_FORMAT: 'None of the installed filters are meant for the selected output format.',
 
   // ─── Table of contents ───────────────────────────────────────────────────────
