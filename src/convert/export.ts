@@ -186,7 +186,11 @@ export async function exportNote(
     // so there the question is put plainly and the answer is yes or no.
     const chosen = isDesktop()
       ? await chooseSavePath({ title: t.OVERWRITE_TITLE(outputFileFullName), defaultPath: outputPath })
-      : (await confirm(plugin.app, t.OVERWRITE_TITLE(outputFileFullName)))
+      : (await confirm(plugin.app, {
+            title: t.EXPORT_DIALOG_TITLE,
+            message: t.OVERWRITE_TITLE(outputFileFullName),
+            accept: t.BUTTON_REPLACE,
+          }))
         ? outputPath
         : undefined;
 

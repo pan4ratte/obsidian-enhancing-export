@@ -94,10 +94,9 @@ export default {
   },
 
   // ─── Buttons ─────────────────────────────────────────────────────────────────
-  BUTTON_YES: 'Yes',
-  BUTTON_NO: 'No',
   BUTTON_OK: 'OK',
   BUTTON_CANCEL: 'Cancel',
+  BUTTON_REPLACE: 'Replace',
   ACTION_EDIT: 'Edit',
   ACTION_DUPLICATE: 'Duplicate',
   ACTION_SAVE: 'Save',

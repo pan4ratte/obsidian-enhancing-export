@@ -25,6 +25,10 @@
 * Images named by URL are fetched by the plugin and put into the document before the conversion starts, up to 64 per export.
 * What could not be fetched is reported as a warning; the export goes on.
 
+### UI/UX enhancements and bug fixes
+
+* Confirmation dialogs are built as Obsidian's own: Cancel first, the action named on the button that goes through with it, and red where something is removed.
+
 
 ## 2.0.0
 

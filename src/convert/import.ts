@@ -74,7 +74,14 @@ export async function importFile(plugin: PandocGuiPlugin, request: ImportRequest
   const outputDir = dirname(outputPath);
   const files = new FileStore(app.vault, vaultRoot(adapter));
 
-  if ((await files.exists(outputPath)) && !(await confirm(app, t.OVERWRITE_TITLE(noteName), t.IMPORT_DIALOG_TITLE))) {
+  if (
+    (await files.exists(outputPath)) &&
+    !(await confirm(app, {
+      title: t.IMPORT_DIALOG_TITLE,
+      message: t.OVERWRITE_TITLE(noteName),
+      accept: t.BUTTON_REPLACE,
+    }))
+  ) {
     return false;
   }
 

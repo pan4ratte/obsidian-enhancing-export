@@ -1,5 +1,6 @@
 import { App, Modal } from 'obsidian';
 import { t } from '../lang/helpers';
+import { isMobileUi } from '../system/platform';
 
 export interface MessageBoxOptions {
   /** The whole body of the box, where one run of text is the whole of it. */
@@ -7,40 +8,42 @@ export interface MessageBoxOptions {
   /** Draws the body instead, for a box that is more than one run of text. */
   render?: (contentEl: HTMLElement) => void;
   title?: string;
-  buttons: 'Yes' | 'YesNo' | 'Ok' | 'OkCancel';
+  buttons: 'Ok' | 'OkCancel';
   buttonsLabel?: {
-    yes?: string;
-    no?: string;
     ok?: string;
     cancel?: string;
   };
-  buttonsClass?: {
-    yes?: string;
-    no?: string;
-    ok?: string;
-    cancel?: string;
-  };
+  /** What Obsidian's own delete dialogs do with the button that goes through with it. */
+  destructive?: boolean;
   callback?: {
-    yes?: () => void;
-    no?: () => void;
     ok?: () => void;
     cancel?: () => void;
   };
 }
 
+export interface ConfirmOptions {
+  message: string;
+  title?: string;
+  /** Names the action rather than answering yes, as every Obsidian confirmation does. */
+  accept?: string;
+  destructive?: boolean;
+}
+
 /**
- * A yes-or-no question, answered before anything else happens.
+ * A question answered before anything else happens.
  *
  * Closed rather than answered is a no: the buttons answer first and close after, so by the time the close is seen the
  * question has already been settled.
  */
-export const confirm = (app: App, message: string, title?: string): Promise<boolean> =>
+export const confirm = (app: App, options: ConfirmOptions): Promise<boolean> =>
   new Promise(resolve => {
     const box = new MessageBox(app, {
-      title,
-      message,
-      buttons: 'YesNo',
-      callback: { yes: () => resolve(true), no: () => resolve(false) },
+      title: options.title,
+      message: options.message,
+      buttons: 'OkCancel',
+      buttonsLabel: { ok: options.accept },
+      destructive: options.destructive,
+      callback: { ok: () => resolve(true), cancel: () => resolve(false) },
     });
     const close = box.onClose.bind(box);
     box.onClose = () => {
@@ -52,6 +55,8 @@ export const confirm = (app: App, message: string, title?: string): Promise<bool
 
 export class MessageBox extends Modal {
   readonly options: MessageBoxOptions;
+  private buttonContainerEl?: HTMLElement;
+  private acceptEl?: HTMLButtonElement;
 
   constructor(app: App, message: string);
   constructor(app: App, message: string, title?: string);
@@ -64,63 +69,38 @@ export class MessageBox extends Modal {
     const {
       titleEl,
       contentEl,
-      options: { message, render, title, buttons, callback, buttonsLabel: label, buttonsClass },
+      options: { message, render, title, buttons, callback, buttonsLabel: label, destructive },
     } = this;
+    this.containerEl.addClass('mod-confirmation');
     if (title) {
       titleEl.setText(title);
     }
     if (render) {
       render(contentEl);
     } else {
-      contentEl.createDiv({ text: message });
+      contentEl.createEl('p', { text: message });
     }
-    switch (buttons) {
-      case 'Yes':
-        contentEl.createDiv({ cls: ['modal-button-container'], parent: contentEl }, el => {
-          el.createEl('button', {
-            text: label?.yes ?? t.BUTTON_YES,
-            cls: ['mod-cta', buttonsClass?.yes],
-            parent: el,
-          }).onclick = () => this.call(callback?.yes);
-        });
-        break;
-      case 'YesNo':
-        contentEl.createDiv({ cls: ['modal-button-container'], parent: contentEl }, el => {
-          el.createEl('button', {
-            text: label?.yes ?? t.BUTTON_YES,
-            cls: ['mod-cta', buttonsClass?.yes],
-            parent: el,
-          }).onclick = () => this.call(callback?.yes);
-          el.createEl('button', {
-            text: label?.no ?? t.BUTTON_NO,
-            cls: ['mod-cta', buttonsClass?.no],
-            parent: el,
-          }).onclick = () => this.call(callback?.no);
-        });
-        break;
-      case 'Ok':
-        contentEl.createDiv({ cls: ['modal-button-container'], parent: contentEl }, el => {
-          el.createEl('button', {
-            text: label?.ok ?? t.BUTTON_OK,
-            cls: ['mod-cta', buttonsClass?.no],
-            parent: el,
-          }).onclick = () => this.call(callback?.ok);
-        });
-        break;
-      case 'OkCancel':
-        contentEl.createDiv({ cls: ['modal-button-container'], parent: contentEl }, el => {
-          el.createEl('button', {
-            text: label?.ok ?? t.BUTTON_OK,
-            cls: ['mod-cta', buttonsClass?.ok],
-            parent: el,
-          }).onclick = () => this.call(callback?.ok);
-          el.createEl('button', {
-            text: label?.cancel ?? t.BUTTON_CANCEL,
-            cls: ['mod-cta', buttonsClass?.cancel],
-            parent: el,
-          }).onclick = () => this.call(callback?.cancel);
-        });
-        break;
+    // As Obsidian builds its own: the buttons hang off the modal rather than sit in its content, and read from the
+    // left as the way out and the way on.
+    this.buttonContainerEl = this.modalEl.createDiv('modal-button-container', el => {
+      if (buttons === 'OkCancel') {
+        el.createEl('button', {
+          text: label?.cancel ?? t.BUTTON_CANCEL,
+          cls: ['mod-cancel'],
+        }).onclick = () => this.call(callback?.cancel);
+      }
+      this.acceptEl = el.createEl('button', {
+        text: label?.ok ?? t.BUTTON_OK,
+        cls: destructive ? ['mod-cta', 'mod-destructive'] : ['mod-cta'],
+      });
+      this.acceptEl.onclick = () => this.call(callback?.ok);
+    });
+  }
+  open(): void {
+    super.open();
+    // After the opening, which lands the focus on the modal itself. Where there is a keyboard, Enter then answers.
+    if (!isMobileUi()) {
+      this.acceptEl?.focus({ preventScroll: true });
     }
   }
   private call(callback?: () => void): void {
@@ -132,5 +112,6 @@ export class MessageBox extends Modal {
   onClose() {
     const { contentEl } = this;
     contentEl.empty();
+    this.buttonContainerEl?.detach();
   }
 }

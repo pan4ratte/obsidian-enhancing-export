@@ -134,9 +134,11 @@ export default (props: {
     new MessageBox(props.app, {
       title: t.WASM_REMOVE,
       message: t.WASM_REMOVE_CONFIRM,
-      buttons: 'YesNo',
+      buttons: 'OkCancel',
+      buttonsLabel: { ok: t.WASM_REMOVE },
+      destructive: true,
       callback: {
-        yes: () => {
+        ok: () => {
           setFailed(undefined);
           void props.manager.remove().then(() => {
             void lookAgain();

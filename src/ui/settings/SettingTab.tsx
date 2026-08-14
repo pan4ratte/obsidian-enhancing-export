@@ -447,9 +447,11 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
     new MessageBox(app, {
       title: t.ACTION_REMOVE,
       message: t.TEMPLATE_REMOVE_CONFIRM(name),
-      buttons: 'YesNo',
+      buttons: 'OkCancel',
+      buttonsLabel: { ok: t.ACTION_REMOVE },
+      destructive: true,
       callback: {
-        yes: () =>
+        ok: () =>
           batch(() => {
             setSettings('items', items => items.filter(v => v.name !== name));
             forgetTemplate(name);

@@ -94,10 +94,9 @@ export default {
   },
 
   // ─── Buttons ─────────────────────────────────────────────────────────────────
-  BUTTON_YES: 'Да',
-  BUTTON_NO: 'Нет',
   BUTTON_OK: 'ОК',
   BUTTON_CANCEL: 'Отмена',
+  BUTTON_REPLACE: 'Заменить',
   ACTION_EDIT: 'Изменить',
   ACTION_DUPLICATE: 'Дублировать',
   ACTION_SAVE: 'Сохранить',
