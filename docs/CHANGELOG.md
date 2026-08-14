@@ -3,32 +3,23 @@
 
 ## 2.1.0
 
-### New feature: PDF with Pandoc WASM, through Typst
+### New features
 
-* New template, “PDF (Typst)”: exports a PDF on any device, a phone included.
-* New Pandoc WASM extensions dialog, opened from the extensions icon on the Pandoc WASM card.
-* Typst installs there, separately from Pandoc WASM: about 36 MB with its fonts.
-* Fonts: Libertinus, New Computer Modern and DejaVu come with Typst; a vault folder adds your own, and Noto Color Emoji installs on its own.
-* The Typst card offers an update when the installed build is older than the one this release was tested with.
-* LaTeX PDF templates and Beamer slides are still left out under WASM — they need a typesetter that cannot be run.
+* **Support for PDF export with Pandoc WASM, through Typst.** New template, “PDF (Typst)”: exports a PDF on all devices, mobile included.
+* **Extensions for Pandoc WASM.** New Pandoc WASM extensions store, opens from the Pandoc WASM dashboard card. From it you can install Typst (about 36 MB, comes with its fonts and is stored in the plugin's folder). Fonts: Libertinus, New Computer Modern and DejaVu come with Typst, but you can also specify a vault folder for your own. Current extensions:
+    * Citation styles: APA, Chicago (both), MLA, IEEE, AMA, Nature, Harvard and GOST, from the official CSL repository.
+    * Pandoc's own layout templates for HTML, LaTeX, Typst and EPUB, taken from the version of the build you have.
+    * Reference documents for Word, OpenOffice and PowerPoint — written by Pandoc itself, so nothing is downloaded.
+    * MathJax as a local file, for HTML exports that show their maths offline.
+    * Everything installs into the plugin folder and is named in a template with `${pluginDir}/…`.
+* **Support for web-embedded images on Pandoc WASM.** Images named by URL are fetched by the plugin and put into the document before the conversion starts, up to 64 per export. This is a workaround for a WASM limitation.
 
-### Extensions for Pandoc WASM
-
-* Citation styles: APA, Chicago (both), MLA, IEEE, AMA, Nature, Harvard and GOST, from the official CSL repository.
-* Pandoc's own layout templates for HTML, LaTeX, Typst and EPUB, taken from the version of the build you have.
-* Reference documents for Word, OpenOffice and PowerPoint — written by Pandoc itself, so nothing is downloaded.
-* MathJax as a local file, for HTML exports that show their maths offline.
-* Everything installs into the plugin folder and is named in a template with `${pluginDir}/…`.
-
-### Images by URL
-
-* Images named by URL are fetched by the plugin and put into the document before the conversion starts, up to 64 per export.
-* What could not be fetched is reported as a warning; the export goes on.
+Note: LaTeX PDF templates and Beamer slides are still left out under WASM — they need a typesetter that cannot be run. Typst is basically a workaround to make PDF generation possible on mobile devices and you don't have to use it if you have local Pandoc on your computer.
 
 ### UI/UX enhancements and bug fixes
 
-* Confirmation dialogs are built as Obsidian's own: Cancel first, the action named on the button that goes through with it, and red where something is removed.
-* The edit pencil is back in the templates table on mobile; the table scrolls sideways there instead of folding the names over several lines.
+* Confirmation dialogs were reworked to follow Obsidian's own dialogs.
+* The edit pencil is back in the templates table on mobile and the table scrolls sideways there.
 
 
 ## 2.0.0
@@ -37,14 +28,14 @@
 
 This update introduces full mobile support for the plugin. Now you can export to almost every format and with almost every option into your vault as well as import (convert) files from other formats to Markdown. Pandoc WASM is an optional feature, and you can use it on mobile devices exclusively or on desktop too. The key advantage is that with WASM you don't need to install Pandoc locally at all — the key limitation is the WASM environment.
 
-* **Install Pandoc WASM from the dasboard with one click.** Installation is optional and fully automatic, it imports Pandoc's official WebAssembly build. It is a single file that is stored in the plugin's folder: approximately 56 MB. If you sync your vault, Pandoc WASM will be available on all of your mobile and desktop devices. 
-* **Pandoc WASM supports almost all features of regular Pandoc.** It cannod make PDF, runs no commands of your own and fetches nothing from the network; templates it cannot run are left out of the export dialog, and settings that mean nothing to it are hidden. Export and import on a phone write into the vault. All limitations are imposed by the platform.
+* **Install Pandoc WASM from the dashboard with one click.** Installation is optional and fully automatic, it imports Pandoc's official WebAssembly build. It is a single file that is stored in the plugin's folder: approximately 56 MB. If you sync your vault, Pandoc WASM will be available on all of your mobile and desktop devices.
+* **Pandoc WASM supports almost all features of regular Pandoc.** It cannot make PDF, runs no commands of your own and fetches nothing from the network; templates it cannot run are left out of the export dialog, and settings that mean nothing to it are hidden. Export and import on a phone write into the vault. All limitations are imposed by the platform.
 * **New setting, “Use Pandoc WASM on this computer.”** When disabled, the local Pandoc does the conversion — when enabled, Pandoc WASM does. All mobile devices run the WASM as the only supported option.
-* **New feature: User guide.** As the plugin grows, more features need an explanation. User guide will help with that. For example, all options that are not supported by the Pandoc WASM are listed there. The user guide opens with a command of from the plugin settings.
+* **New feature: User guide.** As the plugin grows, more features need an explanation. User guide will help with that. For example, all options that are not supported by the Pandoc WASM are listed there. The user guide opens with a command or from the plugin settings.
 
 ### UI/UX enhancements and bug fixes
 
-* The dasboard was completely redesigned to fit new features. Note, that Pandoc WASM is updated separately from the regular one, but the update itsef is fully automatic for WASM specifically.
+* The dashboard was completely redesigned to fit new features. Note that Pandoc WASM is updated separately from the regular one, but the update itself is fully automatic for WASM specifically.
 * The device compatibility is checked before anything is downloaded. A device that cannot run Pandoc WASM will be notified.
 
 
@@ -63,8 +54,8 @@ This update introduces full mobile support for the plugin. Now you can export to
 
 * An export runs behind a notice that names the file, shows a progress bar, and turns green when the file is written.
 * The resulting command scrolls sideways instead of wrapping, so a line is an option and a long path no longer folds over several.
-* On MacOS: Fixed a big, buttons, toggles and every other control answer clicks again when the settings open in a popout window.
-* On MacOS: Fixed a big, file dialogs open on the window that asked for them.
+* On macOS: Fixed a bug — buttons, toggles and every other control answer clicks again when the settings open in a popout window.
+* On macOS: Fixed a bug — file dialogs open on the window that asked for them.
 
 
 ## 1.2.1
@@ -79,7 +70,7 @@ This update introduces full mobile support for the plugin. Now you can export to
 
 ---
 
-Chagelog for the 1.2.0 release:
+Changelog for the 1.2.0 release:
 
 > * Fixed a bug when deleted default templates came back on restart.
 > * Localized all lua-filters info in the store.
