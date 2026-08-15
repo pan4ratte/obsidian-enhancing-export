@@ -1,6 +1,6 @@
 This guide can be opened from the command palette by typing “Pandoc GUI: Open user guide”, or with the “User guide” button in the plugin settings.
 
-## 1. Pandoc WASM limitations
+## 1. Pandoc WASM specifics
 
 Pandoc WASM works somewhat differently from the ordinary version because of how it is built. Before exporting with it, mind these limits:
 
