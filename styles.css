@@ -291,6 +291,53 @@
   color: var(--text-muted);
 }
 
+/*
+ * What is new in this version, the first row of the card until it is dismissed.
+ * `overflow` is for the closing: the row is animated down to no height at all,
+ * and what stands in it is cut rather than spilling over the row below.
+ */
+.ex-pandoc-panel-row.ex-changelog-notice {
+  align-items: center;
+  gap: var(--size-4-2);
+  padding: var(--size-4-2) var(--size-4-4);
+  overflow: hidden;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+.ex-changelog-notice-text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The version is what opens the changelog — a link in the line of text rather
+   than a button standing beside it. */
+.ex-changelog-notice .ex-changelog-version {
+  height: auto;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  color: var(--text-accent);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: var(--font-semibold);
+  text-decoration: underline;
+  cursor: var(--cursor);
+}
+
+.ex-changelog-notice .ex-changelog-version:hover {
+  color: var(--text-accent-hover);
+  background: none;
+  box-shadow: none;
+}
+
+.ex-changelog-dismiss {
+  flex: none;
+  color: var(--text-muted);
+}
+
 /* The dot beside the version keeps the state; the notice repeats it only where
    the state is something gone wrong or something to do. */
 .ex-pandoc-notice.is-warning {
@@ -2294,6 +2341,53 @@
 .ex-user-guide-modal.ex-user-guide-modal p,
 .ex-user-guide-modal.ex-user-guide-modal li {
   font-size: var(--font-ui-small);
+}
+
+/* The changelog is read the same way the guide is, and out of the same kind of
+   modal. Its own rules are only what the guide's prose does not cover. */
+.ex-changelog-modal {
+  max-width: 680px;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: auto;
+}
+
+.ex-changelog-modal * {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.ex-changelog-modal.ex-changelog-modal,
+.ex-changelog-modal.ex-changelog-modal p,
+.ex-changelog-modal.ex-changelog-modal li {
+  font-size: var(--font-ui-small);
+}
+
+/* A version is a heading of the page rather than of a section of it, so it is
+   given the air that says so. The first takes none: the modal's title is
+   directly above it. */
+.ex-changelog-modal h2 {
+  margin-top: var(--size-4-6);
+  font-size: var(--font-ui-large);
+}
+
+.ex-changelog-modal h2:first-child {
+  margin-top: 0;
+}
+
+.ex-changelog-modal h3 {
+  margin-bottom: var(--size-4-1);
+  font-size: var(--font-ui-medium);
+}
+
+/* The renderer hands back a bare `ul`, which is left with the 40px the browser
+   gives one — half of that is enough for a bullet to hang in, and it is what
+   the same list is read at in Publish to Telegram. Every level takes it, so a
+   sub-bullet steps in by the same amount rather than by the browser's. */
+.ex-changelog-modal ul,
+.ex-changelog-modal ol {
+  padding-inline-start: var(--size-4-5);
+  margin-bottom: var(--size-4-3);
 }
 
 /* The variables table is the widest thing in the guide: held to the column, so

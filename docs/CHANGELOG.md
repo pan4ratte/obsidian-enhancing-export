@@ -6,18 +6,19 @@
 ### New features
 
 * **Support for PDF export with Pandoc WASM, through Typst.** New template, “PDF (Typst)”: exports a PDF on all devices, mobile included.
-* **Extensions for Pandoc WASM.** New Pandoc WASM extensions store, opens from the Pandoc WASM dashboard card. From it you can install Typst (about 36 MB, comes with its fonts and is stored in the plugin's folder). Fonts: Libertinus, New Computer Modern and DejaVu come with Typst, but you can also specify a vault folder for your own. Current extensions:
+* **Extensions for Pandoc WASM.** New Pandoc WASM extensions store, opens from the Pandoc WASM card on the dashboard. From it you can install Typst (about 36 MB, comes with its fonts and is stored in the plugin's folder). Fonts: Libertinus, New Computer Modern and DejaVu come with Typst, but you can also specify a vault folder for your own. Current extensions:
     * Citation styles: APA, Chicago (both), MLA, IEEE, AMA, Nature, Harvard and GOST, from the official CSL repository.
-    * Pandoc's own layout templates for HTML, LaTeX, Typst and EPUB, taken from the version of the build you have.
-    * Reference documents for Word, OpenOffice and PowerPoint — written by Pandoc itself, so nothing is downloaded.
+    * Pandoc's own layout templates for HTML, LaTeX, Typst and EPUB, taken from the current build.
+    * Reference documents for Word, OpenOffice and PowerPoint — Pandoc generates them, so nothing is downloaded.
     * MathJax as a local file, for HTML exports that show their maths offline.
     * Everything installs into the plugin folder and is named in a template with `${pluginDir}/…`.
-* **Support for web-embedded images on Pandoc WASM.** Images named by URL are fetched by the plugin and put into the document before the conversion starts, up to 64 per export. This is a workaround for a WASM limitation.
+* **Support for web-embedded images on Pandoc WASM.** Images embedded in notes by URL are fetched by the plugin and put into the document before the conversion starts, up to 64 per export. This is a workaround for a WASM limitation.
 
-Note: LaTeX PDF templates and Beamer slides are still left out under WASM — they need a typesetter that cannot be run. Typst is basically a workaround to make PDF generation possible on mobile devices and you don't have to use it if you have local Pandoc on your computer.
+Note: PDF templates that export through LaTeX, and Beamer slides, are still unavailable under WASM — they need a typesetter that cannot be run there. Typst is basically a workaround to make PDF generation possible on mobile devices and you don't have to use it if you have a local Pandoc with those engines on your computer.
 
 ### UI/UX enhancements and bug fixes
 
+* The dashboard opens with a “What's new” card: the version opens the plugin's changelog, and the notice can be dismissed until the next update.
 * Confirmation dialogs were reworked to follow Obsidian's own dialogs.
 * The edit pencil is back in the templates table on mobile and the table scrolls sideways there.
 

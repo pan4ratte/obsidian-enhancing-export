@@ -43,6 +43,7 @@ export default defineConfig(({ mode }) => {
         ]
       }) : undefined,
       textLoader(TEXT_FILES), // src/resources.ts, src/lang/helpers.ts
+      stubImportMetaUrl(/@myriaddreamin[\\/]/),
       prod ? undefined : inject(['src/hmr.ts']),
     ],
     build: {
@@ -117,6 +118,23 @@ const silence = (pattern: RegExp) => {
   };
   return logger;
 };
+
+
+/**
+ * Typst's wasm-bindgen wrappers end in a branch that fetches the `.wasm` beside themselves, named against
+ * `import.meta.url`. The plugin never takes it — the compiler is handed the binary the vault has on disk — and a cjs
+ * bundle has no `import.meta` to give it, so rolldown replaces the whole expression with `{}` and warns that it did.
+ * Written out here instead, which leaves the dead branch dead and the build quiet.
+ */
+const stubImportMetaUrl = (test: RegExp): Plugin => ({
+  name: 'stub-import-meta-url',
+  enforce: 'pre',
+  transform(code, id) {
+    if (test.test(id) && code.includes('import.meta.url')) {
+      return { code: code.replaceAll('import.meta.url', 'undefined'), map: null };
+    }
+  },
+});
 
 
 const inject = (files: string[]): Plugin => {
