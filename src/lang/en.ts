@@ -81,6 +81,7 @@ export default {
     fileInUse: 'The file may be open in another program — a PDF viewer, Word, or a preview pane. Close it and export again.',
     outputFolder: 'The export folder could not be written to. Pick a folder that exists, or create it first.',
     pdfEngine: 'The PDF engine is not installed. Install a LaTeX distribution (MiKTeX, TeX Live or TinyTeX), or choose another engine under Advanced in the template.',
+    typstEngine: 'Typst is not installed: the local Pandoc could not find it on the system. Install Typst from the extensions store — the Pandoc WASM card in the plugin settings — and it will set the PDF, or install Typst on the system.',
     pandocNotFound: 'Pandoc could not be run. Install it, or set the Pandoc folder in this plugin’s settings.',
     latexUnicode: 'pdfLaTeX cannot write these characters. Switch the template’s PDF engine to XeLaTeX or LuaLaTeX under Advanced.',
     latexPackage: 'A LaTeX package is missing. Install it with your TeX distribution’s package manager, then export again.',
@@ -120,7 +121,7 @@ export default {
   PANDOC_MANUAL: 'Pandoc manual',
   USER_GUIDE: 'User guide',
   CHANGELOG_TITLE: 'What’s new',
-  CHANGELOG_BANNER_PREFIX: 'What’s new in plugin\'s version ',
+  CHANGELOG_BANNER_PREFIX: "What’s new in plugin's version ",
   CHANGELOG_BANNER_DISMISS: 'Dismiss until the next update',
   PANDOC_FOLDER: 'Pandoc folder',
   PANDOC_PATH: 'Pandoc path',
@@ -372,7 +373,7 @@ export default {
 
   // ─── Layout template and includes ────────────────────────────────────────────
   OUTPUT_TEMPLATE: 'Layout template',
-  OUTPUT_TEMPLATE_DESC: 'A pandoc template of your own, in place of the built-in one for this format.',
+  OUTPUT_TEMPLATE_DESC: (extension: string) => `A pandoc template of your own, in place of the built-in one. For the format selected that is a ${extension} file.`,
   STYLESHEET: 'Stylesheet',
   STYLESHEET_DESC: 'A CSS file the written page links to.',
   INCLUDES: 'Include files',

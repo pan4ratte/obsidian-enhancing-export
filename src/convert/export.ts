@@ -13,6 +13,7 @@ import { renameHighlightFlags } from '../args/writer_args';
 import { outputArg } from '../args/output_arg';
 import { resolveEngine, unsupportedBy, writesTypstPdf } from '../pandoc/engine';
 import { convertWithWasm } from '../wasm/convert';
+import { typesetTypstPdf } from './typst_pdf';
 import { FileStore } from '../system/file_store';
 import { download } from '../system/download';
 import { basename, dirname, normalize, resolve, stem } from '../system/paths';
@@ -315,8 +316,31 @@ export async function exportNote(
       warnings = [dropped, result.stderr.trim()].filter(Boolean).join('\n\n');
     } else {
       progress.running(variables.outputFileFullName);
-      const { stderr } = await exec(cmd, { cwd: variables.currentDir, env });
-      warnings = stderr.trim();
+      const run = (command: string) => exec(command, { cwd: variables.currentDir, env });
+      try {
+        const { stderr } = await run(cmd);
+        warnings = stderr.trim();
+      } catch (err) {
+        // The machine has no typst to set the PDF with, and the plugin has one. Pandoc has already done its half of
+        // the work — it is asked for the source instead, and the wasm build sets it. Anything else fails as it did.
+        if (!(writesTypstPdf(setting) && describeExportFailure(err, cmd).hint === 'typstEngine' && (await plugin.typst.isInstalled()))) {
+          throw err;
+        }
+        progress.starting();
+        const typst = await plugin.typst.load();
+        progress.running(variables.outputFileFullName);
+        warnings = await typesetTypstPdf({
+          command: cmd,
+          run,
+          // Where the export told pandoc to look for what the note names, in the order it told it.
+          searchPaths: [variables.currentDir, variables.attachmentFolderPath, ...variables.embedDirs.split(PATH_SEPARATOR())].filter(
+            Boolean
+          ),
+          outputPath: actualOutputPath,
+          typst,
+          files,
+        });
+      }
     }
 
     // Pandoc writes its warnings here and exports the file all the same, so they are reported rather than thrown.

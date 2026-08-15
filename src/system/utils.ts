@@ -42,6 +42,12 @@ export interface ExecResult {
   stderr: string;
 }
 
+/**
+ * What a run may print before node gives up on holding it. Node's own megabyte is a document's worth of typst source
+ * short of enough — pandoc prints that where nothing names a file to put it in, see `src/convert/typst_pdf.ts`.
+ */
+const OUTPUT_LIMIT = 64 * 1024 * 1024;
+
 /** Run a command. Node's, so only where there is one — the wasm engine is what a phone converts with. */
 export async function exec(cmd: string, options?: { cwd?: string; env?: Record<string, string> }): Promise<ExecResult> {
   // Obsidian's own check, not this plugin's `isDesktop`: a phone being emulated is given no node to run anything
@@ -52,7 +58,7 @@ export async function exec(cmd: string, options?: { cwd?: string; env?: Record<s
   const { exec: run } = await import('child_process');
   return await new Promise((resolve, reject) => {
     // Naming the encoding picks the overload that returns text rather than a Buffer.
-    run(cmd, { ...options, encoding: 'utf8' }, (error, stdout, stderr) => {
+    run(cmd, { maxBuffer: OUTPUT_LIMIT, ...options, encoding: 'utf8' }, (error, stdout, stderr) => {
       if (error) {
         console.error(stdout, stderr, error);
         reject(error);

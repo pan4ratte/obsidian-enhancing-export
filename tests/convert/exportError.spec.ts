@@ -66,6 +66,16 @@ describe('what to try', () => {
     expect(describe_(execError("'xelatex' is not recognized as an internal or external command")).recommendation).toBe(hint.pdfEngine);
   });
 
+  test('a missing typst is its own answer: the plugin has one, and it is not the one pandoc runs', () => {
+    expect(describe_(execError('pandoc: typst not found. Please select a different --pdf-engine or install typst')).recommendation).toBe(
+      hint.typstEngine
+    );
+    expect(describe_(execError("'typst' is not recognized as an internal or external command")).recommendation).toBe(hint.typstEngine);
+    expect(describe_(execError('/bin/sh: typst: command not found')).recommendation).toBe(hint.typstEngine);
+    // What typst itself says about a document it could not set is not this.
+    expect(describe_(execError('error: unknown variable\n  ┌─ Note.typ:3:1')).recommendation).not.toBe(hint.typstEngine);
+  });
+
   test('nothing ran at all', () => {
     expect(
       describe_(execError("'pandoc' is not recognized as an internal or external command,\noperable program or batch file.")).recommendation

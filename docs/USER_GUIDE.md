@@ -14,7 +14,7 @@ Pandoc WASM works somewhat differently from the ordinary version because of how 
 
 Pandoc WASM has limits built into how it works, and these extensions are what gets around them. The ordinary local Pandoc has no such limits, so the extensions matter above all on a mobile device. They install from the extensions icon on the Pandoc WASM card and live in the plugin folder, so a template can name them with `${pluginDir}`:
 
-* **Typst** and **fonts** — typesetting a PDF, as above.
+* **Typst** and **fonts** — typesetting a PDF, as above. It earns its place on a computer too: where the local Pandoc finds no Typst on the system, this build sets the “PDF (Typst)” template's PDF.
 * **Emoji font** — Noto Color Emoji; without it the emoji in a note never reach the PDF.
 * **Citation styles** — nine styles asked for often: APA, Chicago (both schemes), MLA, IEEE, AMA, Nature, Harvard and GOST R 7.0.5-2008. Name the one you want under “Citation style” in a template.
 * **Pandoc layout templates** — its own HTML, LaTeX, Typst and EPUB templates, from the version you have: copy one, change it, name it under “Template”.

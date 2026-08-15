@@ -1,4 +1,4 @@
-import { outputArg } from '../../src/args/output_arg';
+import { outputArg, withoutOutputArg } from '../../src/args/output_arg';
 import { trimQuotes } from '../../src/system/utils';
 
 /** What `export.ts` ends up with: the argument as written, with its quotes taken off. */
@@ -75,5 +75,37 @@ describe('outputArg', () => {
   test('a value glued to a short flag is not an output path', () => {
     // `-oout.pdf` is a cluster ending in `f`. Reading it as a path would be a guess; the caller reports it instead.
     expect(output('pandoc "in.md" -oout.pdf')).toBeUndefined();
+  });
+});
+
+/* Taking the flag back out is how pandoc is asked for the typst source on stdout — see `src/convert/typst_pdf.ts`. */
+describe('withoutOutputArg', () => {
+  test('drops the flag and the path it names, however they are spelled', () => {
+    expect(withoutOutputArg('pandoc "in.md" -o "out.pdf"')).toBe('pandoc "in.md"');
+    expect(withoutOutputArg('pandoc "in.md" -o out.pdf')).toBe('pandoc "in.md"');
+    expect(withoutOutputArg('pandoc "in.md" --output "out.pdf"')).toBe('pandoc "in.md"');
+    expect(withoutOutputArg('pandoc "in.md" --output=out.pdf')).toBe('pandoc "in.md"');
+    expect(withoutOutputArg('pandoc "in.md" -o="out.pdf"')).toBe('pandoc "in.md"');
+    expect(withoutOutputArg('pandoc "in.md" -o"out.pdf"')).toBe('pandoc "in.md"');
+  });
+
+  test('everything else stands, in the order it was written', () => {
+    expect(withoutOutputArg('pandoc "in.md" -s -o "out.pdf" -t typst --pdf-engine=typst')).toBe(
+      'pandoc "in.md" -s -t typst --pdf-engine=typst'
+    );
+    expect(withoutOutputArg('pandoc "in.md" --lua-filter="x/y.lua" -o "out.pdf"')).toBe('pandoc "in.md" --lua-filter="x/y.lua"');
+  });
+
+  test('a cluster keeps the flags that are not the output', () => {
+    expect(withoutOutputArg('pandoc "in.md" -so "out.pdf"')).toBe('pandoc "in.md" -s');
+  });
+
+  test('a flag that only starts the same is left alone', () => {
+    expect(withoutOutputArg('pandoc "in.md" --output-x "keep.pdf" -o "drop.pdf"')).toBe('pandoc "in.md" --output-x "keep.pdf"');
+  });
+
+  test('a command that names no output is handed back as it was', () => {
+    expect(withoutOutputArg('pandoc "in.md" -t typst')).toBe('pandoc "in.md" -t typst');
+    expect(withoutOutputArg('')).toBe('');
   });
 });

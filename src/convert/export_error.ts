@@ -1,15 +1,17 @@
 import { t } from '../lang/helpers';
 import { TemplateError } from '../templates/template';
 
+type Hints = typeof t.ERROR_HINTS;
+
 /** A failed export, with the command line stripped out and a suggestion where one is known. */
 export interface ExportFailure {
   /** The error as it was reported, with the command line taken out. */
   detail: string;
   /** What to try, for the errors that come up again and again. */
   recommendation?: string;
+  /** Which of them this was, for a caller that does something about it rather than saying it — see `typst_pdf.ts`. */
+  hint?: keyof Hints;
 }
-
-type Hints = typeof t.ERROR_HINTS;
 
 /** The errors worth recognising, most specific first — the first pattern to match wins. */
 const RECOMMENDATIONS: ReadonlyArray<readonly [RegExp, keyof Hints]> = [
@@ -20,6 +22,9 @@ const RECOMMENDATIONS: ReadonlyArray<readonly [RegExp, keyof Hints]> = [
   ],
   // The plugin's own `mkdir` before the command runs.
   [/no such file or directory, (mkdir|open)|ENOTDIR/i, 'outputFolder'],
+  // Typst before the rest of the engines: the plugin installs one of its own, so a reader who has done that is owed
+  // the reason it was not the one run — and the LaTeX distributions named below are no answer here.
+  [/\btypst(\.exe)?\b[^\n]{0,60}(not found|is not recognized|no such file|does not exist|cannot be found)|install typst/i, 'typstEngine'],
   // Pandoc names the engine it could not run, and says so twice over.
   [
     /select a different --pdf-engine|\b(pdflatex|xelatex|lualatex|tectonic|context|wkhtmltopdf|weasyprint|prince|typst|pdfroff)(\.exe)?\b[^\n]{0,60}(not found|is not recognized|no such file|does not exist|cannot be found)/i,
@@ -86,8 +91,8 @@ export function describeExportFailure(err: unknown, cmd: string): ExportFailure 
   // Recognised by type rather than by pattern: this one is the plugin's own, and
   // nothing pandoc writes should be able to claim it.
   if (err instanceof TemplateError) {
-    return { detail, recommendation: t.ERROR_HINTS.template };
+    return { detail, recommendation: t.ERROR_HINTS.template, hint: 'template' };
   }
   const matched = RECOMMENDATIONS.find(([pattern]) => pattern.test(detail));
-  return { detail, recommendation: matched && t.ERROR_HINTS[matched[1]] };
+  return { detail, recommendation: matched && t.ERROR_HINTS[matched[1]], hint: matched?.[1] };
 }

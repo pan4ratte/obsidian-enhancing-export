@@ -17,6 +17,38 @@ const SHORT = /^-(?!-)[a-zA-Z]*o(?:=(.*)|("(?:[^"]*)")|)$/s;
  * own `-o` comes first and the user's extra arguments are appended after it, so theirs is meant to be the one that
  * counts.
  */
+/**
+ * The same command with every `-o`/`--output` taken out of it, which is how pandoc is asked for its output on stdout
+ * instead of in a file. A cluster keeps the flags that are not the `o`: `-so` is `-s` with the output dropped.
+ */
+export const withoutOutputArg = (cmd: string): string => {
+  const tokens = cmd.match(TOKENS);
+  if (!tokens) {
+    return cmd;
+  }
+  const kept: string[] = [];
+  for (let i = 0; i < tokens.length; i += 1) {
+    const token = tokens[i];
+    const long = LONG.exec(token);
+    const short = long ? null : SHORT.exec(token);
+    if (!long && !short) {
+      kept.push(token);
+      continue;
+    }
+    if (short) {
+      const others = token.replace(/^(-[a-zA-Z]*)o(?:=.*|"[^"]*")?$/s, '$1');
+      if (others.length > 1) {
+        kept.push(others);
+      }
+    }
+    // A bare flag names its path in the token after it, which goes with it.
+    if ((long ? long[1] : (short[1] ?? short[2])) === undefined) {
+      i += 1;
+    }
+  }
+  return kept.join(' ');
+};
+
 export const outputArg = (cmd: string): string | undefined => {
   const tokens = cmd.match(TOKENS);
   if (!tokens) {

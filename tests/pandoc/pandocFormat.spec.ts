@@ -25,6 +25,7 @@ import {
   supportsTopLevelDivision,
   supportsVariable,
   supportsWrap,
+  templateExtension,
 } from '../../src/pandoc/pandoc_format';
 import { CURATED_VARIABLES } from '../../src/args/writer_args';
 
@@ -324,5 +325,45 @@ describe('which filters a writer can use', () => {
 
   test('a template whose writer cannot be made out is not narrowed down', () => {
     expect(runsInFormat(['latex'], undefined)).toBe(true);
+  });
+});
+
+/*
+ * A `--template` named without an extension is looked for with one, and the template editor says which. Every value
+ * below was read back from pandoc 3.10 itself: asked for a template that is not there, it names the file it looked for.
+ */
+describe('the extension a template is expected to carry', () => {
+  test('is the name of the writer itself, which is not always the language it writes', () => {
+    expect(templateExtension('html')).toBe('.html');
+    expect(templateExtension('html5')).toBe('.html5');
+    expect(templateExtension('latex')).toBe('.latex');
+    expect(templateExtension('beamer')).toBe('.beamer');
+    expect(templateExtension('typst')).toBe('.typst');
+    expect(templateExtension('revealjs')).toBe('.revealjs');
+    expect(templateExtension('epub3')).toBe('.epub3');
+    expect(templateExtension('markdown')).toBe('.markdown');
+    expect(templateExtension('ms')).toBe('.ms');
+  });
+
+  test('for a PDF it is the writer the engine sets from, LaTeX unless another is named', () => {
+    expect(templateExtension('pdf')).toBe('.latex');
+    expect(templateExtension('pdf', 'xelatex')).toBe('.latex');
+    expect(templateExtension('pdf', 'lualatex')).toBe('.latex');
+    expect(templateExtension('pdf', 'tectonic')).toBe('.latex');
+    expect(templateExtension('pdf', 'latexmk')).toBe('.latex');
+    expect(templateExtension('pdf', 'typst')).toBe('.typst');
+    expect(templateExtension('pdf', 'context')).toBe('.context');
+    expect(templateExtension('pdf', 'wkhtmltopdf')).toBe('.html');
+    expect(templateExtension('pdf', 'weasyprint')).toBe('.html');
+    expect(templateExtension('pdf', 'pagedjs-cli')).toBe('.html');
+    expect(templateExtension('pdf', 'prince')).toBe('.html');
+    expect(templateExtension('pdf', 'groff')).toBe('.ms');
+  });
+
+  test('there is none where a template lays nothing out', () => {
+    expect(templateExtension('docx')).toBeUndefined();
+    expect(templateExtension('odt')).toBeUndefined();
+    expect(templateExtension('pptx')).toBeUndefined();
+    expect(templateExtension(undefined)).toBeUndefined();
   });
 });

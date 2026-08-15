@@ -13,6 +13,7 @@
     * MathJax as a local file, for HTML exports that show their maths offline.
     * Everything installs into the plugin folder and is named in a template with `${pluginDir}/…`.
 * **Support for web-embedded images on Pandoc WASM.** Images embedded in notes by URL are fetched by the plugin and put into the document before the conversion starts, up to 64 per export. This is a workaround for a WASM limitation.
+* **“PDF (Typst)” works without a Typst on the computer too.** Where the local Pandoc finds no Typst on the computer, the PDF is set by the Typst built into the plugin, automatically: Pandoc writes the source, the WASM extension typesets it, and the note's images go into the document.
 
 Note: PDF templates that export through LaTeX, and Beamer slides, are still unavailable under WASM — they need a typesetter that cannot be run there. Typst is basically a workaround to make PDF generation possible on mobile devices and you don't have to use it if you have a local Pandoc with those engines on your computer.
 
@@ -21,6 +22,8 @@ Note: PDF templates that export through LaTeX, and Beamer slides, are still unav
 * The dashboard opens with a “What's new” card: the version opens the plugin's changelog, and the notice can be dismissed until the next update.
 * Confirmation dialogs were reworked to follow Obsidian's own dialogs.
 * The edit pencil is back in the templates table on mobile and the table scrolls sideways there.
+* With Typst installed neither on the system nor in the plugin, the export error suggests installing it rather than a LaTeX distribution.
+* The “Layout template” row in the template editor names the extension Pandoc expects for the selected format.
 
 
 ## 2.0.0

@@ -195,6 +195,7 @@ import {
   supportsSectionLists,
   supportsSplitLevel,
   supportsTemplate,
+  templateExtension,
   supportsToc,
   supportsTopLevelDivision,
   supportsVariable,
@@ -795,7 +796,12 @@ const SettingTab = (props: { plugin: PandocGuiPlugin }) => {
         </Show>
 
         <Show when={supportsTemplate(format())}>
-          <Setting name={t.OUTPUT_TEMPLATE} description={t.OUTPUT_TEMPLATE_DESC} class="ex-template-modal-output-template">
+          {/* Named without one, a template is looked for under the extension the writer expects — so the row says which. */}
+          <Setting
+            name={t.OUTPUT_TEMPLATE}
+            description={t.OUTPUT_TEMPLATE_DESC(templateExtension(format(), pdfEngine(args())))}
+            class="ex-template-modal-output-template"
+          >
             <FileInput
               value={templateFile(args())}
               filters={[ANY_FILE]}

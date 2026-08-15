@@ -156,6 +156,36 @@ const TEMPLATE_UNSUPPORTED = new Set(['biblatex', 'bibtex', 'csljson', 'docx', '
 
 export const supportsTemplate = (writer?: string): boolean => !!writer && !TEMPLATE_UNSUPPORTED.has(writer);
 
+/**
+ * The writer a PDF engine lays its pages out with, for the engines that are not LaTeX. `-t pdf` names no writer of its
+ * own: pandoc picks one from the engine, and it is that one whose template a `--template` stands in for.
+ */
+const PDF_TEMPLATE_WRITERS: Record<string, string> = {
+  typst: 'typst',
+  context: 'context',
+  weasyprint: 'html',
+  'pagedjs-cli': 'html',
+  prince: 'html',
+  wkhtmltopdf: 'html',
+  groff: 'ms',
+  pdfroff: 'ms',
+};
+
+/**
+ * The extension pandoc adds to a `--template` that is named without one — `special` is `special.html` for HTML — or
+ * nothing where the writer lays nothing out with a template.
+ *
+ * The extension is the writer's own name, which is not always the name of the language it writes: `-t html5` wants
+ * `.html5`. Measured against pandoc 3.10 by asking it for a template that is not there and reading back the file it
+ * says it looked for.
+ */
+export const templateExtension = (writer?: string, pdfEngine?: string): string | undefined => {
+  if (!supportsTemplate(writer)) {
+    return undefined;
+  }
+  return `.${isPdfOutput(writer) ? (PDF_TEMPLATE_WRITERS[pdfEngine ?? ''] ?? 'latex') : writer}`;
+};
+
 /** `--eol`: the writers whose output is a text file with lines to end. */
 const EOL_UNSUPPORTED = new Set(['docx', 'odt', 'opendocument', 'pptx', 'epub', 'epub2', 'epub3', 'pdf']);
 
