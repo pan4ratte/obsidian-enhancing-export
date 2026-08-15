@@ -23,7 +23,6 @@ Note: PDF templates that export through LaTeX, and Beamer slides, are still unav
 * Confirmation dialogs were reworked to follow Obsidian's own dialogs.
 * The edit pencil is back in the templates table on mobile and the table scrolls sideways there.
 * With Typst installed neither on the system nor in the plugin, the export error suggests installing it rather than a LaTeX distribution.
-* The “Layout template” row in the template editor names the extension Pandoc expects for the selected format.
 
 
 ## 2.0.0
