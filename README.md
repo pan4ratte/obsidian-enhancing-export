@@ -164,7 +164,7 @@ Want to add a filter of your own? The folder's [readme](lua-filters/README.md) s
 
 This guide is available inside the plugin too: the “Pandoc GUI: Open user guide” command in the command palette, or the “User guide” button in the settings.
 
-## 1. Pandoc WASM limitations
+## 1. Pandoc WASM specifics
 
 Pandoc WASM works somewhat differently from the ordinary version because of how it is built. Before exporting with it, mind these limits:
 
