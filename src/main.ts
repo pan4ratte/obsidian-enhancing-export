@@ -51,10 +51,13 @@ export default class PandocGuiPlugin extends Plugin {
       callback: async () => {
         const file = this.app.workspace.getActiveFile();
         if (file) {
-          if (this.settings.lastExportType && this.settings.lastExportDirectory) {
+          // This device's own folder, not merely some device's: a vault that has exported on the computer carries a
+          // folder for it, and a phone reading the same settings has none of its own until it has exported once.
+          const directory = getPlatformValue(this.settings.lastExportDirectory);
+          if (this.settings.lastExportType && directory) {
             const setting = this.settings.items.find(s => s.name === this.settings.lastExportType);
             if (setting) {
-              await exportNote(this, file, getPlatformValue(this.settings.lastExportDirectory), undefined, setting);
+              await exportNote(this, file, directory, undefined, setting);
               return;
             }
           }

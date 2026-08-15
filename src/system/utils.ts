@@ -3,9 +3,10 @@ import { currentPlatform } from './platform';
 
 /**
  * The platforms a setting can be given a value of its own on: node's own names for the desktops, which is what vaults
- * have stored since before there was a phone to run on, plus one for each phone.
+ * have stored since before there was a phone to run on, one for each phone, and one for a desktop emulating a phone —
+ * which answers a phone's questions with a phone's answers and must not put them where the computer's own are kept.
  */
-export type PlatformKey = NodeJS.Platform | 'ios' | 'android' | '*';
+export type PlatformKey = NodeJS.Platform | 'ios' | 'android' | 'emulated' | '*';
 
 export type PlatformValue<T> = { [k in PlatformKey]?: T };
 

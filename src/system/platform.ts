@@ -9,15 +9,22 @@ import { Platform, type DataAdapter } from 'obsidian';
 import { normalize } from './paths';
 import type { PlatformKey } from './utils';
 
-/** Whether this device is a phone or a tablet — what can be run on it, and nothing about how it is drawn. */
-export const isMobile = (): boolean => Platform.isMobileApp;
+/**
+ * Whether this runs as a phone does — what the plugin can actually do, and nothing about how it is drawn.
+ *
+ * A desktop emulating a phone counts, because Obsidian withholds every node package from a plugin while it does: no
+ * pandoc to run, no file system outside the vault, no electron. Asking `isMobileApp` instead gets a desktop under
+ * emulation as far as a command it cannot start, which is how an export used to end in a node error rather than in
+ * the wasm build the phone it was pretending to be would have used.
+ */
+export const isMobile = (): boolean => !Platform.isDesktop;
 
 /**
  * Whether Obsidian is drawing its mobile UI, which a desktop emulating a phone is doing too.
  *
  * What the plugin shows follows this, so that emulation is worth something: a desktop set to emulate a phone gets the
- * settings a phone gets, the installed pandoc and all of its rows left out. What the plugin can actually do follows
- * `isMobile` — under emulation there is still a node to run pandoc with, and exports go on running it.
+ * settings a phone gets, the installed pandoc and all of its rows left out. What the plugin can do follows `isMobile`,
+ * which under emulation says the same — a phone's UI over a phone's abilities is the whole point of the pretence.
  */
 export const isMobileUi = (): boolean => Platform.isMobile;
 
@@ -40,13 +47,12 @@ export const isPhoneUi = (): boolean => Platform.isPhone;
 export const isEmulatingMobile = (): boolean => typeof document !== 'undefined' && document.body.hasClass('emulate-mobile');
 
 /**
- * Whether this is a desktop at all — which a desktop emulating a phone still is, and goes on exporting as.
+ * Whether node and electron are there to be reached — the one question worth asking before reaching for either.
  *
- * Not the question to ask before reaching for node: `Platform.isDesktop` is, being the one that turns over under
- * emulation, where Obsidian withholds node from a plugin whatever the device really is. Every `import()` of a node
- * package in this plugin is guarded by that one, which is also the guard Obsidian's own lint rule reads.
+ * `Platform.isDesktop` is what answers it, being the flag that turns over under emulation as well as on a phone; it is
+ * also the guard Obsidian's own lint rule reads. Every `import()` of a node package in this plugin stands behind this.
  */
-export const isDesktop = (): boolean => !Platform.isMobileApp;
+export const isDesktop = (): boolean => Platform.isDesktop;
 
 /**
  * Which platform a per-platform setting belongs to.
@@ -61,6 +67,12 @@ export const currentPlatform = (): PlatformKey => {
   }
   if (Platform.isAndroidApp) {
     return 'android';
+  }
+  // A desktop pretending to be a phone answers as a phone: an export folder picked there is one of the vault's, chosen
+  // because nothing outside it can be written to. Kept in a slot of its own, so a session spent testing the phone's
+  // side of a synced vault does not write over the folder the computer itself exports to.
+  if (isEmulatingMobile()) {
+    return 'emulated';
   }
   return Platform.isWin ? 'win32' : Platform.isMacOS ? 'darwin' : 'linux';
 };
@@ -85,7 +97,7 @@ const dialogWindow = async () => {
 
 /** A page opened outside Obsidian, however this platform opens one. */
 export const openExternal = (url: string): void => {
-  if (isMobile()) {
+  if (!isDesktop()) {
     window.open(url, '_blank');
     return;
   }
@@ -119,7 +131,7 @@ export const chooseFile = async (options: {
   folder?: boolean;
   defaultPath?: string;
 }): Promise<string | undefined> => {
-  if (isMobile()) {
+  if (!isDesktop()) {
     return undefined;
   }
   const ct = await electron();
@@ -133,7 +145,7 @@ export const chooseFile = async (options: {
 
 /** Where to save a file, asked of the system with the overwrite warning it puts up itself. */
 export const chooseSavePath = async (options: { title?: string; defaultPath?: string }): Promise<string | undefined> => {
-  if (isMobile()) {
+  if (!isDesktop()) {
     return options.defaultPath;
   }
   const ct = await electron();
@@ -147,7 +159,7 @@ export const chooseSavePath = async (options: { title?: string; defaultPath?: st
 
 /** The folder a file dialog starts in when nothing better is known. */
 export const documentsFolder = async (): Promise<string | undefined> => {
-  if (isMobile()) {
+  if (!isDesktop()) {
     return undefined;
   }
   const ct = await electron();

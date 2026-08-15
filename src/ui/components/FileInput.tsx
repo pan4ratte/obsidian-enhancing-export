@@ -34,7 +34,7 @@ export default (props: {
   return (
     <>
       <Text style="width: 100%" value={props.value ?? ''} tooltip={props.value} placeholder={props.placeholder} onChange={props.onChange} />
-      {/* Typed rather than chosen on a phone, which has no dialog to open. */}
+      {/* Typed rather than chosen where there is no dialog to open — a phone, and a desktop emulating one. */}
       <Show when={isDesktop()}>
         <ExtraButton icon={props.folder ? 'folder' : 'folder-open'} tooltip={props.tooltip} onClick={() => void pick()} />
       </Show>
