@@ -9,7 +9,7 @@
 
 ### UI/UX enhancements and bug fixes
 
-* The lua-filter store's shelves are merged: five instead of eight, none of them named after an output format.
+* The lua-filter store's chip row is shorter: five shelves instead of eight, none of them named after an output format, and no "No setup needed" chip.
 
 
 

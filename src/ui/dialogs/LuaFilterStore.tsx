@@ -16,7 +16,7 @@ import Icon from '../components/Icon';
 import { tooltip } from '../components/tooltip';
 
 /** The chips above the list: how a filter stands, then the shelf it sits on. */
-type Chip = LuaFilterCategory | 'all' | 'installed' | 'updatable' | 'nosetup';
+type Chip = LuaFilterCategory | 'all' | 'installed' | 'updatable';
 
 const CATEGORY_ICON: Record<LuaFilterCategory, string> = {
   structure: 'layers',
@@ -101,16 +101,7 @@ export default (props: {
   };
 
   const inChip = (e: LuaFilterEntry, value: Chip) =>
-    value === 'all'
-      ? true
-      : value === 'installed'
-        ? !!installedOf(e.id)
-        : value === 'updatable'
-          ? isUpdatable(e)
-          : value === 'nosetup'
-            ? // Nothing to install or configure first.
-              !e.requires
-            : e.category === value;
+    value === 'all' ? true : value === 'installed' ? !!installedOf(e.id) : value === 'updatable' ? isUpdatable(e) : e.category === value;
 
   /** Anything on disk that the catalogue has a newer copy of, whatever is being shown. */
   const updatableCount = createMemo(() => allEntries().filter(isUpdatable).length);
@@ -124,7 +115,6 @@ export default (props: {
       ['installed', t.STORE_CHIP_INSTALLED],
       // Offered only when there is something to update, whatever is being shown.
       ...(updatableCount() > 0 ? ([['updatable', t.STORE_CHIP_UPDATABLE]] as const) : []),
-      ['nosetup', t.STORE_CHIP_NO_SETUP],
       ...shelves.map(c => [c, t.STORE_CATEGORY_LABELS[c]] as const),
     ].map(([value, label]: [Chip, string]) => ({ value, label, count: counted(value) }));
   });

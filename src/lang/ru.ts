@@ -483,7 +483,6 @@ export default {
   STORE_CHIP_ALL: 'Все',
   STORE_CHIP_INSTALLED: 'Установленные',
   STORE_CHIP_UPDATABLE: 'Доступно обновление',
-  STORE_CHIP_NO_SETUP: 'Без настройки',
   STORE_CATEGORY_LABELS: {
     structure: 'Структура',
     citations: 'Цитаты',

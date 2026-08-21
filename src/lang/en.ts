@@ -483,7 +483,6 @@ export default {
   STORE_CHIP_ALL: 'All',
   STORE_CHIP_INSTALLED: 'Installed',
   STORE_CHIP_UPDATABLE: 'Update available',
-  STORE_CHIP_NO_SETUP: 'No setup needed',
   STORE_CATEGORY_LABELS: {
     structure: 'Structure',
     citations: 'Citations',
