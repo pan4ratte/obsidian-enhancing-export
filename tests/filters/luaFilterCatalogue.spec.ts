@@ -45,12 +45,12 @@ describe('reading a catalogue', () => {
         description: 'Counts words.',
         author: 'JM',
         license: 'MIT',
-        category: 'tools',
+        category: 'structure',
         path: 'pandoc/wordcount.lua',
       },
     ]);
     const [entry] = await manager().fetchCatalogue();
-    expect(entry).toMatchObject({ id: 'wordcount', storeName: 'Word count', author: 'JM', license: 'MIT', category: 'tools' });
+    expect(entry).toMatchObject({ id: 'wordcount', storeName: 'Word count', author: 'JM', license: 'MIT', category: 'structure' });
   });
 
   test('an unknown or missing category becomes the catch-all shelf', async () => {
@@ -62,6 +62,15 @@ describe('reading a catalogue', () => {
     expect(entries.map(e => e.category)).toEqual(['other', 'other']);
     // A row with no name of its own is still a row, under its id.
     expect(entries[0].storeName).toBe('a');
+  });
+
+  test('a shelf that has since been merged lands on the one that took it', async () => {
+    serve([
+      { id: 'a', category: 'word', path: 'a.lua' },
+      { id: 'b', category: 'latex', path: 'b.lua' },
+      { id: 'c', category: 'tools', path: 'c.lua' },
+    ]);
+    expect((await manager().fetchCatalogue()).map(e => e.category)).toEqual(['prose', 'prose', 'other']);
   });
 
   test('a row with nothing to fetch, or nothing to call it, is skipped rather than fatal', async () => {
@@ -101,7 +110,7 @@ describe('reading a catalogue in the vault’s language', () => {
       description: 'Counts words.',
       requires: 'Nothing at all.',
       author: 'JM',
-      category: 'tools',
+      category: 'structure',
       path: 'pandoc/wordcount.lua',
       i18n: { ru: { storeName: 'Подсчёт слов', description: 'Считает слова.', requires: 'Ничего.' } },
     },
@@ -142,7 +151,7 @@ describe('reading a catalogue in the vault’s language', () => {
     locale = 'ru';
     serve([{ ...translated[0], i18n: { ru: { storeName: 'Подсчёт слов', path: 'nowhere.lua', category: 'other' } } }]);
     const [entry] = await manager().fetchCatalogue();
-    expect(entry).toMatchObject({ path: 'pandoc/wordcount.lua', category: 'tools' });
+    expect(entry).toMatchObject({ path: 'pandoc/wordcount.lua', category: 'structure' });
   });
 });
 

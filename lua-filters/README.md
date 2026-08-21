@@ -73,14 +73,11 @@ one click away, on the card's *Open readme* button.
 
 | `category` | Shown as | What is on it |
 | --- | --- | --- |
-| `structure` | Structure | Assembling the document: includes, page breaks, abstracts, format-only content. |
+| `structure` | Structure | Assembling the document: includes, page breaks, abstracts, format-only content, the kind of document it is. |
 | `citations` | Citations | Bibliographies, citekeys, DOIs, author metadata. |
 | `figures` | Figures & math | Diagrams, maths, music, captions. |
-| `prose` | Text & typography | Quotes, indents, dates, fonts. |
-| `word` | Word & ODT | Making a reference document's styles actually govern the output. |
-| `latex` | LaTeX & PDF | Things only the LaTeX writer can do. |
-| `tools` | Tools | Filters that report on a document instead of exporting it. |
-| `other` | Other | Anything with no category, or one this plugin does not know. The chip appears only when something lands here. |
+| `prose` | Text & typography | How the text is set: quotes, indents, fonts, highlighted code, table spacing. |
+| `other` | Tools & other | Filters that report on a document instead of exporting it, and anything with a category this plugin does not know. |
 
 ## Entry schema
 
@@ -107,7 +104,7 @@ one click away, on the card's *Open readme* button.
       "license": "MIT",
 
       // One of the shelves above. An unknown or missing one becomes "other".
-      "category": "tools",
+      "category": "other",
 
       // Optional. The output formats the filter is written for, as families:
       // "latex" (latex, beamer, pdf), "docx", "odt", "html" (html*, epub*),

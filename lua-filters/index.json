@@ -129,6 +129,45 @@
       }
     },
     {
+      "id": "track-changes",
+      "storeName": "Word tracked changes",
+      "description": "Decides what to do with the tracked changes in a .docx you are reading in: accept them, reject them, or keep both readings.",
+      "author": "Mathias Walter",
+      "license": "MIT",
+      "category": "structure",
+      "updated": "2026-08-07",
+      "fileName": "track-changes.lua",
+      "path": "pandoc/track-changes.lua",
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/track-changes",
+      "i18n": {
+        "ru": {
+          "storeName": "Исправления Word",
+          "description": "Решает, что делать с исправлениями в режиме рецензирования в читаемом .docx: принять их, отклонить или сохранить оба варианта."
+        }
+      }
+    },
+    {
+      "id": "scrlttr2",
+      "storeName": "Letter (KOMA-Script)",
+      "description": "Sets the note as a letter through KOMA-Script's scrlttr2 class, addressee and closing included. No longer maintained upstream.",
+      "author": "Albert Krewinkel",
+      "license": "MIT",
+      "category": "structure",
+      "formats": ["latex"],
+      "requires": "A LaTeX installation with KOMA-Script.",
+      "updated": "2026-08-07",
+      "fileName": "scrlttr2.lua",
+      "path": "pandoc/scrlttr2.lua",
+      "homepage": "https://github.com/pandoc/lua-filters/tree/master/scrlttr2",
+      "i18n": {
+        "ru": {
+          "storeName": "Письмо (KOMA-Script)",
+          "description": "Набирает заметку письмом через класс scrlttr2 из KOMA-Script, вместе с адресатом и заключительной формулой. Больше не поддерживается автором.",
+          "requires": "Установленный LaTeX с KOMA-Script."
+        }
+      }
+    },
+    {
       "id": "course:zotero",
       "storeName": "Citations as live Zotero links",
       "description": "Resolves Better BibTeX citekeys against a running Zotero, so citations and the bibliography come out right without exporting a .bib file first.",
@@ -478,7 +517,7 @@
       "description": "Lets inline code in a table cell take its own character style, so it can be sized for the table instead of the body text. Pandoc hardcodes VerbatimChar there and ignores anything else.",
       "author": "Mark Ingrem (pan4ratte)",
       "license": "MIT",
-      "category": "word",
+      "category": "prose",
       "formats": ["docx", "odt"],
       "requires": "A character style named \"Table Verbatim\" in the reference document.",
       "updated": "2026-08-07",
@@ -499,7 +538,7 @@
       "description": "Adds a thin spacer paragraph before and after every table, so tables do not sit flush against the text in Word.",
       "author": "Mark Ingrem (pan4ratte)",
       "license": "MIT",
-      "category": "word",
+      "category": "prose",
       "formats": ["docx"],
       "updated": "2026-08-07",
       "fileName": "table-spacing.lua",
@@ -513,30 +552,12 @@
       }
     },
     {
-      "id": "track-changes",
-      "storeName": "Word tracked changes",
-      "description": "Decides what to do with the tracked changes in a .docx you are reading in: accept them, reject them, or keep both readings.",
-      "author": "Mathias Walter",
-      "license": "MIT",
-      "category": "word",
-      "updated": "2026-08-07",
-      "fileName": "track-changes.lua",
-      "path": "pandoc/track-changes.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/track-changes",
-      "i18n": {
-        "ru": {
-          "storeName": "Исправления Word",
-          "description": "Решает, что делать с исправлениями в режиме рецензирования в читаемом .docx: принять их, отклонить или сохранить оба варианта."
-        }
-      }
-    },
-    {
       "id": "minted",
       "storeName": "Highlighted code in PDF",
       "description": "Sets code blocks with LaTeX's minted package, which highlights far more languages, and better, than the plain verbatim pandoc falls back to.",
       "author": "Stephen McDowell",
       "license": "MIT",
-      "category": "latex",
+      "category": "prose",
       "formats": ["latex"],
       "requires": "Pygments installed, and LaTeX run with --shell-escape.",
       "updated": "2026-08-07",
@@ -557,7 +578,7 @@
       "description": "Stops LaTeX breaking a hyphenated word at its hyphen when it justifies a line — the fix for names and compounds split across lines.",
       "author": "Frederik Elwert",
       "license": "MIT",
-      "category": "latex",
+      "category": "prose",
       "formats": ["latex"],
       "updated": "2026-08-07",
       "fileName": "latex-hyphen.lua",
@@ -571,33 +592,12 @@
       }
     },
     {
-      "id": "scrlttr2",
-      "storeName": "Letter (KOMA-Script)",
-      "description": "Sets the note as a letter through KOMA-Script's scrlttr2 class, addressee and closing included. No longer maintained upstream.",
-      "author": "Albert Krewinkel",
-      "license": "MIT",
-      "category": "latex",
-      "formats": ["latex"],
-      "requires": "A LaTeX installation with KOMA-Script.",
-      "updated": "2026-08-07",
-      "fileName": "scrlttr2.lua",
-      "path": "pandoc/scrlttr2.lua",
-      "homepage": "https://github.com/pandoc/lua-filters/tree/master/scrlttr2",
-      "i18n": {
-        "ru": {
-          "storeName": "Письмо (KOMA-Script)",
-          "description": "Набирает заметку письмом через класс scrlttr2 из KOMA-Script, вместе с адресатом и заключительной формулой. Больше не поддерживается автором.",
-          "requires": "Установленный LaTeX с KOMA-Script."
-        }
-      }
-    },
-    {
       "id": "wordcount",
       "storeName": "Word count",
       "description": "Counts the words pandoc reads, not the characters the file holds — markup, properties and link targets left out. Prints the count instead of exporting.",
       "author": "John MacFarlane",
       "license": "MIT",
-      "category": "tools",
+      "category": "other",
       "updated": "2026-08-07",
       "fileName": "wordcount.lua",
       "path": "pandoc/wordcount.lua",
@@ -615,7 +615,7 @@
       "description": "Lists the misspelled words of a note, reading the prose and skipping code, links and maths. Prints the list instead of exporting.",
       "author": "John MacFarlane",
       "license": "MIT",
-      "category": "tools",
+      "category": "other",
       "requires": "The aspell program on the PATH.",
       "updated": "2026-08-07",
       "fileName": "spellcheck.lua",

@@ -6,6 +6,7 @@ import {
   DEFAULT_LUA_FILTER_CATEGORY,
   LUA_FILTER_CATEGORIES,
   LuaFilterManager,
+  shelfOf,
   type InstalledLuaFilter,
   type LuaFilterCategory,
   type LuaFilterEntry,
@@ -22,10 +23,7 @@ const CATEGORY_ICON: Record<LuaFilterCategory, string> = {
   citations: 'quote',
   figures: 'image',
   prose: 'type',
-  word: 'file-text',
-  latex: 'printer',
-  tools: 'wrench',
-  other: 'package',
+  other: 'wrench',
 };
 
 /** What went wrong, in the words of whatever threw — an object gets its shape, not `[object Object]`. */
@@ -76,7 +74,7 @@ export default (props: {
         storeName: f.storeName,
         description: '',
         author: '',
-        category: f.category ?? DEFAULT_LUA_FILTER_CATEGORY,
+        category: shelfOf(f.category),
         updated: f.updated,
         fileName: f.fileName,
       }));

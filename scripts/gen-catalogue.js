@@ -42,10 +42,7 @@ const CATEGORIES = [
   ['citations', 'Citations'],
   ['figures', 'Figures & math'],
   ['prose', 'Text & typography'],
-  ['word', 'Word & ODT'],
-  ['latex', 'LaTeX & PDF'],
-  ['tools', 'Tools'],
-  ['other', 'Other'],
+  ['other', 'Tools & other'],
 ];
 
 /*
@@ -75,10 +72,7 @@ const READMES = [
       citations: 'Цитаты',
       figures: 'Иллюстрации и формулы',
       prose: 'Текст и типографика',
-      word: 'Word и ODT',
-      latex: 'LaTeX и PDF',
-      tools: 'Инструменты',
-      other: 'Прочее',
+      other: 'Инструменты и прочее',
     },
     intro: 'Содержание каталога на данный момент:',
     outro: 'Хотите добавить свой фильтр?',

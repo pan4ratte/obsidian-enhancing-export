@@ -7,6 +7,10 @@
 
 * **Table of contents depth in the export window.** Where a template writes a format that has a table of contents, the export window carries the same slider as the template editor: it shows what the template asks for, and lets a different depth be set for one export without changing the template itself.
 
+### UI/UX enhancements and bug fixes
+
+* The lua-filter store's shelves are merged: five instead of eight, none of them named after an output format.
+
 
 
 ## 2.1.0

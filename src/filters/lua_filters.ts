@@ -4,7 +4,7 @@ import type PandocGuiPlugin from '../main';
 /* The lua-filter store. */
 
 /** The shelves the store is divided into, in the order they are shown. */
-export const LUA_FILTER_CATEGORIES = ['structure', 'citations', 'figures', 'prose', 'word', 'latex', 'tools', 'other'] as const;
+export const LUA_FILTER_CATEGORIES = ['structure', 'citations', 'figures', 'prose', 'other'] as const;
 
 export type LuaFilterCategory = (typeof LUA_FILTER_CATEGORIES)[number];
 
@@ -12,6 +12,17 @@ export type LuaFilterCategory = (typeof LUA_FILTER_CATEGORIES)[number];
 export const DEFAULT_LUA_FILTER_CATEGORY: LuaFilterCategory = 'other';
 
 const isCategory = (value: unknown): value is LuaFilterCategory => LUA_FILTER_CATEGORIES.includes(value as LuaFilterCategory);
+
+/** The shelves that were named after an output format, and the shelf their filters stand on now. */
+const MERGED_CATEGORIES: Record<string, LuaFilterCategory> = {
+  word: 'prose',
+  latex: 'prose',
+  tools: 'other',
+};
+
+/** The shelf a value names, whatever the shelves were called when it was written. */
+export const shelfOf = (value: unknown): LuaFilterCategory =>
+  isCategory(value) ? value : (MERGED_CATEGORIES[value as string] ?? DEFAULT_LUA_FILTER_CATEGORY);
 
 /** One row of the catalogue — everything a card shows, plus where to fetch it. */
 export interface LuaFilterEntry {
@@ -212,7 +223,7 @@ export class LuaFilterManager {
         description: text.description ?? f.description ?? '',
         author: f.author ?? '',
         license: f.license,
-        category: isCategory(f.category) ? f.category : DEFAULT_LUA_FILTER_CATEGORY,
+        category: shelfOf(f.category),
         formats: Array.isArray(f.formats) ? f.formats.filter(v => typeof v === 'string') : undefined,
         requires: text.requires ?? f.requires,
         updated: f.updated,

@@ -100,6 +100,8 @@ The catalogue currently offers:
 | [Format-only content](https://github.com/pandoc/lua-filters/tree/master/not-in-format) | Keeps a block or a span out of the formats it was not written for, so one note can carry both the printed wording and the web wording. | — |
 | [Tables written as lists](https://github.com/pandoc-ext/list-table) | Write a table as a nested list and have it come out as a table. Cells that hold a paragraph, a list or a code block stay editable in the note instead of becoming an unreadable pipe table. | — |
 | [reveal.js code blocks](https://github.com/pandoc/lua-filters/tree/master/revealjs-codeblock) | Passes code-block attributes through to reveal.js, so a slide can highlight lines and step through them. | — |
+| [Word tracked changes](https://github.com/pandoc/lua-filters/tree/master/track-changes) | Decides what to do with the tracked changes in a .docx you are reading in: accept them, reject them, or keep both readings. | — |
+| [Letter (KOMA-Script)](https://github.com/pandoc/lua-filters/tree/master/scrlttr2) | Sets the note as a letter through KOMA-Script's scrlttr2 class, addressee and closing included. No longer maintained upstream. | A LaTeX installation with KOMA-Script. |
 
 **Citations**
 
@@ -133,24 +135,12 @@ The catalogue currently offers:
 | [Fonts and alignment](https://github.com/pandoc-ext/fonts-and-alignment) | Sets the font, size, colour and alignment of a marked span or section, for the passages a template has no style for. | — |
 | [Tidier URLs](https://github.com/pandoc-ext/pretty-urls) | Drops the https:// and the trailing slash from a bare link, so an address printed in the text reads as text. | — |
 | [Remove wikilinks](https://github.com/pan4ratte/obsidian-pandoc-gui/blob/main/lua-filters/pan4ratte/strip-wikilinks.lua) | Removes wikilinks along with the text inside them from the exported file. Embeds, images, attachments and external links are not affected; in a vault writing markdown links, links to a `.md` file or to a heading go the same way. | — |
-
-**Word & ODT**
-
-| Filter | What it does | Needs |
-| :--- | :---------- | :--- |
 | [Code inside tables](https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/table-verbatim.lua) | Lets inline code in a table cell take its own character style, so it can be sized for the table instead of the body text. Pandoc hardcodes VerbatimChar there and ignores anything else. | A character style named "Table Verbatim" in the reference document. |
 | [Space before and after tables](https://github.com/pan4ratte/course-it-in-science/blob/main/Obsidian/Pandoc/filters/table-spacing.lua) | Adds a thin spacer paragraph before and after every table, so tables do not sit flush against the text in Word. | — |
-| [Word tracked changes](https://github.com/pandoc/lua-filters/tree/master/track-changes) | Decides what to do with the tracked changes in a .docx you are reading in: accept them, reject them, or keep both readings. | — |
-
-**LaTeX & PDF**
-
-| Filter | What it does | Needs |
-| :--- | :---------- | :--- |
 | [Highlighted code in PDF](https://github.com/pandoc/lua-filters/tree/master/minted) | Sets code blocks with LaTeX's minted package, which highlights far more languages, and better, than the plain verbatim pandoc falls back to. | Pygments installed, and LaTeX run with --shell-escape. |
 | [Keep hyphenated words whole](https://github.com/pandoc/lua-filters/tree/master/latex-hyphen) | Stops LaTeX breaking a hyphenated word at its hyphen when it justifies a line — the fix for names and compounds split across lines. | — |
-| [Letter (KOMA-Script)](https://github.com/pandoc/lua-filters/tree/master/scrlttr2) | Sets the note as a letter through KOMA-Script's scrlttr2 class, addressee and closing included. No longer maintained upstream. | A LaTeX installation with KOMA-Script. |
 
-**Tools**
+**Tools & other**
 
 | Filter | What it does | Needs |
 | :--- | :---------- | :--- |
