@@ -1,6 +1,14 @@
 # Changelog
 
 
+## 2.2.0
+
+### New features
+
+* **Table of contents depth in the export window.** Where a template writes a format that has a table of contents, the export window carries the same slider as the template editor: it shows what the template asks for, and lets a different depth be set for one export without changing the template itself.
+
+
+
 ## 2.1.0
 
 ### New features

@@ -1225,6 +1225,29 @@
 }
 
 /*
+ * The table of contents is read across the row instead: the slider names its
+ * steps under itself, and beside a label there was not enough of the row left
+ * for six of them to stand apart.
+ */
+.ex-export-modal.ex-export-modal .setting-item.ex-export-modal-toc {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Nothing stands beside the label here for the cap to protect. */
+.ex-export-modal.ex-export-modal .setting-item.ex-export-modal-toc > .setting-item-info {
+  max-width: none;
+}
+
+.ex-export-modal.ex-export-modal .setting-item.ex-export-modal-toc > .setting-item-control {
+  /* Down a column, the `flex: 1` and the centring above work on the other axis. */
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: 100%;
+}
+
+/*
  * A group's heading is the first row of its card, and takes a row's inset.
  *
  * The template modal's headings carry a margin to set a group apart from the

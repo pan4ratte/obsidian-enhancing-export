@@ -7,12 +7,15 @@ import { extractDefaultExtension as extractExtension } from '../../settings';
 import { setPlatformValue, getPlatformValue } from '../../system/utils';
 import { exportNote } from '../../convert/export';
 import { droppedBy, resolveEngine, unsupportedBy } from '../../pandoc/engine';
+import { outputFormat, supportsToc } from '../../pandoc/pandoc_format';
+import { TOC_MAX_DEPTH, TOC_NONE, setTocDepth, tocDepth } from '../../args/toc_args';
 import { chooseFile, documentsFolder, isMobile, isMobileUi, vaultRoot } from '../../system/platform';
 import FolderInput from '../components/FolderInput';
 import Modal from '../components/Modal';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
 import Setting, { Text, DropDown, ExtraButton, Toggle } from '../components/Setting';
+import StepSlider from '../components/StepSlider';
 
 const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: () => void }) => {
   const {
@@ -40,6 +43,29 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
   // What this template asks for that the engine will not do. It is not a reason to stop — the file is written, just
   // without them — so it is said here, where the template can still be changed, and the button says what it is agreeing to.
   const dropped = createMemo(() => (setting() ? droppedBy(setting(), engine) : []));
+
+  // The table of contents, for the templates that are a pandoc command line — a custom one is a command of its own,
+  // with nothing here to read a `--toc` out of.
+  const pandocSetting = createMemo(() => {
+    const chosen = setting();
+    return chosen?.type === 'pandoc' ? chosen : undefined;
+  });
+  const format = createMemo(() => {
+    const chosen = pandocSetting();
+    return chosen && outputFormat(chosen.arguments, chosen.customArguments, chosen.userArguments);
+  });
+  /** The depth this export asks for, where it asks for one of its own; the template's own until then. */
+  const [tocOverride, setTocOverride] = createSignal<number>();
+  const toc = () => tocOverride() ?? tocDepth(pandocSetting()?.customArguments);
+  /** None, then one heading level at a time, as the template editor's own row offers them. */
+  const tocLabels = [t.TOC_NONE, ...Array.from({ length: TOC_MAX_DEPTH }, (_, i) => String(i + 1))];
+
+  /** What the export runs: the template, carrying the depth this dialog asks for where that is not its own. */
+  const exportSetting = () => {
+    const chosen = pandocSetting();
+    const depth = tocOverride();
+    return chosen && depth !== undefined ? { ...chosen, customArguments: setTocDepth(chosen.customArguments, depth) } : setting();
+  };
 
   // Where the file goes, as a path on the device. A phone has nowhere outside the vault to write to, so there it is
   // always one of the vault's own folders — held as a vault path, and turned into a real one at export.
@@ -95,7 +121,7 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
       currentFile,
       untrack(candidateOutputDirectory),
       untrack(outputFileFullName),
-      untrack(setting),
+      untrack(exportSetting),
       untrack(showOverwriteConfirmation),
       // The dialog asks for no options of its own, so `${options.…}` reads as unset.
       {},
@@ -110,7 +136,15 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
     <>
       <Modal app={app} title={t.EXPORT_DIALOG_TITLE} hidden={hidden()} classList={{ 'ex-export-modal': true }} onClose={props.onClose}>
         <Setting name={t.EXPORT_DIALOG_TEMPLATE}>
-          <DropDown options={exportTypes} onChange={typ => setExportType(typ)} selected={exportType()} />
+          {/* The depth belongs to the template it was picked for, so another template starts from its own. */}
+          <DropDown
+            options={exportTypes}
+            onChange={typ => {
+              setExportType(typ);
+              setTocOverride(undefined);
+            }}
+            selected={exportType()}
+          />
         </Setting>
 
         <Show when={allHidden}>
@@ -146,6 +180,14 @@ const Dialog = (props: { plugin: PandocGuiPlugin; currentFile: TFile; onClose?: 
             <FolderInput app={app} value={vaultFolder()} placeholder={t.IMPORT_DIALOG_FOLDER_PLACEHOLDER} onChange={setVaultFolder} />
           </Show>
         </Setting>
+
+        {/* The template editor's own row, for the writers that would do something with it: it says what the template
+            asks for, and answering it here changes this export alone. */}
+        <Show when={supportsToc(format())}>
+          <Setting name={t.TOC} description={t.TOC_DESC} class="ex-export-modal-toc">
+            <StepSlider labels={tocLabels} min={TOC_NONE} value={toc()} onChange={depth => setTocOverride(depth)} />
+          </Setting>
+        </Show>
 
         <Setting name={t.EXPORT_DIALOG_OVERWRITE} class="mod-toggle">
           <Toggle checked={showOverwriteConfirmation()} onChange={setShowOverwriteConfirmation} />
